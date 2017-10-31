@@ -54,11 +54,11 @@ for num_dom in num_domains:
 		
 	    with open(filename_prefix + "loss_ndom%i_correlation%f.csv" % (num_dom, correlation), "w") as fout:
 		fout.write("epoch, loss\n")
-		fout.write("%i, %f" % (0, evaluate()))
+		fout.write("%i, %f\n" % (0, evaluate()))
 		for epoch_i in xrange(1, num_epochs + 1):
 		    train_epoch()	
 		    curr_loss = evaluate()
-		    fout.write("%i, %f" % (epoch_i, curr_loss))
+		    fout.write("%i, %f\n" % (epoch_i, curr_loss))
 		    print("%i, %f" % (epoch_i, curr_loss))
 
 	tf.reset_default_graph()
