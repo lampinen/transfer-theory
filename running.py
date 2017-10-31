@@ -21,7 +21,7 @@ filename_prefix = "correlation_results/"
 for num_dom in num_domains:
     num_input = num_examples_per
     num_output = output_size * num_dom
-    num_hidden = num_input+1 
+    num_hidden = num_input 
     for correlation in correlations:
 	x_data, y_data = datasets.correlated_dataset(num_examples_per, output_size, num_dom, correlation) 
 	
@@ -52,7 +52,7 @@ for num_dom in num_domains:
 	    
 	    sess.run(tf.global_variables_initializer())
 		
-	    with open(filename_prefix + "loss_ndom%i_correlation%f" % (num_dom, correlation), "w") as fout:
+	    with open(filename_prefix + "loss_ndom%i_correlation%f.csv" % (num_dom, correlation), "w") as fout:
 		fout.write("epoch, loss\n")
 		fout.write("%i, %f" % (0, evaluate()))
 		for epoch_i in xrange(1, num_epochs + 1):
