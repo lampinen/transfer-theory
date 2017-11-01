@@ -1,0 +1,90 @@
+---
+title: "transfer analyses"
+author: "Andrew Lampinen"
+date: "October 31, 2017"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+```{r}
+nruns = 100
+ndoms = c(2)
+qs = c(1, 0.5, 0, -0.5, -1)
+d = data.frame()
+for (ndom in ndoms) {
+  for (q in qs) {
+    for (run in 0:(nruns-1)) {
+      this_d = read.csv(sprintf("../correlation_results/loss_ndom%i_correlation%f_run%i.csv", ndom, q, run), header=T)
+      this_d = this_d %>% 
+        mutate(ndom=ndom, q=q, run=run)
+      d = bind_rows(d, this_d)
+    }
+  }
+}
+```
+
+```{r}
+d = d %>%
+  mutate(abs_q = factor(abs(q)),
+         q = factor(q),
+         log_loss = log(loss))
+```
+
+```{r}
+avg_d = d %>%
+  group_by(q, abs_q, ndom, epoch) %>%
+  summarize(loss=mean(loss), log_loss=mean(log_loss))
+```
+
+
+```{r}
+ggplot(avg_d, aes(x=epoch, y=log_loss, color=q)) +
+  geom_line() +
+  scale_color_brewer(palette='BuPu') + 
+  facet_grid(~ ndom)
+```
+
+# Orthogonal
+
+
+```{r}
+nruns = 100
+ndoms = c(2, 4, 10)
+d = data.frame()
+for (ndom in ndoms) {
+  for (q in qs) {
+    for (run in 0:(nruns-1)) {
+      this_d = read.csv(sprintf("../orthogonal_transform_results/loss_ndom%i_run%i.csv", ndom, run), header=T)
+      this_d = this_d %>% 
+        mutate(ndom=ndom, run=run)
+      d = bind_rows(d, this_d)
+    }
+  }
+}
+```
+
+```{r}
+d = d %>%
+  mutate(ndom=factor(ndom),
+         log_loss = log(loss))
+```
+
+```{r}
+avg_d = d %>%
+  group_by(ndom, epoch) %>%
+  summarize(loss=mean(loss), log_loss=mean(log_loss))
+```
+
+
+```{r}
+ggplot(avg_d, aes(x=epoch, y=log_loss, color=ndom)) +
+  geom_line() +
+  scale_color_brewer(palette='BuPu') + 
+  theme_bw()
+```
+
