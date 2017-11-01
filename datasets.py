@@ -2,6 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division 
 import numpy
+from orthogonal_matrices import random_orthogonal
 
 def random_dataset(num_examples, num_outputs):
     """Returns num_examples random unit length vectors of length num_outputs"""
@@ -35,7 +36,7 @@ def correlated_dataset(num_examples, num_outputs, num_domains, q):
 def transformed_dataset(num_examples, num_outputs, num_domains):
     """Returns a dataset of num_domains block domains which are all transformations of the first -- not orthogonal transformations yet"""
     shared_structure_set = random_dataset(num_examples, num_outputs)
-    transforms = [random_dataset(num_examples, num_examples) for _ in xrange(num_domains - 1)]
+    transforms = [random_orthogonal(num_examples) for _ in xrange(num_domains - 1)]
 
     domain_sets = [shared_structure_set] + [numpy.dot(transform, shared_structure_set) for transform in transforms]
 
