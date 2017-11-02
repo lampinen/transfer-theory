@@ -12,14 +12,14 @@ library(ggplot2)
 ```
 
 ```{r}
-nruns = 100
+nruns = 10
 ndoms = c(2)
 qs = c(1, 0.5, 0, -0.5, -1)
 d = data.frame()
 for (ndom in ndoms) {
   for (q in qs) {
     for (run in 0:(nruns-1)) {
-      this_d = read.csv(sprintf("../correlation_results/loss_ndom%i_correlation%f_run%i.csv", ndom, q, run), header=T)
+      this_d = read.csv(sprintf("../correlation_results_slow/loss_ndom%i_correlation%f_run%i.csv", ndom, q, run), header=T)
       this_d = this_d %>% 
         mutate(ndom=ndom, q=q, run=run)
       d = bind_rows(d, this_d)
@@ -54,7 +54,7 @@ ggplot(avg_d, aes(x=epoch, y=log_loss, color=q)) +
 
 ```{r}
 nruns = 100
-ndoms = c(2, 4, 10)
+ndoms = c(1, 2, 4, 10)
 d = data.frame()
 for (ndom in ndoms) {
   for (q in qs) {
@@ -70,21 +70,26 @@ for (ndom in ndoms) {
 
 ```{r}
 d = d %>%
-  mutate(ndom=factor(ndom),
+  mutate(loss_per=loss/ndom,
+         ndom=factor(ndom),
+         log_loss_per=log(loss_per),
          log_loss = log(loss))
 ```
 
 ```{r}
 avg_d = d %>%
   group_by(ndom, epoch) %>%
-  summarize(loss=mean(loss), log_loss=mean(log_loss))
+  summarize(loss=mean(loss), log_loss=mean(log_loss), loss_per=mean(loss_per), log_loss_per=mean(log_loss_per))
 ```
 
 
 ```{r}
-ggplot(avg_d, aes(x=epoch, y=log_loss, color=ndom)) +
-  geom_line() +
+ggplot(avg_d, aes(x=epoch, y=log_loss_per, color=ndom)) +
+  geom_line(size=1.2) +
   scale_color_brewer(palette='BuPu') + 
   theme_bw()
+```
+```{r}
+ggsave("../plots/orthogonal_first_results.png")
 ```
 
