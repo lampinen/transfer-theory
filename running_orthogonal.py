@@ -9,7 +9,7 @@ import datasets
 ### Parameters
 num_examples_per = 20
 output_size = 100
-num_domains = [2, 4, 10]
+num_domains = [1]
 num_runs = 100 
 learning_rate = 0.01
 num_epochs = 2000
