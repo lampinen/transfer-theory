@@ -6,9 +6,8 @@ from orthogonal_matrices import random_orthogonal
 
 def random_dataset(num_examples, num_outputs):
     """Returns num_examples random unit length vectors of length num_outputs"""
-    unscaled = 2*numpy.random.rand(num_examples, num_outputs) - 1 
-    scaled = unscaled / numpy.expand_dims(numpy.sqrt(numpy.sum(unscaled**2, axis=1)), axis=1)
-    return scaled
+    result = numpy.random.randn(num_examples, num_outputs)/num_outputs
+    return result
 
 
 def correlated_dataset(num_examples, num_outputs, num_domains, q):
