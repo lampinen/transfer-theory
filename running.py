@@ -10,14 +10,16 @@ import datasets
 num_examples_per = 20
 output_size = 100
 correlations = [1, 0.5, 0, -0.5, -1]
-num_domains = [4]
+num_domains = [2]
 num_runs = 10 
-learning_rate = 0.01
-num_epochs = 1000
+learning_rate = 0.001
+num_epochs = 5000
 batch_size = 1
 filename_prefix = "correlation_results/"
 
 ###
+var_scal_init = tf.contrib.layers.variance_scaling_initializer(factor=0.1, mode='FAN_AVG')
+
 
 for run_i in xrange(num_runs):
   for num_dom in num_domains:
@@ -30,8 +32,8 @@ for run_i in xrange(num_runs):
 	  input_ph = tf.placeholder(tf.float32, shape=[num_input, None])
 	  target_ph = tf.placeholder(tf.float32, shape=[num_output, None])
 
-	  W1 = tf.get_variable('W1', shape=[num_hidden, num_input], initializer=tf.contrib.layers.xavier_initializer())	
-	  W2 = tf.get_variable('W2', shape=[num_output, num_hidden], initializer=tf.contrib.layers.xavier_initializer())	
+	  W1 = tf.get_variable('W1', shape=[num_hidden, num_input], initializer=var_scal_init)	
+	  W2 = tf.get_variable('W2', shape=[num_output, num_hidden], initializer=var_scal_init)
       
 	  hidden = tf.matmul(W1, input_ph)
 	  output = tf.matmul(W2, hidden)
