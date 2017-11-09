@@ -12,10 +12,10 @@ output_size = 100
 correlations = [1, 0.5, 0, -0.5, -1]
 num_domains = [2]
 num_runs = 10 
-learning_rate = 0.001
-num_epochs = 10000
+learning_rate = 0.01
+num_epochs = 2000
 batch_size = 1
-filename_prefix = "correlation_results_slow/"
+filename_prefix = "correlation_results/"
 
 ###
 
