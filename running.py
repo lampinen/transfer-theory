@@ -13,12 +13,12 @@ correlations = [1, 0.5, 0, -0.5, -1]
 num_domains = [2]
 num_runs = 10 
 learning_rate = 0.001
-num_epochs = 5000
+num_epochs = 10000
 batch_size = 1
 filename_prefix = "correlation_results/"
 
 ###
-var_scal_init = tf.contrib.layers.variance_scaling_initializer(factor=0.1, mode='FAN_AVG')
+var_scal_init = tf.contrib.layers.variance_scaling_initializer(factor=0.01, mode='FAN_AVG')
 
 
 for run_i in xrange(num_runs):
