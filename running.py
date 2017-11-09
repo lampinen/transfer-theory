@@ -10,10 +10,10 @@ import datasets
 num_examples_per = 20
 output_size = 100
 correlations = [1, 0.5, 0, -0.5, -1]
-num_domains = [2]
+num_domains = [4]
 num_runs = 10 
 learning_rate = 0.01
-num_epochs = 2000
+num_epochs = 1000
 batch_size = 1
 filename_prefix = "correlation_results/"
 
