@@ -12,8 +12,9 @@ num_runs = 10
 learning_rate = 0.01
 num_epochs = 2000
 batch_size = 1
-filename_prefix = "eightthings_results/"
+filename_prefix = "eightthings_smallweights_results/"
 ###
+var_scal_init = tf.contrib.layers.variance_scaling_initializer(factor=0.1, mode='FAN_AVG')
 
 for run_i in xrange(num_runs):
   for data_type in ['original', 'scrambled']: 
@@ -29,8 +30,8 @@ for run_i in xrange(num_runs):
       input_ph = tf.placeholder(tf.float32, shape=[num_input, None])
       target_ph = tf.placeholder(tf.float32, shape=[num_output, None])
 
-      W1 = tf.get_variable('W1', shape=[num_hidden, num_input], initializer=tf.contrib.layers.xavier_initializer())	
-      W2 = tf.get_variable('W2', shape=[num_output, num_hidden], initializer=tf.contrib.layers.xavier_initializer())	
+      W1 = tf.get_variable('W1', shape=[num_hidden, num_input], initializer=var_scal_init)
+      W2 = tf.get_variable('W2', shape=[num_output, num_hidden], initializer=var_scal_init)
   
       hidden = tf.matmul(W1, input_ph)
       output = tf.matmul(W2, hidden)
