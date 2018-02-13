@@ -9,7 +9,7 @@ import read_8things as eightthings
 
 ### Parameters
 num_runs = 10
-learning_rate = 0.01
+learning_rate = 0.001
 num_epochs = 2000
 batch_size = 1
 filename_prefix = "eightthings_smallweights_results/"
