@@ -12,14 +12,14 @@ library(ggplot2)
 ```
 
 ```{r}
-nruns = 10
+nruns = 2
 ndoms = c(2)
 qs = c(1, 0.5, 0, -0.5, -1)
 d = data.frame()
 for (ndom in ndoms) {
   for (q in qs) {
     for (run in 0:(nruns-1)) {
-      this_d = read.csv(sprintf("../correlation_results_slow/loss_ndom%i_correlation%f_run%i.csv", ndom, q, run), header=T)
+      this_d = read.csv(sprintf("../correlation_results/loss_ndom%i_correlation%f_run%i.csv", ndom, q, run), header=T)
       this_d = this_d %>% 
         mutate(ndom=ndom, q=q, run=run)
       d = bind_rows(d, this_d)
@@ -30,7 +30,10 @@ for (ndom in ndoms) {
 
 ```{r}
 d = d %>%
-  mutate(abs_q = factor(abs(q)),
+  mutate(loss_per = loss/ndom,
+         log_loss_per = log(loss_per),
+         ndom=factor(ndom, levels=c(1,2,4,10)),
+         abs_q = factor(abs(q)),
          q = factor(q),
          log_loss = log(loss))
 ```
@@ -38,22 +41,58 @@ d = d %>%
 ```{r}
 avg_d = d %>%
   group_by(q, abs_q, ndom, epoch) %>%
-  summarize(loss=mean(loss), log_loss=mean(log_loss))
+  summarize(loss=mean(loss), log_loss=mean(log_loss), loss_per=mean(loss_per), log_loss_per=mean(log_loss_per))
 ```
 
 
 ```{r}
-ggplot(avg_d, aes(x=epoch, y=log_loss, color=q)) +
-  geom_line() +
+ggplot(avg_d %>% filter(ndom==2), aes(x=epoch, y=log_loss_per, color=q)) +
+  geom_line(size=1.5) +
   scale_color_brewer(palette='BuPu') + 
-  facet_grid(~ ndom)
+  theme_bw()
+```
+
+```{r}
+ggsave("../plots/correlation_first_results.png")
+```
+
+```{r}
+ggplot(avg_d %>% filter(ndom == 2), aes(x=epoch, y=log_loss, color=q)) +
+  geom_line(size=1.5) +
+  scale_color_brewer(palette='BuPu') + 
+  ylim(-2.1, -2.0) +
+  theme_bw()
+```
+
+```{r}
+ggsave("../plots/correlation_first_results_zoomed_in.png")
+```
+
+```{r}
+ggplot(avg_d %>% filter(q==0), aes(x=epoch, y=log_loss_per, color=ndom)) +
+  geom_line(size=1.5) +
+  scale_color_brewer(palette='BuPu', drop=F) + 
+  theme_bw()
+```
+```{r}
+ggsave("../plots/q0_ndom_comparison.png")
+```
+
+```{r}
+ggplot(avg_d %>% filter(q==1), aes(x=epoch, y=log_loss_per, color=ndom)) +
+  geom_line(size=1.5) +
+  scale_color_brewer(palette='BuPu', drop=F) + 
+  theme_bw()
+```
+```{r}
+ggsave("../plots/q1_ndom_comparison.png")
 ```
 
 # Orthogonal
 
 
 ```{r}
-nruns = 100
+nruns = 10
 ndoms = c(1, 2, 4, 10)
 d = data.frame()
 for (ndom in ndoms) {
@@ -93,3 +132,135 @@ ggplot(avg_d, aes(x=epoch, y=log_loss_per, color=ndom)) +
 ggsave("../plots/orthogonal_first_results.png")
 ```
 
+# Eight things
+
+```{r}
+nruns = 10
+features_types = c('original', 'scrambled')
+d = data.frame()
+for (features in features_types) {
+  for (q in qs) {
+    for (run in 0:(nruns-1)) {
+      this_d = read.csv(sprintf("../eightthings_smallweights_results/loss_features%s_run%i.csv", features, run), header=T)
+      this_d = this_d %>% 
+        mutate(features=features, run=run)
+      d = bind_rows(d, this_d)
+    }
+  }
+}
+```
+
+```{r}
+d = d %>%
+  filter(epoch <= 1000) %>%
+  mutate(features=factor(features),
+         log_loss = log(loss))
+```
+
+```{r}
+avg_d = d %>%
+  group_by(features, epoch) %>%
+  summarize(loss=mean(loss), log_loss=mean(log_loss))
+```
+
+
+```{r}
+ggplot(avg_d, aes(x=epoch, y=log_loss, color=features)) +
+  geom_line(size=1.2) +
+  scale_color_brewer(palette='BuPu') + 
+  theme_bw()
+```
+```{r}
+ggsave("../plots/eightthings_slower_results.png")
+```
+
+
+# Eight things (with label noise)
+
+```{r}
+nruns = 50
+features_types = c('original', 'scrambled')
+d = data.frame()
+for (features in features_types) {
+  for (q in qs) {
+    for (run in 0:(nruns-1)) {
+      this_d = read.csv(sprintf("../eightthings_noisy_results/loss_features%s_run%i.csv", features, run), header=T)
+      this_d = this_d %>% 
+        mutate(features=features, run=run)
+      d = bind_rows(d, this_d)
+    }
+  }
+}
+```
+
+```{r}
+d = d %>%
+  filter(epoch <= 1000) %>%
+  mutate(features=factor(features),
+         log_loss = log(loss))
+```
+
+```{r}
+avg_d = d %>%
+  group_by(features, epoch) %>%
+  summarize(loss=mean(loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
+  mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n())) %>%
+  ungroup() %>%
+  mutate(features=factor(features, labels=c("Shared structure", "No shared structure")))
+```
+
+
+```{r}
+ggplot(avg_d, aes(x=epoch, y=log_loss, color=features)) +
+  geom_line(size=1.2) +
+  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
+  scale_color_manual(values=c("#B3CDE3", "#88419D")) + 
+  scale_fill_manual(values=c("#B3CDE3", "#88419D")) + 
+  theme_bw()
+```
+```{r}
+ggsave("../plots/eightthings_noisy_results.png")
+```
+
+# Shared input modes analysis
+
+```{r}
+nruns = 10
+qs = c(0, 0.2, 0.39, 0.79, 1.57, 3.14)
+num_domains = c(2)
+d = data.frame()
+for (num_dom in num_domains) {
+  for (q in qs) {
+    for (run in 0:(nruns-1)) {
+      this_d = read.csv(sprintf("../shared_input_mode_results/loss_ndom%i_q%.2f_run%i.csv", num_dom, q, run), header=T)
+      this_d = this_d %>% 
+        mutate(q=q, num_domains=num_dom, run=run)
+      d = bind_rows(d, this_d)
+    }
+  }
+}
+```
+
+```{r}
+d = d %>%
+  mutate(q=factor(q),
+         num_domains=factor(num_domains),
+         log_loss = log(loss))
+```
+
+```{r}
+avg_d = d %>%
+  group_by(q, num_domains, epoch) %>%
+  summarize(loss=mean(loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
+  mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n())) %>%
+  ungroup()
+```
+
+
+```{r}
+ggplot(avg_d, aes(x=epoch, y=log_loss, color=q)) +
+  geom_line(size=1.2) +
+#  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
+  scale_color_brewer(palette="BuPu") + 
+  theme_bw()
+```

@@ -90,5 +90,5 @@ def shared_input_modes_dataset(num_examples, num_outputs, num_domains, q):
 
 def noisy_shared_input_modes_dataset(num_examples, num_outputs, num_domains, q, noise_var=0.1):
     x_data, y_data, input_modes = shared_input_modes_dataset(num_examples, num_outputs, num_domains, q)
-    y_data_noisy = y_data + noise_var/num_outputs * numpy.random.standard_normal(numpy.shape(y_data))
+    y_data_noisy = y_data + noise_var * numpy.random.standard_normal(numpy.shape(y_data))
     return x_data, y_data, y_data_noisy, input_modes

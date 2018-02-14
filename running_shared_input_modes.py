@@ -5,16 +5,16 @@ from __future__ import division
 import numpy as np
 import tensorflow as tf
 import datasets
-
+PI = np.pi
 ### Parameters
 num_examples = 20
 output_size = 100
-num_domains = [1, 2]
-qs = [1, 0.66, 0.33, 0]
-noise_var = 0.1
-num_runs = 100 
+num_domains = [2]
+qs = [0, PI/16, PI/8, PI/4, PI/2, PI] 
+noise_var = 0.025 # independent gaussian per output
+num_runs = 10 
 learning_rate = 0.01
-num_epochs = 2000
+num_epochs = 1000
 batch_size = 1
 filename_prefix = "shared_input_mode_results/"
 save_every = 10
@@ -24,10 +24,11 @@ save_every = 10
 for run_i in xrange(num_runs):
   for num_dom in num_domains:
       for q in qs:
+          print("Now running q: %.2f, num_dom: %i, run: %i" % (q, num_dom, run_i))
           num_input = num_examples
           num_output = output_size * num_dom
           num_hidden = num_input 
-          x_data, y_data, noisy_y_data = datasets.noisy_shared_input_modes_dataset(num_examples, output_size, num_dom, q, noise_var=0.1) 
+          x_data, y_data, noisy_y_data, input_modes = datasets.noisy_shared_input_modes_dataset(num_examples, output_size, num_dom, q, noise_var=noise_var) 
           
           input_ph = tf.placeholder(tf.float32, shape=[num_input, None])
           target_ph = tf.placeholder(tf.float32, shape=[num_output, None])
@@ -61,7 +62,7 @@ for run_i in xrange(num_runs):
                   for epoch_i in xrange(1, num_epochs + 1):
                       train_epoch()	
                       curr_loss = evaluate()
-                      if epoch % save_every == 0:
+                      if epoch_i % save_every == 0:
                           fout.write("%i, %f\n" % (epoch_i, curr_loss))
                           print("%i, %f" % (epoch_i, curr_loss))
 
