@@ -64,17 +64,20 @@ def random_vector_at_cos(initial_vec, cos_theta):
     return new_vec
 
 def random_rotation_matrix(theta, n):
-    """Generates a rotation of an angle theta in n dimensions about a random vector"""
+    """Generates a 'rotation' of an angle theta in n dimensions about many random axes"""
     P = random_orthogonal(n)
-    R = block_diag(numpy.array([[numpy.cos(theta), -numpy.sin(theta)],[numpy.sin(theta), numpy.cos(theta)]]), numpy.eye(n-2)) 
+    if n % 2 == 0:
+        R = block_diag(*([numpy.array([[numpy.cos(theta), -numpy.sin(theta)],[numpy.sin(theta), numpy.cos(theta)]])]*(n//2))) 
+    else: 
+        R = block_diag(*([numpy.array([[numpy.cos(theta), -numpy.sin(theta)],[numpy.sin(theta), numpy.cos(theta)]])]*(n//2) + [numpy.eye(1)])) 
     return numpy.matmul(numpy.transpose(P),  numpy.matmul(R, P))
 
-def shared_input_modes_dataset(num_examples, num_outputs, num_domains, q):
+def shared_input_modes_dataset(num_examples, num_outputs, num_domains, q, num_nonempty=4):
     """Returns a dataset of num_domains block domains with input modes related at angle q"""
     if num_outputs < num_examples:
         raise ValueError("Less than full rank tasks are not supported at the moment (the appropriate truncation of the permuted S matrix is kinda annoying)")
     input_modes = random_orthogonal(num_examples)
-    strengths = numpy.array([numpy.sqrt(2./num_examples)] * (num_examples//2) + [0.]* (num_examples - num_examples//2))
+    strengths = numpy.array(range(num_nonempty, 0, -1) + [0.]* (num_examples - num_nonempty))
     
     def _strengths_to_S(strengths, num_outputs=num_outputs):
         return numpy.concatenate((numpy.diag(strengths), numpy.zeros((num_outputs-len(strengths), num_examples))), axis=0)
@@ -88,7 +91,7 @@ def shared_input_modes_dataset(num_examples, num_outputs, num_domains, q):
     x_data = numpy.eye(len(y_data))
     return x_data, y_data, input_modes
 
-def noisy_shared_input_modes_dataset(num_examples, num_outputs, num_domains, q, noise_var=0.1):
+def noisy_shared_input_modes_dataset(num_examples, num_outputs, num_domains, q, num_nonempty=4, noise_var=0.1):
     x_data, y_data, input_modes = shared_input_modes_dataset(num_examples, num_outputs, num_domains, q)
     y_data_noisy = y_data + noise_var * numpy.random.standard_normal(numpy.shape(y_data))
     return x_data, y_data, y_data_noisy, input_modes
