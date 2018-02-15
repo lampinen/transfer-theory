@@ -8,25 +8,25 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 
-theme_set(theme_bw())
+theme_set(theme_bw() )
 ```
 
 ```{r}
 d = read.csv("mode_strengths.csv", header=T)
 ```
 
-# plotting singular values as function of Q
 ```{r}
 d_avg = d %>%
   filter(q <= 3.14) %>%
   mutate(num_domains = factor(num_domains),
          q = factor(q)) %>%
   group_by(q, num_domains, mode) %>%
-  summarize(s_mean = mean(shared_value), s_sd = sd(shared_value)) %>%
+  summarize(s_mean = mean(shared_value), s_sd = sd(shared_value), dot_mean=mean(dom1_dot_shared), dot_sd=sd(dom1_dot_shared)) %>%
   mutate(s_min = s_mean - 1.96 * s_sd/sqrt(n()), s_max = s_mean+  1.96 * s_sd/sqrt(n())) %>%
   ungroup() 
 ```
 
+# plotting singular values as function of Q
 ```{r}
 ggplot(data=d_avg %>% filter(mode < 4), aes(x = q, y = s_mean, ymin=s_min, ymax=s_max, color=q, fill=q)) +
   geom_point(size=3) +
@@ -42,6 +42,13 @@ ggsave("../plots/shared_input_mode_strengths.png")
 # mode overlap
 
 ```{r}
-
+ggplot(data=d_avg %>% filter(mode < 4), aes(x = q, y = dot_mean, color=q)) +
+  geom_point(size=3) +
+  scale_color_brewer(palette="Spectral") + # Hi yochai!
+  facet_grid(mode ~ num_domains, scales="free")
+  
 ```
 
+```{r}
+ggsave("../plots/shared_input_mode_alignments.png")
+```
