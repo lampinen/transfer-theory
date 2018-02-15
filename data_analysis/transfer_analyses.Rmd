@@ -227,7 +227,7 @@ ggsave("../plots/eightthings_noisy_results.png")
 ```{r}
 nruns = 10
 qs = c(0, 0.2, 0.39, 0.79, 1.57, 3.14)
-num_domains = c(2)
+num_domains = c(2, 10)
 d = data.frame()
 for (num_dom in num_domains) {
   for (q in qs) {
@@ -243,6 +243,7 @@ for (num_dom in num_domains) {
 
 ```{r}
 d = d %>%
+  filter(q < 3.14) %>%
   mutate(q=factor(q),
          num_domains=factor(num_domains),
          log_loss = log(loss))
@@ -258,9 +259,14 @@ avg_d = d %>%
 
 
 ```{r}
-ggplot(avg_d, aes(x=epoch, y=log_loss, color=q)) +
+ggplot(avg_d %>% filter(epoch < 250), aes(x=epoch, y=log_loss, color=q)) +
   geom_line(size=1.2) +
 #  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
   scale_color_brewer(palette="BuPu") + 
+  facet_wrap(~ num_domains) +
   theme_bw()
 ```
+```{r}
+ggsave("../plots/shared_input_modes_preliminary_results.png")
+```
+

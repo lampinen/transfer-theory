@@ -7,23 +7,26 @@ import tensorflow as tf
 import datasets
 PI = np.pi
 ### Parameters
-num_examples = 20
+num_examples = 30
 output_size = 100
-num_domains = [2]
-qs = [0, PI/16, PI/8, PI/4, PI/2, PI] 
-noise_var = 0.025 # independent gaussian per output
+num_domains = [2, 10]
+qs = [0, PI/16, PI/8, PI/4, PI/2, PI, 3*PI/2] 
+noise_var = 0.1 # independent gaussian per output
 num_runs = 10 
 learning_rate = 0.01
-num_epochs = 1000
+num_epochs = 500
 batch_size = 1
 filename_prefix = "shared_input_mode_results/"
-save_every = 10
+save_every = 5
 
 ###
+var_scale_init = tf.contrib.layers.variance_scaling_initializer(factor=0.1, mode='FAN_AVG')
 
 for run_i in xrange(num_runs):
   for num_dom in num_domains:
       for q in qs:
+          np.random.seed(run_i)
+          tf.set_random_seed(run_i)
           print("Now running q: %.2f, num_dom: %i, run: %i" % (q, num_dom, run_i))
           num_input = num_examples
           num_output = output_size * num_dom
@@ -33,13 +36,14 @@ for run_i in xrange(num_runs):
           input_ph = tf.placeholder(tf.float32, shape=[num_input, None])
           target_ph = tf.placeholder(tf.float32, shape=[num_output, None])
 
-          W1 = tf.get_variable('W1', shape=[num_hidden, num_input], initializer=tf.contrib.layers.xavier_initializer())	
-          W2 = tf.get_variable('W2', shape=[num_output, num_hidden], initializer=tf.contrib.layers.xavier_initializer())	
+          W1 = tf.get_variable('W1', shape=[num_hidden, num_input], initializer=var_scale_init)
+          W2 = tf.get_variable('W2', shape=[num_output, num_hidden], initializer=var_scale_init)
       
           hidden = tf.matmul(W1, input_ph)
           output = tf.matmul(W2, hidden)
           
           loss = tf.nn.l2_loss(output - target_ph)
+          first_domain_loss = tf.nn.l2_loss(output[:output_size, :] - target_ph[:output_size, :])
           optimizer = tf.train.GradientDescentOptimizer(learning_rate)
           train = optimizer.minimize(loss)	
           
@@ -51,7 +55,7 @@ for run_i in xrange(num_runs):
               def evaluate():
                   curr_loss = 0.
                   for batch_i in xrange(num_examples//batch_size):
-                      curr_loss += sess.run(loss, feed_dict={input_ph: x_data[batch_i:batch_i+batch_size, :].reshape([num_input, 1]), target_ph: y_data[batch_i:batch_i+batch_size, :].reshape([num_output, 1])})
+                      curr_loss += sess.run(first_domain_loss, feed_dict={input_ph: x_data[batch_i:batch_i+batch_size, :].reshape([num_input, 1]), target_ph: y_data[batch_i:batch_i+batch_size, :].reshape([num_output, 1])})
                   return curr_loss
               
               sess.run(tf.global_variables_initializer())
