@@ -17,7 +17,7 @@ d = read.csv("mode_strengths.csv", header=T)
 
 ```{r}
 d_avg = d %>%
-  filter(q <= 3.14) %>%
+  filter(q < 3.14) %>%
   mutate(num_domains = factor(num_domains),
          q = factor(q)) %>%
   group_by(q, num_domains, mode) %>%
