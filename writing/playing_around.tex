@@ -1,0 +1,104 @@
+\documentclass[11pt]{article}
+
+\usepackage{subcaption}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{relsize}
+\usepackage{natbib}
+\usepackage{float}
+\usepackage[margin=1in]{geometry}
+
+\floatstyle{boxed}
+\restylefloat{figure}
+
+\begin{document}
+Let 
+\[
+M = \left[ \begin{array}{cc} A & C \\ B & D \end{array} \right]
+\]
+where an SVD for each sub-matrix is given by (WLOG):
+\[ 
+A = U_AS_AV_A^T
+\]
+Then
+\[
+M =
+\underbrace{\left[ \begin{array}{cccc} 
+U_A & 0 & U_C & 0\\
+0 & U_B & 0 & U_D\\
+\end{array} \right]}_{X} 
+\underbrace{\left[ \begin{array}{cccc} 
+S_A & 0 & 0 & 0\\
+0 & S_B & 0 & 0\\
+0 & 0 & S_C & 0\\
+0 & 0 & 0 & S_D\\
+\end{array} \right]}_{S} 
+\underbrace{\left[ \begin{array}{cc} 
+V_A^T & 0\\
+V_B^T & 0\\
+0 & V_C^T \\
+0 & V_D^T \\
+\end{array} \right]}_{Y^T} 
+\]
+Now assume that \(C = D = 0\):
+
+\[
+M =
+\underbrace{\left[ \begin{array}{cccc} 
+U_A & 0 & 0 & 0\\
+0 & U_B & 0 & 0\\
+\end{array} \right]}_{X} 
+\underbrace{\left[ \begin{array}{cccc} 
+S_A & 0 & 0 & 0\\
+0 & S_B & 0 & 0\\
+0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0\\
+\end{array} \right]}_{S} 
+\underbrace{\left[ \begin{array}{cc} 
+V_A^T & 0\\
+V_B^T & 0\\
+0 & 0 \\
+0 & 0 \\
+\end{array} \right]}_{Y^T} 
+\]
+
+truncate to:
+\[
+\left[ \begin{array}{c} 
+A \\
+B
+\end{array} \right] = M =
+\underbrace{\left[ \begin{array}{cc} 
+U_A & 0 \\
+0 & U_B \\
+\end{array} \right]}_{X} 
+\underbrace{\left[ \begin{array}{cc} 
+S_A & 0 \\
+0 & S_B \\
+\end{array} \right]}_{S} 
+\underbrace{\left[ \begin{array}{c} 
+V_A^T\\
+V_B^T\\
+\end{array} \right]}_{Y^T} 
+\]
+Now the heart of the issue is that 
+\[Y Y^T \propto I \qquad \text{but} \qquad Y^T Y = \left[ \begin{array}{cc} 
+I & V_A^TV_B \\
+V_B^TV_A & I \\
+\end{array} \right]\] 
+What about defining
+\[Y'^T = \left[ \begin{array}{cc} 
+V_A^T & V_A^T\\
+V_B^T & -V_B^T\\
+\end{array} \right]
+\]
+Then
+\[Y'Y'^T \propto I \qquad \text{and} \qquad  Y'^T Y' \propto I\]
+and
+\[
+XSY'^T = \left[ \begin{array}{cc}
+A & A\\
+B & -B\\
+\end{array} \right]
+\]
+\end{document}
