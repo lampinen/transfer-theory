@@ -13,10 +13,10 @@ num_domains = [2, 10]
 qs = [0, PI/16, PI/8, PI/4, PI/2, PI, 3*PI/2] 
 noise_var = 0.1 # independent gaussian per output
 num_runs = 10 
-learning_rate = 0.01
-num_epochs = 500
-batch_size = 1
-filename_prefix = "shared_input_mode_results/"
+learning_rate = 0.001
+num_epochs = 5000
+batch_size = 30
+filename_prefix = "shared_input_mode_batch_results/"
 save_every = 5
 
 ###
@@ -50,12 +50,12 @@ for run_i in xrange(num_runs):
           with tf.Session() as sess:
               def train_epoch():
                   for batch_i in xrange(num_examples//batch_size):
-                      sess.run(train, feed_dict={input_ph: x_data[batch_i:batch_i+batch_size, :].reshape([num_input, 1]), target_ph: noisy_y_data[batch_i:batch_i+batch_size, :].reshape([num_output, 1])})
+                      sess.run(train, feed_dict={input_ph: x_data[batch_i:batch_i+batch_size, :].transpose(), target_ph: noisy_y_data[batch_i:batch_i+batch_size, :].transpose()})
 
               def evaluate():
                   curr_loss = 0.
                   for batch_i in xrange(num_examples//batch_size):
-                      curr_loss += sess.run(first_domain_loss, feed_dict={input_ph: x_data[batch_i:batch_i+batch_size, :].reshape([num_input, 1]), target_ph: y_data[batch_i:batch_i+batch_size, :].reshape([num_output, 1])})
+                      curr_loss += sess.run(first_domain_loss, feed_dict={input_ph: x_data[batch_i:batch_i+batch_size, :].transpose(), target_ph: y_data[batch_i:batch_i+batch_size, :].transpose()})
                   return curr_loss
               
               sess.run(tf.global_variables_initializer())

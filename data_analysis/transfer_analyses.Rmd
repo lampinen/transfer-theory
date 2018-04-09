@@ -232,7 +232,7 @@ d = data.frame()
 for (num_dom in num_domains) {
   for (q in qs) {
     for (run in 0:(nruns-1)) {
-      this_d = read.csv(sprintf("../shared_input_mode_results/loss_ndom%i_q%.2f_run%i.csv", num_dom, q, run), header=T)
+      this_d = read.csv(sprintf("../shared_input_mode_batch_results/loss_ndom%i_q%.2f_run%i.csv", num_dom, q, run), header=T)
       this_d = this_d %>% 
         mutate(q=q, num_domains=num_dom, run=run)
       d = bind_rows(d, this_d)
@@ -259,7 +259,7 @@ avg_d = d %>%
 
 
 ```{r}
-ggplot(avg_d %>% filter(epoch < 250), aes(x=epoch, y=log_loss, color=q)) +
+ggplot(avg_d %>% filter(epoch < 2000), aes(x=epoch, y=log_loss, color=q)) +
   geom_line(size=1.2) +
 #  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
   scale_color_brewer(palette="BuPu") + 
@@ -267,6 +267,6 @@ ggplot(avg_d %>% filter(epoch < 250), aes(x=epoch, y=log_loss, color=q)) +
   theme_bw()
 ```
 ```{r}
-ggsave("../plots/shared_input_modes_preliminary_results.png")
+ggsave("../plots/shared_input_modes_batch_results.png")
 ```
 
