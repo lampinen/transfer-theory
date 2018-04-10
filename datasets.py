@@ -72,6 +72,7 @@ def random_rotation_matrix(theta, n):
         R = block_diag(*([numpy.array([[numpy.cos(theta), -numpy.sin(theta)],[numpy.sin(theta), numpy.cos(theta)]])]*(n//2) + [numpy.eye(1)])) 
     return numpy.matmul(numpy.transpose(P),  numpy.matmul(R, P))
 
+
 def shared_input_modes_dataset(num_examples, num_outputs, num_domains, q, num_nonempty=4):
     """Returns a dataset of num_domains block domains with input modes related at angle q"""
     if num_outputs < num_examples:
@@ -92,6 +93,28 @@ def shared_input_modes_dataset(num_examples, num_outputs, num_domains, q, num_no
     return x_data, y_data, input_modes
 
 def noisy_shared_input_modes_dataset(num_examples, num_outputs, num_domains, q, num_nonempty=4, noise_var=0.1):
-    x_data, y_data, input_modes = shared_input_modes_dataset(num_examples, num_outputs, num_domains, q)
+    x_data, y_data, input_modes = shared_input_modes_dataset(num_examples, num_outputs, num_domains, q, num_nonempty=num_nonempty)
+    y_data_noisy = y_data + noise_var * numpy.random.standard_normal(numpy.shape(y_data))
+    return x_data, y_data, y_data_noisy, input_modes
+
+def SVD_dataset(num_examples, num_outputs, num_nonempty=4):
+    """Like the shared input modes dataset, but only one domain"""
+    input_modes = random_orthogonal(num_examples)
+    strengths = numpy.array(range(num_nonempty, 0, -1) + [0.]* (num_examples - num_nonempty))
+    
+    def _strengths_to_S(strengths, num_outputs=num_outputs):
+        if num_outputs > num_examples:
+            return numpy.concatenate((numpy.diag(strengths), numpy.zeros((num_outputs-len(strengths), num_examples))), axis=0)
+        else:
+            return numpy.diag(strengths)[:num_outputs, :]
+
+    S = _strengths_to_S(strengths)
+
+    y_data = numpy.transpose(numpy.matmul(random_orthogonal(num_outputs), numpy.matmul(S, input_modes)))
+    x_data = numpy.eye(len(y_data))
+    return x_data, y_data, input_modes
+
+def noisy_SVD_dataset(num_examples, num_outputs, num_nonempty=4, noise_var=0.1):
+    x_data, y_data, input_modes = SVD_dataset(num_examples, num_outputs, num_nonempty=num_nonempty)
     y_data_noisy = y_data + noise_var * numpy.random.standard_normal(numpy.shape(y_data))
     return x_data, y_data, y_data_noisy, input_modes

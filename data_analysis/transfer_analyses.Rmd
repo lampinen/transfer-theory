@@ -270,3 +270,50 @@ ggplot(avg_d %>% filter(epoch < 2000), aes(x=epoch, y=log_loss, color=q)) +
 ggsave("../plots/shared_input_modes_batch_results.png")
 ```
 
+
+# Single domain generalization analyses
+
+```{r}
+nruns = 10
+noise_vars = c(0., 0.025, 0.05, 0.1, 0.2)
+output_sizes= c(10, 50, 100, 200, 400)
+d = data.frame()
+for (noise_var in noise_vars) {
+  for (output_size in output_sizes) {
+    for (run in 0:(nruns-1)) {
+      this_d = read.csv(sprintf("../single_generalization_results/noise_var_%.2f_output_size_%i_run_%i.csv", noise_var, output_size, run), header=T)
+      this_d = this_d %>% 
+        mutate(noise_var=noise_var, output_size=output_size, run=run)
+      d = bind_rows(d, this_d)
+    }
+  }
+}
+```
+
+```{r}
+d = d %>%
+  mutate(output_size=factor(output_size),
+         noise_var=factor(noise_var),
+         log_loss = log(loss))
+```
+
+```{r}
+avg_d = d %>%
+  group_by(noise_var, output_size, epoch) %>%
+  summarize(loss=mean(loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
+  mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n())) %>%
+  ungroup()
+```
+
+
+```{r}
+ggplot(avg_d, aes(x=epoch, y=log_loss, color=noise_var)) +
+  geom_line(size=1.2) +
+#  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
+  scale_color_brewer(palette="YlOrRd") + 
+  facet_wrap(~ output_size) +
+  theme_bw()
+```
+```{r}
+ggsave("../plots/single_domain_generalization_curves.png")
+```
