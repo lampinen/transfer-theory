@@ -12,6 +12,11 @@ library(ggplot2)
 ```
 
 ```{r}
+theme_set(theme_bw() +
+            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()))
+```
+
+```{r}
 nruns = 2
 ndoms = c(2)
 qs = c(1, 0.5, 0, -0.5, -1)
@@ -263,8 +268,10 @@ ggplot(avg_d %>% filter(epoch < 2000), aes(x=epoch, y=log_loss, color=q)) +
   geom_line(size=1.2) +
 #  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
   scale_color_brewer(palette="BuPu") + 
-  facet_wrap(~ num_domains) +
-  theme_bw()
+  ylab("Log generalization loss") +
+  xlab("Epoch") +
+  guides(color=guide_legend(title=bquote(phi))) +
+  facet_wrap(~ num_domains) 
 ```
 ```{r}
 ggsave("../plots/shared_input_modes_batch_results.png")
@@ -307,12 +314,14 @@ avg_d = d %>%
 
 
 ```{r}
-ggplot(avg_d, aes(x=epoch, y=log_loss, color=noise_var)) +
+ggplot(avg_d %>% filter(output_size != 400), aes(x=epoch, y=log_loss, color=noise_var)) +
   geom_line(size=1.2) +
 #  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
   scale_color_brewer(palette="YlOrRd") + 
-  facet_wrap(~ output_size) +
-  theme_bw()
+  ylab("Log generalization loss") +
+  xlab("Epoch") +
+  guides(color=guide_legend(title="Noise Variance")) +
+  facet_wrap(~ output_size) 
 ```
 ```{r}
 ggsave("../plots/single_domain_generalization_curves.png")
