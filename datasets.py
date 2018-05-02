@@ -128,3 +128,13 @@ def noisy_SVD_dataset(num_examples, num_outputs, num_nonempty=4, noise_var=0.1):
     x_data, y_data, input_modes = SVD_dataset(num_examples, num_outputs, num_nonempty=num_nonempty)
     y_data_noisy = y_data + noise_var * numpy.random.standard_normal(numpy.shape(y_data))
     return x_data, y_data, y_data_noisy, input_modes
+
+def noisy_SVD_dataset_different_inputs(num_examples, num_outputs, num_nonempty=4, noise_var=0.1, input_type="orthogonal"):
+    x_data, y_data, y_data_noisy, input_modes = noisy_SVD_dataset(num_examples, num_outputs, num_nonempty=num_nonempty, noise_var=noise_var)
+    if input_type == "orthogonal":
+        x_data = random_orthogonal(len(y_data)) 
+    elif input_type == "gaussian":
+        x_data = np.random.randn(num_examples, num_examples) 
+    else:
+        raise ValueError("Unknown input type!")
+    return x_data, y_data, y_data_noisy, input_modes

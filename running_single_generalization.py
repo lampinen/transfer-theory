@@ -13,7 +13,8 @@ num_runs = 10
 learning_rate = 0.001
 num_epochs = 5000
 batch_size = 30
-filename_prefix = "single_generalization_results/"
+filename_prefix = "single_generalization_ortho_inputs_results/"
+input_type = "orthogonal" # one_hot, orthogonal, gaussian
 save_every = 5
 
 ###
@@ -29,7 +30,10 @@ for run_i in xrange(num_runs):
           num_input = num_examples
           num_output = output_size
           num_hidden = num_input 
-          x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset(num_examples, output_size, noise_var=noise_var) 
+          if input_type == "one_hot":
+              x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset(num_examples, output_size, noise_var=noise_var) 
+          else:
+              x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset_different_inputs(num_examples, output_size, noise_var=noise_var, input_type="orthogonal") 
           
           input_ph = tf.placeholder(tf.float32, shape=[num_input, None])
           target_ph = tf.placeholder(tf.float32, shape=[num_output, None])
