@@ -1,0 +1,72 @@
+---
+title: "Generalization analyses"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+```{r}
+theme_set(theme_bw() +
+            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()))
+```
+
+
+# theory sanity check on SVDs
+
+```{r}
+nruns = 10
+noise_vars = c(0.1)
+output_sizes= c(100)
+d = data.frame()
+for (noise_var in noise_vars) {
+  for (output_size in output_sizes) {
+    for (run in 0:(nruns-1)) {
+      this_d = read.csv(sprintf("single_generalization_SVD_results/noise_var_%.2f_output_size_%i_run_%i_SVD_track.csv", noise_var, output_size, run), header=T)
+      this_d = this_d %>% 
+        mutate(noise_var=noise_var, output_size=output_size, run=run)
+      d = bind_rows(d, this_d)
+    }
+  }
+}
+```
+
+```{r}
+d = d %>%
+  mutate(output_size=factor(output_size),
+         noise_var=factor(noise_var)) %>%
+  rename(U0diag=U0Uhat0,
+         U1diag=U1Uhat1,
+         U2diag=U2Uhat2,
+         U3diag=U3Uhat3) %>%
+  gather(measurement, value, s0:U3diag) %>%
+  mutate(mode_rank=as.numeric(gsub(".*([0-9]).*", "\\1", measurement)),
+         measurement_type=ifelse(grepl("s", measurement), "s", ifelse(grepl("diag", measurement), "diag", measurement))) %>%
+  filter(measurement_type %in% c("s", "diag")) %>%
+  select(-measurement) %>%
+  spread(measurement_type, value) %>%
+  mutate(diag=abs(diag), # SVD modes can flip, so take absolute value of projections
+         mode_rank=factor(mode_rank))
+```
+
+```{r}
+avg_d = d %>%
+  group_by(noise_var, output_size, epoch, mode_rank) %>%
+  summarize(s=mean(s),
+            diag=mean(diag)) %>%
+  ungroup()
+```
+
+```{r}
+ggplot(data=avg_d, aes(x=diag, y=s, color=mode_rank, group=mode_rank)) +
+  ylim(0,1) +
+  labs(x="U_hat(t) dot U_hat(inf)", y="S_hat(t)/s_hat(inf)") +
+  scale_color_brewer(palette="Set2") +
+  geom_line(size=1.2)
+```
+
+
+
