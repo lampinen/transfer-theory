@@ -19,7 +19,7 @@ track_SVD = True
 save_every = 5
 
 ###
-var_scale_init = tf.contrib.layers.variance_scaling_initializer(factor=0.1, mode='FAN_AVG')
+var_scale_init = tf.contrib.layers.variance_scaling_initializer(factor=0.001, mode='FAN_AVG')
 
 for run_i in xrange(num_runs):
     for noise_var in noise_vars:
