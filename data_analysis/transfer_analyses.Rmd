@@ -326,3 +326,61 @@ ggplot(avg_d %>% filter(output_size != 400), aes(x=epoch, y=log_loss, color=nois
 ```{r}
 ggsave("../plots/single_domain_generalization_curves.png")
 ```
+
+
+## comparing input types
+```{r}
+nruns = 10
+noise_vars = c(0., 0.025, 0.05, 0.1, 0.2)
+output_sizes= c(10, 50, 100, 200, 400)
+input_types = c("one_hot", "ortho", "gauss")
+d = data.frame()
+for (noise_var in noise_vars) {
+  for (output_size in output_sizes) {
+    for (input_type in input_types) {
+      for (run in 0:(nruns-1)) { 
+        if (input_type == "one_hot") {
+          this_d = read.csv(sprintf("../single_generalization_results/noise_var_%.2f_output_size_%i_run_%i.csv", noise_var, output_size, run), header=T)
+        } else {
+          this_d = read.csv(sprintf("../single_generalization_%s_inputs_results/noise_var_%.2f_output_size_%i_run_%i.csv", input_type, noise_var, output_size, run), header=T)
+        }
+        this_d = this_d %>% 
+          mutate(noise_var=noise_var, output_size=output_size, run=run, input_type=input_type)
+        d = bind_rows(d, this_d)
+      }
+    }
+  }
+}
+```
+
+```{r}
+d = d %>%
+  mutate(output_size=factor(output_size),
+         input_type=factor(input_type, levels=c("one_hot", "gauss", "ortho"), labels=c("One-hot", "Random Gaussian", "Random orthonormal")),
+         noise_var=factor(noise_var),
+         log_loss = log(loss))
+```
+
+```{r}
+avg_d = d %>%
+  group_by(noise_var, output_size, epoch, input_type) %>%
+  summarize(loss=mean(loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
+  mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n())) %>%
+  ungroup()
+```
+
+
+```{r}
+ggplot(avg_d %>% filter(output_size == 100), aes(x=epoch, y=log_loss, color=noise_var, linetype=input_type)) +
+  geom_line(size=1.2) +
+#  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
+  scale_color_brewer(palette="YlOrRd") + 
+  ylab("Log generalization loss") +
+  xlab("Epoch") +
+  guides(color=guide_legend(title="Noise Variance"), linetype=guide_legend(title="Input type")) 
+```
+
+```{r}
+ggsave("../plots/input_types_dont_matter.png")
+```
+
