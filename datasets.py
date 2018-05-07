@@ -107,10 +107,10 @@ def noisy_shared_input_modes_dataset_different_inputs(num_examples, num_outputs,
         raise ValueError("Unknown input type!")
     return x_data, y_data, y_data_noisy, input_modes
 
-def SVD_dataset(num_examples, num_outputs, num_nonempty=4):
+def SVD_dataset(num_examples, num_outputs, num_nonempty=4, singular_value_multiplier=1):
     """Like the shared input modes dataset, but only one domain"""
     input_modes = random_orthogonal(num_examples)
-    strengths = numpy.array(range(num_nonempty, 0, -1) + [0.]* (num_examples - num_nonempty))
+    strengths = singular_value_multiplier * numpy.array(range(num_nonempty, 0, -1) + [0.]* (num_examples - num_nonempty))
     
     def _strengths_to_S(strengths, num_outputs=num_outputs):
         if num_outputs > num_examples:
@@ -124,13 +124,13 @@ def SVD_dataset(num_examples, num_outputs, num_nonempty=4):
     x_data = numpy.eye(len(y_data))
     return x_data, y_data, input_modes
 
-def noisy_SVD_dataset(num_examples, num_outputs, num_nonempty=4, noise_var=0.1):
-    x_data, y_data, input_modes = SVD_dataset(num_examples, num_outputs, num_nonempty=num_nonempty)
+def noisy_SVD_dataset(num_examples, num_outputs, num_nonempty=4, noise_var=0.1, singular_value_multiplier=1):
+    x_data, y_data, input_modes = SVD_dataset(num_examples, num_outputs, num_nonempty=num_nonempty, singular_value_multiplier=singular_value_multiplier)
     y_data_noisy = y_data + noise_var * numpy.random.standard_normal(numpy.shape(y_data))
     return x_data, y_data, y_data_noisy, input_modes
 
-def noisy_SVD_dataset_different_inputs(num_examples, num_outputs, num_nonempty=4, noise_var=0.1, input_type="orthogonal"):
-    x_data, y_data, y_data_noisy, input_modes = noisy_SVD_dataset(num_examples, num_outputs, num_nonempty=num_nonempty, noise_var=noise_var)
+def noisy_SVD_dataset_different_inputs(num_examples, num_outputs, num_nonempty=4, noise_var=0.1, singular_value_multiplier=1, input_type="orthogonal"):
+    x_data, y_data, y_data_noisy, input_modes = noisy_SVD_dataset(num_examples, num_outputs, num_nonempty=num_nonempty, noise_var=noise_var, singular_value_multiplier=singular_value_multiplier)
     if input_type == "orthogonal":
         x_data = random_orthogonal(len(y_data)) 
     elif input_type == "gaussian":
