@@ -7,7 +7,7 @@ from theory_functions import *
 ### Parameters
 num_examples = 1000
 output_sizes = [1000] 
-sigma_zs = [1]#[1, 10, 40, 100]
+sigma_zs = [1, 10, 40, 100]
 base_singular_values = [1.] 
 #num_runs = 10 
 learning_rate = 0.001
@@ -31,7 +31,7 @@ def numeric_integral_mp(delta_x, t, x_min, x_max):
 
 
 def get_noise_multiplier(s_bar, sigma_z):
-    res = (1 - (s_bar/sigma_z)**-2)**2
+    res = (1 - (s_bar/sigma_z)**-2)
     res[s_bar/sigma_z <= 1] = 0.
     return res
 
