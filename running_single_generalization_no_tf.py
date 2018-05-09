@@ -7,18 +7,18 @@ import datasets
 from orthogonal_matrices import random_orthogonal
 ### Parameters
 num_examples = 100
-output_sizes = [100] #[10, 50, 100, 200, 400]
+output_sizes = [num_examples] #[10, 50, 100, 200, 400]
 sigma_zs = [1, 5, 10, 100] 
 num_runs = 1
-learning_rate = 0.0001
-num_epochs = 10000
-num_hidden = 1
+learning_rate = 0.001
+num_epochs = 5000
+num_hidden = num_examples
 batch_size = num_examples
-filename_prefix = "single_generalization_full_results_notf/"
+filename_prefix = "single_generalization_full_results_notf_randi/"
 input_type = "one_hot" # one_hot, orthogonal, gaussian
 track_SVD = True
 save_every = 5
-epsilon = 0.0001
+epsilon = 1e-5
 singular_value_multiplier = 10 
 
 ###
@@ -60,8 +60,8 @@ for run_i in xrange(num_runs):
             
             # initialize weights as random orthogonal matrices and scale so
             # product has singular values of epsilon
-            W21 = np.sqrt(epsilon) * V_hat#random_orthogonal(num_input)[:num_hidden, :] 
-            W32 = np.sqrt(epsilon) * U_hat#random_orthogonal(num_output)[:, :num_hidden] 
+            W21 = np.sqrt(epsilon) * random_orthogonal(num_input)[:num_hidden, :] 
+            W32 = np.sqrt(epsilon) * random_orthogonal(num_output)[:, :num_hidden] 
         
             sigma_31 = np.matmul(noisy_y_data, x_data.transpose())
             sigma_11 = np.matmul(x_data, x_data.transpose())

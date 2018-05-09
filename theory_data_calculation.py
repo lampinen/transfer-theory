@@ -10,16 +10,16 @@ output_sizes = [100]
 sigma_zs = [1, 5, 10, 100]
 base_singular_values = [1.] 
 #num_runs = 10 
-learning_rate = 0.0001
-num_epochs = 10000
-num_hidden = 1
+learning_rate = 0.001
+num_epochs = 5000
+num_hidden = num_examples
 #batch_size = num_examples
 filename_prefix = "single_generalization_full_results/"
 #input_type = "one_hot" # one_hot, orthogonal, gaussian
 #track_SVD = True
 save_every = 5
 singular_value_multiplier = 10
-epsilon = 0.0001
+epsilon = 1e-5
 delta_x = 0.001 # for the numerical integration of M-P dist
 ### 
 
@@ -27,7 +27,7 @@ delta_x = 0.001 # for the numerical integration of M-P dist
 
 def numeric_integral_mp(delta_x, t, x_min, x_max):
     x = np.arange(x_min, x_max, delta_x)
-    return np.sum(mp(x, sigma_z)* s_of_t(x, t, epsilon, tau)* delta_x)
+    return np.sum(mp(x, sigma_z)* (np.array(s_of_t(x, t, epsilon, tau))**2 )* delta_x)
 
 
 def get_noise_multiplier(s_bar, sigma_z):
@@ -57,7 +57,8 @@ for sigma_z in sigma_zs:
 
             sot = np.array(s_of_t(s_hats, epoch_i, epsilon, tau))
             
-            generr = 0 #numeric_integral_mp(0.001, epoch_i, 0, 2)
+            generr = N_2*numeric_integral_mp(delta_x*sigma_z, epoch_i, 0, 2*sigma_z) # number of points in integral estimate is constant in sigma_z 
+            # TODO: Figure out the above N_2
             generr += np.sum(sot**2) 
             generr += y_frob_norm_sq
             generr -= 2 * np.sum(sot * s_bar * noise_multiplier) 

@@ -230,7 +230,7 @@ ggsave("../plots/eightthings_noisy_results.png")
 # Shared input modes analysis
 
 ```{r}
-nruns = 10
+nruns = 1
 qs = c(0, 0.2, 0.39, 0.79, 1.57, 3.14)
 num_domains = c(2, 10)
 d = data.frame()
@@ -384,3 +384,79 @@ ggplot(avg_d %>% filter(output_size == 100), aes(x=epoch, y=log_loss, color=nois
 ggsave("../plots/input_types_dont_matter.png")
 ```
 
+
+## comparing to theory
+```{r}
+nruns = 1
+noise_vars = c(1., 25., 100., 10000.)#, 1600., 10000.)
+output_sizes= c(100)
+d = data.frame()
+for (noise_var in noise_vars) {
+  for (output_size in output_sizes) {
+    for (run in 0:(nruns-1)) { 
+      this_d = read.csv(sprintf("../single_generalization_full_results_notf_randi/noise_var_%.2f_output_size_%i_run_%i.csv", noise_var, output_size, run), header=T)
+
+      this_d = this_d %>% 
+        mutate(noise_var=noise_var, output_size=output_size, run=run, type="Empirical")
+      d = bind_rows(d, this_d)
+    }
+  }
+  this_d = read.csv(sprintf("../single_generalization_full_results/noise_var_%.2f_theory_track.csv", noise_var), header=T)
+
+  this_d = this_d %>% 
+    rename(loss=generalization_error) %>%
+    mutate(noise_var=noise_var, output_size=NA, run=NA, type="Theory")
+  d = bind_rows(d, this_d)
+}
+```
+
+```{r}
+d = d %>%
+  mutate(output_size=factor(output_size),
+         noise_var=factor(noise_var),
+         type=factor(type),
+         log_loss = log(loss))
+```
+
+```{r}
+other_d = d %>%
+  filter(type=="Theory") %>%
+  group_by(noise_var, output_size, epoch) %>%
+  summarize(s = mean(s))
+```
+
+
+```{r}
+avg_d = d %>%
+  group_by(noise_var, output_size, epoch, type) %>%
+  summarize(loss=mean(loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
+  mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n())) %>%
+  ungroup()
+```
+
+
+```{r}
+ggplot(avg_d , aes(x=epoch, y=log_loss, color=noise_var, linetype=type)) +
+  geom_line(size=1.2) +
+#  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
+  scale_color_brewer(palette="YlOrRd") + 
+  ylab("Log generalization loss") +
+  xlab("Epoch") +
+  guides(color=guide_legend(title="Noise Variance"), linetype=guide_legend(title="Theory or empirical")) 
+```
+
+```{r}
+# ggplot(avg_svd_d %>% filter(mode_rank==0), aes(x=log(epoch), y=log(s))) +
+#   geom_line(size=1.2) +
+# #  geom_line(aes(y=diag), color="blue", size=1.2) +
+#   geom_line(data = other_d, aes(y=log(s/10)), color="yellow", linetype=2, size=1.2) +
+# #  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
+#   ylab("Log generalization loss") +
+#   xlab("Epoch") +
+#   guides(color=guide_legend(title="Noise Variance"), linetype=guide_legend(title="Theory or empirical")) 
+
+```
+
+```{r}
+ggsave("../plots/theory_and_empirical_full_rank.png")
+```
