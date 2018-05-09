@@ -5,13 +5,13 @@ from __future__ import division
 import numpy as np
 from theory_functions import *
 ### Parameters
-num_examples = 1000
-output_sizes = [1000] 
-sigma_zs = [1, 10, 40, 100]
+num_examples = 100
+output_sizes = [100] 
+sigma_zs = [1, 5, 10, 100]
 base_singular_values = [1.] 
 #num_runs = 10 
-learning_rate = 0.001
-num_epochs = 5000
+learning_rate = 0.0001
+num_epochs = 10000
 num_hidden = 1
 #batch_size = num_examples
 filename_prefix = "single_generalization_full_results/"
@@ -45,14 +45,14 @@ for sigma_z in sigma_zs:
 
     N_2 = num_hidden
     N_3 = N_1 = num_examples
-    tau = 2/learning_rate
+    tau = 1./learning_rate
     sigma_z = np.sqrt(noise_var)
 
     s_hats = s_hat(singular_values, sigma_z)
     s_bar = np.array(singular_values)
     noise_multiplier = get_noise_multiplier(s_bar, sigma_z) 
     with open(filename_prefix + "noise_var_%.2f_theory_track.csv" % (noise_var), "w") as fout:
-        fout.write("epoch, generalization_error\n")
+        fout.write("epoch, generalization_error, s\n")
         for epoch_i in xrange(1, num_epochs + 1, save_every):
 
             sot = np.array(s_of_t(s_hats, epoch_i, epsilon, tau))
@@ -62,8 +62,8 @@ for sigma_z in sigma_zs:
             generr += y_frob_norm_sq
             generr -= 2 * np.sum(sot * s_bar * noise_multiplier) 
             generr /= y_frob_norm_sq
-            print("%i, %f" % (epoch_i, generr))
-            fout.write("%i, %f\n" % (epoch_i, generr))
+            print("%i, %f, %f" % (epoch_i, generr, sot))
+            fout.write("%i, %f, %f\n" % (epoch_i, generr, sot[0]))
 
 #    print()
 #    print()
