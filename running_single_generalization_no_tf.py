@@ -9,17 +9,18 @@ from orthogonal_matrices import random_orthogonal
 num_examples = 100
 output_sizes = [num_examples] #[10, 50, 100, 200, 400]
 sigma_zs = [1, 5, 10, 100] 
-num_runs = 1
+num_runs = 4
 learning_rate = 0.001
 num_epochs = 5000
 num_hidden = num_examples
 batch_size = num_examples
-filename_prefix = "single_generalization_full_results_notf_randi/"
+filename_prefix = "single_generalization_full_results_notf_wideoutput/"
 input_type = "one_hot" # one_hot, orthogonal, gaussian
 track_SVD = True
 save_every = 5
 epsilon = 1e-5
 singular_value_multiplier = 10 
+N_2_bar = 4 # rank of teacher
 
 ###
 #var_scale_init = tf.contrib.layers.variance_scaling_initializer(factor=2*np.sqrt(epsilon), mode='FAN_AVG')
@@ -36,7 +37,7 @@ for run_i in xrange(num_runs):
             num_input = num_examples
             num_output = output_size
             if input_type == "one_hot":
-                x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset(num_examples, output_size, noise_var=scaled_noise_var, singular_value_multiplier=singular_value_multiplier, num_nonempty=1) 
+                x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset(num_examples, output_size, noise_var=scaled_noise_var, singular_value_multiplier=singular_value_multiplier, num_nonempty=N_2_bar) 
             else:
                 x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset_different_inputs(num_examples, output_size, noise_var=scaled_noise_var, input_type="orthogonal", singular_value_multiplier=singular_value_multiplier, num_nonempty=1) 
 

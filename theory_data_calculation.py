@@ -8,21 +8,22 @@ from theory_functions import *
 num_examples = 100
 output_sizes = [100] 
 sigma_zs = [1, 5, 10, 100]
-base_singular_values = [1.] 
 #num_runs = 10 
 learning_rate = 0.001
 num_epochs = 5000
-num_hidden = num_examples
+num_hidden = num_examples 
 #batch_size = num_examples
-filename_prefix = "single_generalization_full_results/"
+filename_prefix = "single_generalization_full_results_notf_smallstud/"
 #input_type = "one_hot" # one_hot, orthogonal, gaussian
 #track_SVD = True
 save_every = 5
 singular_value_multiplier = 10
 epsilon = 1e-5
 delta_x = 0.001 # for the numerical integration of M-P dist
+N_2_bar = 4 # number of teacher modes
 ### 
 
+base_singular_values = [float(i) for i in range(N_2_bar, 0, -1)] 
 
 
 def numeric_integral_mp(delta_x, t, x_min, x_max):
@@ -52,18 +53,17 @@ for sigma_z in sigma_zs:
     s_bar = np.array(singular_values)
     noise_multiplier = get_noise_multiplier(s_bar, sigma_z) 
     with open(filename_prefix + "noise_var_%.2f_theory_track.csv" % (noise_var), "w") as fout:
-        fout.write("epoch, generalization_error, s\n")
+        fout.write("epoch, generalization_error, s0\n")
         for epoch_i in xrange(1, num_epochs + 1, save_every):
 
             sot = np.array(s_of_t(s_hats, epoch_i, epsilon, tau))
             
-            generr = N_2*numeric_integral_mp(delta_x*sigma_z, epoch_i, 0, 2*sigma_z) # number of points in integral estimate is constant in sigma_z 
-            # TODO: Figure out the above N_2
+            generr = (N_2-len(singular_values))*numeric_integral_mp(delta_x*sigma_z, epoch_i, 0, 2*sigma_z) # number of points in integral estimate is constant in sigma_z 
             generr += np.sum(sot**2) 
             generr += y_frob_norm_sq
             generr -= 2 * np.sum(sot * s_bar * noise_multiplier) 
             generr /= y_frob_norm_sq
-            print("%i, %f, %f" % (epoch_i, generr, sot))
+            print("%i, %f, %f" % (epoch_i, generr, sot[0]))
             fout.write("%i, %f, %f\n" % (epoch_i, generr, sot[0]))
 
 #    print()
