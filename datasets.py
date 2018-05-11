@@ -94,7 +94,7 @@ def shared_input_modes_dataset(num_examples, num_outputs, num_domains, q, num_no
 
 def noisy_shared_input_modes_dataset(num_examples, num_outputs, num_domains, q, num_nonempty=4, noise_var=0.1):
     x_data, y_data, input_modes = shared_input_modes_dataset(num_examples, num_outputs, num_domains, q, num_nonempty=num_nonempty)
-    y_data_noisy = y_data + noise_var * numpy.random.standard_normal(numpy.shape(y_data))
+    y_data_noisy = y_data + numpy.sqrt(noise_var) * numpy.random.standard_normal(numpy.shape(y_data))
     return x_data, y_data, y_data_noisy, input_modes
 
 def noisy_shared_input_modes_dataset_different_inputs(num_examples, num_outputs, num_domains, q, num_nonempty=4, noise_var=0.1, input_type="orthogonal"):
@@ -126,7 +126,9 @@ def SVD_dataset(num_examples, num_outputs, num_nonempty=4, singular_value_multip
 
 def noisy_SVD_dataset(num_examples, num_outputs, num_nonempty=4, noise_var=0.1, singular_value_multiplier=1):
     x_data, y_data, input_modes = SVD_dataset(num_examples, num_outputs, num_nonempty=num_nonempty, singular_value_multiplier=singular_value_multiplier)
-    y_data_noisy = y_data + noise_var * numpy.random.standard_normal(numpy.shape(y_data))
+    y_data_noisy = y_data + numpy.sqrt(noise_var) * numpy.random.standard_normal(numpy.shape(y_data))
+    _, S, _ = numpy.linalg.svd(y_data)
+    print(numpy.amax(S))
     return x_data, y_data, y_data_noisy, input_modes
 
 def noisy_SVD_dataset_different_inputs(num_examples, num_outputs, num_nonempty=4, noise_var=0.1, singular_value_multiplier=1, input_type="orthogonal"):

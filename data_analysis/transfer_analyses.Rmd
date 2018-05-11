@@ -394,14 +394,14 @@ d = data.frame()
 for (noise_var in noise_vars) {
   for (output_size in output_sizes) {
     for (run in 0:(nruns-1)) { 
-      this_d = read.csv(sprintf("../single_generalization_full_results_notf_randi/noise_var_%.2f_output_size_%i_run_%i.csv", noise_var, output_size, run), header=T)
+      this_d = read.csv(sprintf("../single_generalization_full_results_notf/noise_var_%.2f_output_size_%i_run_%i.csv", noise_var, output_size, run), header=T)
 
       this_d = this_d %>% 
         mutate(noise_var=noise_var, output_size=output_size, run=run, type="Empirical")
       d = bind_rows(d, this_d)
     }
   }
-  this_d = read.csv(sprintf("../single_generalization_full_results/noise_var_%.2f_theory_track.csv", noise_var), header=T)
+  this_d = read.csv(sprintf("../single_generalization_full_results_notf/noise_var_%.2f_theory_track.csv", noise_var), header=T)
 
   this_d = this_d %>% 
     rename(loss=generalization_error) %>%
@@ -458,5 +458,5 @@ ggplot(avg_d , aes(x=epoch, y=log_loss, color=noise_var, linetype=type)) +
 ```
 
 ```{r}
-ggsave("../plots/theory_and_empirical_full_rank.png")
+ggsave("../plots/theory_and_empirical_full_rank_N2_90.png")
 ```
