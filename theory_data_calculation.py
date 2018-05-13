@@ -11,17 +11,17 @@ sigma_zs = [1]
 #num_runs = 10 
 learning_rate = 0.001
 num_epochs = 5000
-num_hidden = num_examples 
 #batch_size = num_examples
-filename_prefix = "single_generalization_comparison_results/"
+filename_prefix = "single_generalization_comparison_results_rank4/"
 #input_type = "one_hot" # one_hot, orthogonal, gaussian
 #track_SVD = True
 save_every = 5
 singular_value_multiplier = 10
-singular_value_multipliers = range(1,11)
 epsilon = 1e-5
 delta_x = 0.001 # for the numerical integration of M-P dist
-N_2_bar = 1 # number of teacher modes
+N_2_bar = 4 # number of teacher modes
+num_hidden = num_examples 
+singular_value_multipliers = [float(i) for i in range(1,11)]
 ### 
 
 base_singular_values = [float(i) for i in range(N_2_bar, 0, -1)] 

@@ -12,16 +12,16 @@ sigma_zs = [1]
 num_runs = 10
 learning_rate = 0.001
 num_epochs = 5000
-num_hidden = num_examples
 batch_size = num_examples
-filename_prefix = "single_generalization_comparison_results/"
+filename_prefix = "single_generalization_comparison_results_50stud/"
 input_type = "one_hot" # one_hot, orthogonal, gaussian
 track_SVD = False
 save_every = 5
 epsilon = 1e-5
 singular_value_multiplier = 10 
-singular_value_multipliers = [float(x) for x in range(1, 11)]
 N_2_bar = 1 # rank of teacher
+singular_value_multipliers = [float(x) for x in range(1, 11)]
+num_hidden = 50#num_examples
 
 ###
 #var_scale_init = tf.contrib.layers.variance_scaling_initializer(factor=2*np.sqrt(epsilon), mode='FAN_AVG')
@@ -68,8 +68,8 @@ for run_i in xrange(num_runs):
 			if not track_SVD:
 			    U_hat, S_hat, V_hat = np.linalg.svd(noisy_y_data, full_matrices=False)
 			    U_hat_base = U_hat; V_hat_base=V_hat;
-			W21 = np.sqrt(epsilon) * V_hat_base
-			W32 = np.sqrt(epsilon) * U_hat_base
+			W21 = np.sqrt(epsilon) * V_hat_base[:num_hidden, :]
+			W32 = np.sqrt(epsilon) * U_hat_base[:, :num_hidden]
 		    else:
 			# initialize weights as random orthogonal matrices and scale so
 			# product has singular values of epsilon
