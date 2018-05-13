@@ -463,10 +463,11 @@ ggsave("../plots/theory_and_empirical_full_rank_N2_90.png")
 
 ## aligned vs non-aligned
 ```{r}
-nruns = 5
+prepostfix = "rank4"
+nruns = 1
 noise_vars = c(1.)
 output_sizes= c(100)
-svms = 1:10
+svms = (1:10)
 alignments = c("True", "False")
 d = data.frame()
 for (noise_var in noise_vars) {
@@ -474,14 +475,14 @@ for (noise_var in noise_vars) {
     for (svm in svms) {
       for (aligned in alignments) {
         for (run in 0:(nruns-1)) { 
-          this_d = read.csv(sprintf("../single_generalization_comparison_results/noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i.csv", noise_var, output_size, svm, aligned, run), header=T)
+          this_d = read.csv(sprintf("../single_generalization_comparison_results_%s/noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i.csv", prepostfix, noise_var, output_size, svm, aligned, run), header=T)
     
           this_d = this_d %>% 
             mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", run=run, type="Empirical")
           d = bind_rows(d, this_d)
         }
       }
-      this_d = read.csv(sprintf("../single_generalization_comparison_results/noise_var_%.2f_svm_%f_theory_track.csv", noise_var, svm), header=T)
+      this_d = read.csv(sprintf("../single_generalization_comparison_results_%s/noise_var_%.2f_svm_%f_theory_track.csv", prepostfix, noise_var, svm), header=T)
     
       this_d = this_d %>% 
         rename(loss=generalization_error) %>%
@@ -516,6 +517,19 @@ min_d = d %>%
   
 ```
 
+```{r}
+max_d = d %>%
+  group_by(svm, aligned, noise_var, type, run) %>%
+  summarize(max_Eg = max(log_loss), max_t = which.max(log_loss)) %>%
+  ungroup() %>%
+  group_by(svm, aligned, noise_var, type) %>%
+  summarize(avg_max_Eg = mean(max_Eg), sd_max_Eg = sd(max_Eg),
+            avg_max_t = mean(max_t), sd_max_t = sd(max_t),
+            se_max_Eg = sd_max_Eg/sqrt(n()), ci_Eg_up= avg_max_Eg + 1.96*se_max_Eg, ci_Eg_lo= avg_max_Eg - 1.96*se_max_Eg,
+            se_max_t = sd_max_t/sqrt(n()), ci_t_up= avg_max_t + 1.96*se_max_t, ci_t_lo= avg_max_t - 1.96*se_max_t) %>%
+  ungroup()
+  
+```
 
 
 ```{r}
@@ -537,11 +551,11 @@ ggplot(avg_d, aes(x=epoch, y=log_loss, color=as.numeric(svm), linetype=new_type,
   scale_color_gradient(low="#0000FF", high="#FF0000") +
   ylab("Log generalization loss") +
   xlab("Epoch") +
-  guides(color=guide_legend(title="SNR"), linetype=guide_legend(title="Theory or empirical"))
+  guides(color=guide_colorbar(title="SNR"), linetype=guide_legend(title="Theory or empirical"))
 ```
 
 ```{r}
-ggsave("../plots/theory_empirical_alignment.png")
+ggsave(sprintf("../plots/%s_theory_empirical_alignment.png", prepostfix))
 ```
 ```{r}
 wide_min_d = min_d %>% 
@@ -563,11 +577,13 @@ ggplot(data=wide_min_d, aes(x=Aligned_avg_min_Eg, y=Random_avg_min_Eg, color=as.
   geom_point() +
   geom_errorbar(aes(ymin=Random_ci_Eg_lo, ymax=Random_ci_Eg_up), width=0.05) +
   geom_errorbarh(aes(xmin=Aligned_ci_Eg_lo, xmax=Aligned_ci_Eg_up), height=0.05) +
-  guides(color=guide_colorbar(title="SNR"))
+  guides(color=guide_colorbar(title="SNR")) +
+  xlim(-6, 0) +
+  ylim(-6, 0)
 ```
 
 ```{r}
-ggsave("../plots/min_Eg_aligned_vs_random.png")
+ggsave(sprintf("../plots/%s_min_Eg_aligned_vs_random.png", prepostfix))
 ```
 
 ```{r}
@@ -584,11 +600,13 @@ ggplot(data=wide_min_d, aes(x=Aligned_avg_min_t, y=Random_avg_min_t, color=as.in
   geom_point() +
   geom_errorbar(aes(ymin=Random_ci_t_lo, ymax=Random_ci_t_up), width=5) +
   geom_errorbarh(aes(xmin=Aligned_ci_t_lo, xmax=Aligned_ci_t_up), height=5) +
+  xlim(200, 800) + 
+  ylim(200, 800) +
   guides(color=guide_colorbar(title="SNR"))
 ```
 
 ```{r}
-ggsave("../plots/min_t_aligned_vs_random.png")
+ggsave(sprintf("../plots/%s_min_t_aligned_vs_random.png", prepostfix))
 ```
 ```{r}
 min_d2 = min_d %>% 
@@ -604,13 +622,13 @@ ggplot(data=min_d2, aes(x=avg_min_t, y=avg_min_Eg, color=as.integer(svm), shape=
   labs(x="Best generalization epoch",
        y="Best log generalization error") +
   geom_point() +
-  geom_errorbar(aes(ymin=ci_Eg_lo, ymax=ci_Eg_up), width=7) +
-  geom_errorbarh(aes(xmin=ci_t_lo, xmax=ci_t_up), height=0.05) +
+#  geom_errorbar(aes(ymin=ci_Eg_lo, ymax=ci_Eg_up), width=7) +
+#  geom_errorbarh(aes(xmin=ci_t_lo, xmax=ci_t_up), height=0.05) +
   guides(color=guide_colorbar(title="SNR"), shape=guide_legend(title="Type"))
 ```
 
 ```{r}
-ggsave("../plots/min_Eg_vs_min_t.png")
+ggsave(sprintf("../plots/%s_min_Eg_vs_min_t.png", prepostfix))
 ```
 ```{r}
 ggplot(data=min_d2 %>% filter(this_type != "Theory"), aes(x=avg_min_t, y=avg_min_Eg, color=as.integer(svm), shape=this_type)) +
@@ -625,5 +643,5 @@ ggplot(data=min_d2 %>% filter(this_type != "Theory"), aes(x=avg_min_t, y=avg_min
 ```
 
 ```{r}
-ggsave("../plots/min_Eg_vs_min_t_no_theory.png")
+ggsave(sprintf("../plots/%s_min_Eg_vs_min_t_no_theory.png", prepostfix))
 ```
