@@ -18,24 +18,24 @@ theme_set(theme_bw() +
 # theory sanity check on SVDs
 
 ```{r}
-nruns = 10
-noise_vars = c(0.1)
+nruns = 1
+noise_vars = c(1.)
 output_sizes= c(100)
-d = data.frame()
+svd_d = data.frame()
 for (noise_var in noise_vars) {
   for (output_size in output_sizes) {
     for (run in 0:(nruns-1)) {
-      this_d = read.csv(sprintf("single_generalization_SVD_results/noise_var_%.2f_output_size_%i_run_%i_SVD_track.csv", noise_var, output_size, run), header=T)
+      this_d = read.csv(sprintf("single_generalization_full_results/noise_var_%.2f_output_size_%i_run_%i_SVD_track.csv", noise_var, output_size, run), header=T)
       this_d = this_d %>% 
         mutate(noise_var=noise_var, output_size=output_size, run=run)
-      d = bind_rows(d, this_d)
+      svd_d = bind_rows(svd_d, this_d)
     }
   }
 }
 ```
 
 ```{r}
-d = d %>%
+svd_d = svd_d %>%
   mutate(output_size=factor(output_size),
          noise_var=factor(noise_var)) %>%
   rename(U0diag=U0Uhat0,
@@ -53,7 +53,7 @@ d = d %>%
 ```
 
 ```{r}
-avg_d = d %>%
+avg_svd_d = svd_d %>%
   group_by(noise_var, output_size, epoch, mode_rank) %>%
   summarize(s=mean(s),
             diag=mean(diag)) %>%
@@ -74,12 +74,11 @@ ggsave("plots/projections_vs_singular_values.png")
 
 
 ```{r}
-ggplot(data=avg_d %>% filter(epoch <= 3000), aes(x=diag, y=s, color=epoch)) +
+ggplot(data=avg_d %>% filter(epoch <= 4000), aes(x=diag, y=s, color=epoch)) +
   ylim(0,1) +
   labs(x="U_hat(t) dot U_hat(inf)", y="S_hat(t)/s_hat(inf)") +
   geom_line(size=1.2) +
-  scale_color_gradient(low="blue", high="red") +
-  facet_wrap(~mode_rank)
+  scale_color_gradient(low="blue", high="red")#+
 ```
 
 ```{r}

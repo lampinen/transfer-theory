@@ -12,16 +12,18 @@ sigma_zs = [1]
 learning_rate = 0.001
 num_epochs = 5000
 #batch_size = num_examples
-filename_prefix = "single_generalization_comparison_results_rank4/"
+filename_prefix = "single_generalization_comparison_results_50stud/"
 #input_type = "one_hot" # one_hot, orthogonal, gaussian
 #track_SVD = True
 save_every = 5
 singular_value_multiplier = 10
 epsilon = 1e-5
 delta_x = 0.001 # for the numerical integration of M-P dist
-N_2_bar = 4 # number of teacher modes
-num_hidden = num_examples 
+N_2_bar = 1 # number of teacher modes
+num_hidden = 50
 singular_value_multipliers = [float(i) for i in range(1,11)]
+
+min_gen_approx = False # if true, only approximate min gen by assuming 1 or 0 learning of modes
 ### 
 
 base_singular_values = [float(i) for i in range(N_2_bar, 0, -1)] 
@@ -37,9 +39,15 @@ def get_noise_multiplier(s_bar, sigma_z):
     res[s_bar/sigma_z <= 1] = 0.
     return res
 
+if min_gen_approx:
+    with open(filename_prefix + "min_gen_approx.csv", "w") as fout:
+        fout.write("sigma_z, singular_value_multiplier, approx_eg\n")
 
 for sigma_z in sigma_zs:
     for singular_value_multiplier in singular_value_multipliers:
+
+
+
 	noise_var = sigma_z**2
 
 	singular_values = [s * singular_value_multiplier for s in base_singular_values]
@@ -54,6 +62,20 @@ for sigma_z in sigma_zs:
 	s_hats = s_hat(singular_values, sigma_z)
 	s_bar = np.array(singular_values)
 	noise_multiplier = get_noise_multiplier(s_bar, sigma_z) 
+
+        if min_gen_approx:
+            with open(filename_prefix + "min_gen_approx.csv", "a") as fout:
+                sot = np.array([s_i if s_i/sigma_z > 1 else 0 for s_i in s_hats])
+
+                generr = 0 #(N_2-len(singular_values))*numeric_integral_mp(delta_x*sigma_z, epoch_i, 0, 2*sigma_z) # number of points in integral estimate is constant in sigma_z 
+                generr += np.sum(sot**2) 
+                generr += y_frob_norm_sq
+                generr -= 2 * np.sum(sot * s_bar * noise_multiplier) 
+                generr /= y_frob_norm_sq
+                print("%f, %f, %f" % (sigma_z, singular_value_multiplier, generr))
+                fout.write("%f, %f, %f\n" % (sigma_z, singular_value_multiplier, generr))
+            continue
+
 	with open(filename_prefix + "noise_var_%.2f_svm_%f_theory_track.csv" % (noise_var, singular_value_multiplier), "w") as fout:
 	    fout.write("epoch, generalization_error, s0\n")
 	    for epoch_i in xrange(1, num_epochs + 1, save_every):

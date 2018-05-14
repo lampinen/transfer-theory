@@ -15,7 +15,7 @@ num_examples = 30
 noise_var = 0.1
 #
 
-with open("shared_mode_analysis/mode_strengths.csv", "w") as fout:
+with open("shared_mode_analysis/batch_mode_strengths.csv", "w") as fout:
     fout.write("q, dataset, num_domains, mode, dom1_value, shared_value, dom1_dot_shared\n")
     for q in qs:
         for n_dom in num_domains:

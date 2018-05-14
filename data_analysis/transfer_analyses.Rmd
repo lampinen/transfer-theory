@@ -389,19 +389,19 @@ ggsave("../plots/input_types_dont_matter.png")
 ```{r}
 nruns = 1
 noise_vars = c(1., 25., 100., 10000.)#, 1600., 10000.)
-output_sizes= c(100)
+output_sizes= c(200)
 d = data.frame()
 for (noise_var in noise_vars) {
   for (output_size in output_sizes) {
     for (run in 0:(nruns-1)) { 
-      this_d = read.csv(sprintf("../single_generalization_full_results_notf/noise_var_%.2f_output_size_%i_run_%i.csv", noise_var, output_size, run), header=T)
+      this_d = read.csv(sprintf("../single_generalization_full_results_notf_wide_output/noise_var_%.2f_output_size_%i_run_%i.csv", noise_var, output_size, run), header=T)
 
       this_d = this_d %>% 
         mutate(noise_var=noise_var, output_size=output_size, run=run, type="Empirical")
       d = bind_rows(d, this_d)
     }
   }
-  this_d = read.csv(sprintf("../single_generalization_full_results_notf/noise_var_%.2f_theory_track.csv", noise_var), header=T)
+  this_d = read.csv(sprintf("../single_generalization_full_results_notf_wide_output/noise_var_%.2f_theory_track.csv", noise_var), header=T)
 
   this_d = this_d %>% 
     rename(loss=generalization_error) %>%
@@ -422,7 +422,7 @@ d = d %>%
 other_d = d %>%
   filter(type=="Theory") %>%
   group_by(noise_var, output_size, epoch) %>%
-  summarize(s = mean(s))
+  summarize(s0 = mean(s0))
 ```
 
 
@@ -444,6 +444,13 @@ ggplot(avg_d , aes(x=epoch, y=log_loss, color=noise_var, linetype=type)) +
   xlab("Epoch") +
   guides(color=guide_legend(title="Noise Variance"), linetype=guide_legend(title="Theory or empirical")) 
 ```
+```{r}
+avg_d %>% 
+  filter(noise_var  %in% c(25, 100)) %>% 
+  group_by(type, noise_var) %>%
+  summarize(min_log_loss = min(log_loss)) %>%
+  ungroup()
+```
 
 ```{r}
 # ggplot(avg_svd_d %>% filter(mode_rank==0), aes(x=log(epoch), y=log(s))) +
@@ -458,7 +465,7 @@ ggplot(avg_d , aes(x=epoch, y=log_loss, color=noise_var, linetype=type)) +
 ```
 
 ```{r}
-ggsave("../plots/theory_and_empirical_full_rank_N2_90.png")
+ggsave("../plots/theory_and_empirical_teacher_200_outputs_student_100_hidden.png")
 ```
 
 ## aligned vs non-aligned

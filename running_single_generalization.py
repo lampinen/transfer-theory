@@ -10,9 +10,9 @@ from orthogonal_matrices import random_orthogonal
 num_examples = 100
 output_sizes = [100] #[10, 50, 100, 200, 400]
 sigma_zs = [1, 10, 40, 100]
-num_runs = 10 
-learning_rate = 0.001
-num_epochs = 2000
+num_runs = 1
+learning_rate = 0.0001
+num_epochs = 10000
 num_hidden = 1
 batch_size = num_examples
 filename_prefix = "single_generalization_full_results/"
@@ -46,9 +46,10 @@ for run_i in xrange(num_runs):
   
             if track_SVD:
                 U_bar, S_bar, V_bar = np.linalg.svd(y_data, full_matrices=False)
-                U_bar = U_bar[:, :4]; S_bar = S_bar[:4]; V_bar = V_bar[:4, :]; # save some computation later -- other singular values are zero
+                U_bar = U_bar[:, :1]; S_bar = S_bar[:1]; V_bar = V_bar[:1, :]; # save some computation later -- other singular values are zero
                 U_hat, S_hat, V_hat = np.linalg.svd(noisy_y_data, full_matrices=False)
-                U_hat = U_hat[:, :4]; S_hat = S_hat[:4]; V_hat = V_hat[:4, :]; 
+                U_hat_base = U_hat; V_hat_base=V_hat;
+                U_hat = U_hat[:, :1]; S_hat = S_hat[:1]; V_hat = V_hat[:1, :]; 
 
             np.savetxt(filename_prefix + "noise_var_%.2f_output_size_%i_run_%i_y_data.csv"% (noise_var, output_size, run_i), y_data, delimiter=",")
             np.savetxt(filename_prefix + "noise_var_%.2f_output_size_%i_run_%i_noisy_y_data.csv"% (noise_var, output_size, run_i), noisy_y_data, delimiter=",")
@@ -69,7 +70,7 @@ for run_i in xrange(num_runs):
             hidden = tf.matmul(W1, input_ph)
             output = tf.matmul(W2, hidden)
             
-            loss = tf.nn.l2_loss(output - target_ph)
+            loss = tf.reduce_sum(tf.square(output-target_ph))#2*tf.nn.l2_loss(output - target_ph)
             optimizer = tf.train.GradientDescentOptimizer(learning_rate)
             train = optimizer.minimize(loss)	
             
@@ -82,13 +83,13 @@ for run_i in xrange(num_runs):
                     curr_loss = 0.
                     for batch_i in xrange(num_examples//batch_size):
                         curr_loss += sess.run(loss, feed_dict={input_ph: x_data[batch_i:batch_i+batch_size, :].transpose(), target_ph: y_data[batch_i:batch_i+batch_size, :].transpose()})
-                    return 2*curr_loss/y_data_frob_squared # appropriate normalization
+                    return curr_loss/y_data_frob_squared # appropriate normalization
                 
                 sess.run(tf.global_variables_initializer())
                     
                 if track_SVD:
                     fsvd = open(filename_prefix + "noise_var_%.2f_output_size_%i_run_%i_SVD_track.csv" % (noise_var, output_size, run_i), "w")
-                    fsvd.write("epoch, " + ", ".join(["s%i"%i for i in range(4)]) + ", " + ", ".join(["U%iUhat%i" %(i,j) for i in range(4) for j in range(4)]) + "\n")
+                    fsvd.write("epoch, " + ", ".join(["s%i"%i for i in range(1)]) + ", " + ", ".join(["U%iUhat%i" %(i,j) for i in range(1) for j in range(1)]) + "\n")
                 with open(filename_prefix + "noise_var_%.2f_output_size_%i_run_%i.csv" % (noise_var, output_size, run_i), "w") as fout:
 
                     fout.write("epoch, loss\n")
@@ -101,11 +102,11 @@ for run_i in xrange(num_runs):
                             print("%i, %f" % (epoch_i, curr_loss))
                             if track_SVD:
                                 curr_output = sess.run(output, feed_dict={input_ph: x_data.transpose()})
-                                U, S, V = np.linalg.svd(curr_output.transpose(), full_matrices=False)
-                                U = U[:, :4]; S = S[:4]; V = V[:4, :]; 
+                                U, S, V = np.linalg.svd(curr_output, full_matrices=False)
+                                U = U[:, :1]; S = S[:1]; V = V[:1, :]; 
                                 norm_S = S/S_hat
                                 U_dots = np.dot(U.transpose(), U_hat).flatten()
-                                fsvd.write("%i, " % epoch_i + ", ".join(["%f" for i in range(4)]) % tuple(norm_S) + ", " + ", ".join(["%f" for i in range(4) for j in range(4)]) % tuple(U_dots) + "\n")
+                                fsvd.write("%i, " % epoch_i + ", ".join(["%f" for i in range(1)]) % tuple(norm_S) + ", " + ", ".join(["%f" for i in range(1) for j in range(1)]) % tuple(U_dots) + "\n")
 
                 if track_SVD:
                     fsvd.close()

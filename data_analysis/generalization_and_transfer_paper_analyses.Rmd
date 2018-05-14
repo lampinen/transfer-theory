@@ -269,3 +269,58 @@ ggplot(data=min_d2 %>% filter(this_type=="Empirical-random", svm != 1), aes(x=av
 ggsave("../plots/paper/random_min_Eg_vs_min_t.png", width=5, height=5)
 ```
 
+# Approximating min generalization error with only components out of the noise and misalignment
+
+```{r}
+approx_min_d = bind_rows(
+  read.csv("../single_generalization_comparison_results/min_gen_approx.csv") %>%
+    mutate(student_rank="Full rank"),
+  read.csv("../single_generalization_comparison_results_rank4stud/min_gen_approx.csv") %>%
+    mutate(student_rank="4% of full"),
+  read.csv("../single_generalization_comparison_results_50stud/min_gen_approx.csv") %>%
+    mutate(student_rank="50% of full"),
+  read.csv("../single_generalization_comparison_results_smallstud/min_gen_approx.csv") %>%
+    mutate(student_rank="Teacher rank (1% of full)"))
+
+```
+
+```{r}
+approx_min_d = approx_min_d %>% 
+  rename(svm=singular_value_multiplier) %>%
+  mutate(approx_log_eg = log(approx_eg),
+         svm=factor(svm),
+         student_rank=factor(student_rank, levels=c("Full rank", "50% of full", "4% of full", "Teacher rank (1% of full)"), labels=c("Full rank", "50% of full", "4% of full", "1% of full")))
+```
+
+```{r}
+approx_min_d = inner_join(approx_min_d, wide_min_d)
+```
+
+```{r}
+ggplot(data=approx_min_d, aes(x=Aligned_avg_min_Eg, y=approx_log_eg, color=as.integer(svm), shape=student_rank)) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(1, 10), breaks=c(1,10))  +
+  labs(x="Empirical best log testing error (aligned init)",
+       y="Simple approx. to best log test error") +
+  geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3) +
+  geom_errorbarh(aes(xmin=Aligned_ci_Eg_lo, xmax=Aligned_ci_Eg_up), height=0.05) +
+  guides(shape=guide_legend(title="Empirical results", order=2), color=guide_colorbar(title="SNR", order=1)) +
+  geom_point(size=2) 
+```
+```{r}
+ggsave("../plots/paper/simple_min_test_error_approx_aligned.png")
+```
+
+
+```{r}
+ggplot(data=approx_min_d, aes(x=Random_avg_min_Eg, y=approx_log_eg, color=as.integer(svm), shape=student_rank)) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(1, 10), breaks=c(1,10))  +
+  labs(x="Empirical best log testing error (random init)",
+       y="Simple approx. to best log test error") +
+  geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3) +
+  geom_errorbarh(aes(xmin=Random_ci_Eg_lo, xmax=Random_ci_Eg_up), height=0.05) +
+  guides(shape=guide_legend(title="Empirical results", order=2), color=guide_colorbar(title="SNR", order=1)) +
+  geom_point(size=2) 
+```
+```{r}
+ggsave("../plots/paper/simple_min_test_error_approx_random.png")
+```
