@@ -14,7 +14,7 @@ num_runs = 5
 learning_rate = 0.001
 num_epochs = 5000
 batch_size = num_examples
-filename_prefix = "transfer_results/"
+filename_prefix = "transfer_results_2/"
 #input_type = "one_hot" # one_hot, orthogonal, gaussian
 #track_SVD = False
 save_every = 5
@@ -23,7 +23,7 @@ singular_value_multiplier = 10
 N_2_bar = 1 # rank of teacher
 qs = [1, 0.5,  0]
 singular_value_1_multipliers = [float(x) for x in [1, 2, 4, 10]]
-singular_value_2_multipliers = [float(x) for x in [2, 1, 10]]
+singular_value_2_multipliers = [float(x) for x in [1, 2, 4, 10]]
 alignments = [True] # if false, run with random inits
 num_hidden = num_examples
 
@@ -39,7 +39,7 @@ for run_i in xrange(num_runs):
                     for aligned in alignments:
                         for output_size in output_sizes:
                             
-                            scaled_noise_var = noise_var/output_size
+                            scaled_noise_var = noise_var/(output_size)
                             np.random.seed(run_i)
                             print("Now running noise_var: %.2f, output_size: %i, svm1: %f, alignment: %s, run: %i" % (noise_var, output_size, svm1, aligned, run_i))
 
@@ -132,7 +132,7 @@ for run_i in xrange(num_runs):
                                 t2_ben = (t2_curr_loss - t2_joint_curr_loss)/t2_y_data_frob_squared
                                 curr_norm_loss = curr_loss/y_data_frob_squared
                                 
-                                return curr_norm_loss, symm_ben, t1_ben, t2_ben  # appropriate normalization
+                                return curr_norm_loss, symm_ben, t1_joint_curr_loss, t1_ben, t2_joint_curr_loss, t2_ben  # appropriate normalization
                             
                                 
 #                        if track_SVD:
@@ -140,16 +140,16 @@ for run_i in xrange(num_runs):
 #                            fsvd.write("epoch, " + ", ".join(["s%i"%i for i in range(1)]) + ", " + ", ".join(["U%iUhat%i" %(i,j) for i in range(1) for j in range(1)]) + "\n")
                             with open(filename_prefix + curr_filename + ".csv", "w") as fout:
 
-                                fout.write("epoch, norm_loss, symm_ben, t1_ben, t2_ben\n")
-                                cnl, sb, t1b, t2b = evaluate()
-                                fout.write("%i, %f, %f, %f, %f\n" % (0, cnl, sb, t1b, t2b))
+                                fout.write("epoch, norm_loss, symm_ben, t1_jcl, t1_ben, t2_jcl, t2_ben\n")
+                                cnl, sb, t1jcl, t1b, t2jcl, t2b = evaluate()
+                                fout.write("%i, %f, %f, %f, %f, %f, %f\n" % (0, cnl, sb, t1jcl, t1b, t2jcl, t2b))
                                 for epoch_i in xrange(1, num_epochs + 1):
                                     train_epoch()	
                                     curr_loss = evaluate()
                                     if epoch_i % save_every == 0:
-                                        cnl, sb, t1b, t2b = evaluate()
-                                        fout.write("%i, %f, %f, %f, %f\n" % (epoch_i, cnl, sb, t1b, t2b))
-                                        print("%i, %f, %f, %f, %f\n" % (epoch_i, cnl, sb, t1b, t2b))
+                                        cnl, sb, t1jcl, t1b, t2jcl, t2b = evaluate()
+                                        fout.write("%i, %f, %f, %f, %f, %f, %f\n" % (epoch_i, cnl, sb, t1jcl, t1b, t1jcl, t2b))
+                                        print("%i, %f, %f, %f, %f, %f %f\n" % (epoch_i, cnl, sb, t1jcl,t1b, t2jcl, t2b))
 #                                    if track_SVD:
 #                                        curr_output = np.matmul(np.matmul(W32, W21), x_data)
 #                                        U, S, V = np.linalg.svd(curr_output, full_matrices=False)
