@@ -21,9 +21,9 @@ save_every = 5
 epsilon = 1e-5
 singular_value_multiplier = 10 
 N_2_bar = 1 # rank of teacher
-qs = [1, 0.75, 0.5, 0.25, 0]
-singular_value_1_multipliers = [float(x) for x in [1, 2, 4, 6, 8, 10]]
-singular_value_2_multipliers = [float(x) for x in [2]]
+qs = [1, 0.5,  0]
+singular_value_1_multipliers = [float(x) for x in [1, 2, 4, 10]]
+singular_value_2_multipliers = [float(x) for x in [2, 1, 10]]
 alignments = [True] # if false, run with random inits
 num_hidden = num_examples
 
@@ -54,7 +54,7 @@ for run_i in xrange(num_runs):
                             y_data = y_data.transpose()
 
                             t1_y_data = y_data[:100, :]
-                            t2_y_data = y_data[:100, :]
+                            t2_y_data = y_data[100:, :]
                             t1_noisy_y_data = noisy_y_data[:100, :]
                             t2_noisy_y_data = noisy_y_data[100::, :]
 
@@ -97,10 +97,10 @@ for run_i in xrange(num_runs):
                                 W21 = np.sqrt(epsilon) * random_orthogonal(num_input)[:num_hidden, :] 
                                 W32 = np.sqrt(epsilon) * random_orthogonal(2*num_output)[:, :num_hidden] 
 
-                                t1_W21 = np.sqrt(epsilon) * random_orthogonal(num_input)[:num_hidden, :] 
-                                t1_W32 = np.sqrt(epsilon) * random_orthogonal(num_output)[:, :num_hidden] 
-                                t2_W21 = np.sqrt(epsilon) * random_orthogonal(num_input)[:num_hidden, :] 
-                                t2_W32 = np.sqrt(epsilon) * random_orthogonal(num_output)[:, :num_hidden] 
+                                t1_W21 = W21[:, :] 
+                                t1_W32 = W32[:num_output, :] 
+                                t2_W21 = W21[:, :] 
+                                t2_W32 = W32[num_output:, :]
                         
                             sigma_31 = np.matmul(noisy_y_data, x_data.transpose())
                             sigma_11 = np.matmul(x_data, x_data.transpose())
@@ -127,6 +127,8 @@ for run_i in xrange(num_runs):
                                 t2_curr_loss = np.sum(np.square(t2_y_data - np.matmul(np.matmul(t2_W32, t2_W21), x_data)))
                                 t1_joint_curr_loss = np.sum(np.square(y_data[:100, :] - np.matmul(np.matmul(W32, W21), x_data)[:100, :]))
                                 t2_joint_curr_loss = np.sum(np.square(y_data[100:, :] - np.matmul(np.matmul(W32, W21), x_data)[100:, :]))
+                                print(curr_loss, t1_curr_loss, t2_curr_loss, t1_joint_curr_loss, t2_joint_curr_loss)
+                                exit()
                                 symm_ben = (t1_curr_loss + t2_curr_loss - curr_loss)/y_data_frob_squared
                                 t1_ben = (t1_curr_loss - t1_joint_curr_loss)/t1_y_data_frob_squared
                                 t2_ben = (t2_curr_loss - t2_joint_curr_loss)/t2_y_data_frob_squared
