@@ -102,7 +102,7 @@ def noisy_shared_input_modes_dataset_different_inputs(num_examples, num_outputs,
     if input_type == "orthogonal":
         x_data = random_orthogonal(len(y_data)) 
     elif input_type == "gaussian":
-        x_data = np.random.randn(num_examples, num_examples) 
+        x_data = numpy.random.randn(num_examples, num_examples) 
     else:
         raise ValueError("Unknown input type!")
     return x_data, y_data, y_data_noisy, input_modes
@@ -136,7 +136,41 @@ def noisy_SVD_dataset_different_inputs(num_examples, num_outputs, num_nonempty=4
     if input_type == "orthogonal":
         x_data = random_orthogonal(len(y_data)) 
     elif input_type == "gaussian":
-        x_data = np.random.randn(num_examples, num_examples) 
+        x_data = numpy.random.randn(num_examples, num_examples) 
     else:
         raise ValueError("Unknown input type!")
     return x_data, y_data, y_data_noisy, input_modes
+
+def rank_one_correlated_dataset(num_examples, num_outputs_per, q, svm1, svm2):
+    V = random_orthogonal(num_examples)
+    v1 = V[[1], :]
+    v2 = V[[2], :]
+
+    sqrt_q = numpy.sqrt(q)
+    v2 = sqrt_q * v1 + (1-sqrt_q) * v2 
+    
+    V = numpy.concatenate([v1, v2], axis=0)
+
+    u1 = numpy.random.randn(num_examples,  1)
+    u1 /= numpy.linalg.norm(u1)
+    u2 = numpy.random.randn(num_examples,  1)
+    u2 /= numpy.linalg.norm(u2)
+
+    U = numpy.concatenate([numpy.concatenate([u1, numpy.zeros_like(u2)], axis=0), 
+                        numpy.concatenate([numpy.zeros_like(u1), u2], axis=0)],
+                       axis=1)
+
+    S = numpy.diag([svm1, svm2])
+
+    y_data = numpy.matmul(U, numpy.matmul(S, V)).transpose()
+    x_data = numpy.eye(len(y_data))
+
+    return x_data, y_data
+
+
+def noisy_rank_one_correlated_dataset(num_examples, num_outputs_per, q, svm1, svm2, noise_var):
+    x_data, y_data = rank_one_correlated_dataset(num_examples, num_outputs_per, q, svm1, svm2)
+    y_data_noisy = y_data + numpy.sqrt(noise_var) * numpy.random.standard_normal(numpy.shape(y_data))
+
+    return x_data, y_data, y_data_noisy
+
