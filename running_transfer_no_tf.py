@@ -10,7 +10,7 @@ num_examples = 100
 output_sizes = [num_examples] #[10, 50, 100, 200, 400]
 sigma_zs = [1] 
 
-num_runs = 5
+num_runs = 1
 learning_rate = 0.001
 num_epochs = 5000
 batch_size = num_examples
@@ -21,10 +21,10 @@ save_every = 5
 epsilon = 1e-5
 singular_value_multiplier = 10 
 N_2_bar = 1 # rank of teacher
-qs = [1, 0.5,  0]
-singular_value_1_multipliers = [float(x) for x in [1, 2, 4, 10]]
-singular_value_2_multipliers = [float(x) for x in [1, 2, 4, 10]]
-alignments = [True] # if false, run with random inits
+qs = [0.5, 1, 0]
+singular_value_1_multipliers = [float(x) for x in [100]]
+singular_value_2_multipliers = [float(x) for x in [100, 10, 1, 4]]
+alignments = [False] # if false, run with random inits
 num_hidden = num_examples
 
 ###
@@ -56,7 +56,7 @@ for run_i in xrange(num_runs):
                             t1_y_data = y_data[:100, :]
                             t2_y_data = y_data[100:, :]
                             t1_noisy_y_data = noisy_y_data[:100, :]
-                            t2_noisy_y_data = noisy_y_data[100::, :]
+                            t2_noisy_y_data = noisy_y_data[100:, :]
 
                             y_data_frob_squared = np.sum(y_data**2)
                             t1_y_data_frob_squared = np.sum(t1_y_data**2)
@@ -97,10 +97,10 @@ for run_i in xrange(num_runs):
                                 W21 = np.sqrt(epsilon) * random_orthogonal(num_input)[:num_hidden, :] 
                                 W32 = np.sqrt(epsilon) * random_orthogonal(2*num_output)[:, :num_hidden] 
 
-                                t1_W21 = W21[:, :] 
-                                t1_W32 = W32[:num_output, :] 
-                                t2_W21 = W21[:, :] 
-                                t2_W32 = W32[num_output:, :]
+                                t1_W21 = np.sqrt(epsilon) * random_orthogonal(num_input)[:num_hidden, :]    #W21[:, :] 
+                                t1_W32 = np.sqrt(epsilon) * random_orthogonal(num_output)[:, :num_hidden] #W32[:num_output, :] 
+                                t2_W21 = np.sqrt(epsilon) * random_orthogonal(num_input)[:num_hidden, :]    #W21[:, :] 
+                                t2_W32 = np.sqrt(epsilon) * random_orthogonal(num_output)[:, :num_hidden] #W32[num_output:, :]
                         
                             sigma_31 = np.matmul(noisy_y_data, x_data.transpose())
                             sigma_11 = np.matmul(x_data, x_data.transpose())
@@ -130,6 +130,8 @@ for run_i in xrange(num_runs):
                                 symm_ben = (t1_curr_loss + t2_curr_loss - curr_loss)/y_data_frob_squared
                                 t1_ben = (t1_curr_loss - t1_joint_curr_loss)/t1_y_data_frob_squared
                                 t2_ben = (t2_curr_loss - t2_joint_curr_loss)/t2_y_data_frob_squared
+                                t1_joint_curr_loss /= t1_y_data_frob_squared
+                                t2_joint_curr_loss /= t2_y_data_frob_squared
                                 curr_norm_loss = curr_loss/y_data_frob_squared
                                 
                                 return curr_norm_loss, symm_ben, t1_joint_curr_loss, t1_ben, t2_joint_curr_loss, t2_ben  # appropriate normalization
@@ -148,7 +150,7 @@ for run_i in xrange(num_runs):
                                     curr_loss = evaluate()
                                     if epoch_i % save_every == 0:
                                         cnl, sb, t1jcl, t1b, t2jcl, t2b = evaluate()
-                                        fout.write("%i, %f, %f, %f, %f, %f, %f\n" % (epoch_i, cnl, sb, t1jcl, t1b, t1jcl, t2b))
+                                        fout.write("%i, %f, %f, %f, %f, %f, %f\n" % (epoch_i, cnl, sb, t1jcl, t1b, t2jcl, t2b))
                                         print("%i, %f, %f, %f, %f, %f %f\n" % (epoch_i, cnl, sb, t1jcl,t1b, t2jcl, t2b))
 #                                    if track_SVD:
 #                                        curr_output = np.matmul(np.matmul(W32, W21), x_data)
