@@ -21,10 +21,10 @@ save_every = 5
 epsilon = 1e-5
 singular_value_multiplier = 10 
 N_2_bar = 1 # rank of teacher
-qs = [0.5, 1, 0]
-singular_value_1_multipliers = [float(x) for x in [100]]
+qs = [0.5, 0.75, 0.25, 1, 0]
+singular_value_1_multipliers = [float(x) for x in [100, 10, 1, 4]]
 singular_value_2_multipliers = [float(x) for x in [100, 10, 1, 4]]
-alignments = [False] # if false, run with random inits
+alignments = [True] # if false, run with random inits
 num_hidden = num_examples
 
 ###
