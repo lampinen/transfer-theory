@@ -15,6 +15,49 @@ theme_set(theme_bw(base_size = 15) +
             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()))
 ```
 
+```{r}
+# stolen from stack exchange with minor tweaks
+label_facets = function(p, label_top, label_right) {
+  # Get the ggplot grob
+  z <- ggplotGrob(p)
+  
+  # Get the positions of the strips in the gtable: t = top, l = left, ...
+  posR <- subset(z$layout, grepl("strip-r", name), select = t:r)
+  posT <- subset(z$layout, grepl("strip-t", name), select = t:r)
+  
+  # Add a new column to the right of current right strips, 
+  # and a new row on top of current top strips
+  width <- z$widths[max(posR$r)]    # width of current right strips
+  height <- z$heights[min(posT$t)]  # height of current top strips
+  
+  z <- gtable_add_cols(z, width, max(posR$r))  
+  z <- gtable_add_rows(z, height, min(posT$t)-1)
+  
+  # Construct the new strip grobs
+  stripR <- gTree(name = "Strip_right", children = gList(
+     rectGrob(gp = gpar(col = NA, fill = "grey85")),
+     textGrob(label_right, rot = -90, gp = gpar(fontsize = 15, col = "grey10"))))
+  
+  stripT <- gTree(name = "Strip_top", children = gList(
+     rectGrob(gp = gpar(col = NA, fill = "grey85")),
+     textGrob(label_top, gp = gpar(fontsize = 15, col = "grey10"))))
+  
+  # Position the grobs in the gtable
+  z <- gtable_add_grob(z, stripR, t = min(posR$t)+1, l = max(posR$r) + 1, b = max(posR$b)+1, name = "strip-right")
+  z <- gtable_add_grob(z, stripT, t = min(posT$t), l = min(posT$l), r = max(posT$r), name = "strip-top")
+  
+  # Add small gaps between strips
+  z <- gtable_add_cols(z, unit(1/5, "line"), max(posR$r))
+  z <- gtable_add_rows(z, unit(1/5, "line"), min(posT$t))
+  
+  # Draw it
+  grid.newpage()
+  grid.draw(z)
+  
+  return(z)
+}
+```
+
 
 ## Assumption checks
 ```{r}
@@ -323,4 +366,287 @@ ggplot(data=approx_min_d, aes(x=Random_avg_min_Eg, y=approx_log_eg, color=as.int
 ```
 ```{r}
 ggsave("../plots/paper/simple_min_test_error_approx_random.png")
+```
+
+
+
+# Transfer 
+
+```{r}
+nruns = 10
+noise_vars = c(1.)
+output_sizes= c(100)
+qs = c(1, 0.95, 0.9, 0.5, 0)
+svm1s = c(100, 10, 4, 1)
+svm2s = c(100, 10, 4, 1)
+alignments = c("True")
+d = data.frame()
+for (noise_var in noise_vars) {
+  for (output_size in output_sizes) {
+    for (q in qs) {
+      for (svm1 in svm1s) {
+        for (svm2 in svm2s) {
+          for (aligned in alignments) {
+            for (run in 0:(nruns-1)) { 
+              this_d = read.csv(sprintf("../transfer_results_2/noise_var_%.2f_output_size_%i_q_%f_svm1_%f_svm2_%f_aligned_%s_run_%i_.csv",noise_var, output_size, q, svm1, svm2, aligned, run), header=T)
+        
+              this_d = this_d %>% 
+                mutate(noise_var=noise_var, output_size=output_size, q=q, svm1=svm1, svm2=svm2, aligned=aligned=="True", run=run, student_rank="Full rank", type="Empirical")
+              d = bind_rows(d, this_d)
+            }
+          }
+          # this_d = read.csv(sprintf("../single_generalization_comparison_results/noise_var_%.2f_svm_%f_theory_track.csv", noise_var, svm), header=T)
+          # 
+          # this_d = this_d %>% 
+          #   rename(loss=generalization_error) %>%
+          #   mutate(noise_var=noise_var, output_size=NA,  svm=svm, aligned=aligned=="True", run=NA, student_rank="Full rank", type="Theory")
+          # d = bind_rows(d, this_d)
+        }
+      }
+    }
+  }
+}
+
+```
+
+```{r}
+d = d %>% 
+  mutate(q = factor(q),
+         svm1 = factor(svm1),
+         svm2 = factor(svm2),
+         aligned=factor(aligned),
+         type=factor(type),
+         sep_loss=symm_ben + norm_loss,
+         t1_alone_loss = t1_ben + t1_jcl,
+         t2_alone_loss = t2_ben + t2_jcl)
+```
+
+```{r}
+avg_d = d %>%
+  gather(j_or_s, loss, norm_loss, sep_loss) %>%
+  mutate(loss = log(loss),
+         j_or_s = ifelse(grepl("norm", j_or_s), "Joint", "Separate")) %>%
+  group_by(q, svm1, svm2, aligned, j_or_s, type, noise_var, epoch) %>%
+  summarize(avg_l = mean(loss),
+            sd_l = sd(loss)) %>%
+  ungroup()
+```
+
+
+```{r}
+ggplot(data=avg_d %>% filter(epoch %% 100 == 0), aes(x = epoch/1000, y = avg_l, color=q, shape=j_or_s)) + 
+  geom_point(size=2)  + 
+  labs(y = "Average log loss (both tasks)", x="Time") +
+  facet_grid(svm1~svm2) +
+  scale_color_brewer(palette="BuPu") +
+  scale_x_continuous(breaks=c(0, 2.5, 5)) +
+#  scale_color_gradient(low="#770077", high="#00AA00", limits=c(0, 1))  +
+  guides(shape=guide_legend(title="Training"), color=guide_legend(title="q"))
+```
+
+```{r}
+ggsave("../plots/paper/transfer_learning_curves.png", width=10, height=10)
+```
+
+```{r}
+t1_avg_d = d %>%
+  gather(j_or_s, loss, t1_jcl, t1_alone_loss) %>%
+  mutate(loss = log(loss),
+         j_or_s = ifelse(grepl("jcl", j_or_s), "Joint", "Separate")) %>%
+  group_by(q, svm1, svm2, aligned, j_or_s, type, noise_var, epoch) %>%
+  summarize(avg_l = mean(loss),
+            sd_l = sd(loss)) %>%
+  ungroup()
+```
+
+
+```{r}
+ggplot(data=t1_avg_d %>% filter(epoch %% 100 == 0), aes(x = epoch/1000, y = avg_l, color=q, shape=j_or_s)) + 
+  geom_point(size=2)  + 
+  labs(y = "Average log task 1 loss", x="Time") +
+  facet_grid(svm1~svm2) +
+  scale_color_brewer(palette="BuPu") +
+  scale_x_continuous(breaks=c(0, 2.5, 5)) +
+#  scale_color_gradient(low="#770077", high="#00AA00", limits=c(0, 1))  +
+  guides(shape=guide_legend(title="Training"), color=guide_legend(title="q"))
+```
+
+```{r}
+ggsave("../plots/paper/transfer_learning_curves_t1.png", width=10, height=10)
+```
+
+```{r}
+benefit_d = d %>%
+  mutate(jll = log(norm_loss),
+         sll = log(sep_loss)) %>%
+  group_by(q, svm1, svm2, aligned, type, noise_var, run) %>%
+  summarize(min_jll = min(jll),
+            min_sll = min(sll)) %>%
+  ungroup() %>%
+  mutate(benefit=min_sll-min_jll) %>%
+  group_by(q, svm1, svm2, aligned, type, noise_var) %>%
+  summarize(avg_benefit = mean(benefit),
+            sd_benefit = sd(benefit),
+            ci_upper = avg_benefit + 1.96*sd_benefit/sqrt(n()),
+            ci_lower =avg_benefit - 1.96*sd_benefit/sqrt(n())) %>%
+  ungroup()
+```
+
+
+ 
+```{r}
+this_plot = (ggplot(data=benefit_d, aes(x = q, y = avg_benefit, color=q)) + 
+  geom_point(size=2)  + 
+  geom_errorbar(aes(ymin=ci_lower, ymax=ci_upper), width=0.5) +
+  labs(y = "Benefit to optimal stopping error") +
+  facet_grid(svm1 ~svm2) +
+  scale_color_manual(values=c("#9EBCDA", "#8C96C6", "#8C6BB1", "#88419D", "#4D004B") ) +
+#  scale_color_gradient(low="#770077", high="#00AA00", limits=c(0, 1))  +
+  geom_hline(aes(yintercept=0), linetype=3, alpha=0.5) +
+  guides(shape=guide_legend(title="Training"), color=guide_legend(title="q"))) %>% 
+  label_facets(., "SNR 2", "SNR 1")
+```
+
+```{r}
+ggsave("../plots/paper/transfer_benefit_to_optimal_stopping_error.png", plot=this_plot, width=10, height=10)
+```
+
+```{r}
+t1_benefit_d = d %>%
+  mutate(jll = log(t1_jcl),
+         sll = log(t1_alone_loss)) %>%
+  group_by(q, svm1, svm2, aligned, type, noise_var, run) %>%
+  summarize(min_jll = min(jll),
+            min_sll = min(sll)) %>%
+  ungroup() %>%
+  mutate(benefit=min_sll-min_jll) %>%
+  group_by(q, svm1, svm2, aligned, type, noise_var) %>%
+  summarize(avg_benefit = mean(benefit),
+            sd_benefit = sd(benefit),
+            ci_upper = avg_benefit + 1.96*sd_benefit/sqrt(n()),
+            ci_lower =avg_benefit - 1.96*sd_benefit/sqrt(n())) %>%
+  ungroup()
+```
+
+
+ 
+```{r}
+this_plot = (ggplot(data=t1_benefit_d, aes(x = q, y = avg_benefit, color=q)) + 
+  geom_point(size=2)  + 
+  geom_errorbar(aes(ymin=ci_lower, ymax=ci_upper), width=0.5) +
+  labs(y = "Benefit to optimal stopping error (task 1)") +
+  facet_grid(svm1 ~svm2) +
+  scale_color_manual(values=c("#9EBCDA", "#8C96C6", "#8C6BB1", "#88419D", "#4D004B") ) +
+#  scale_color_gradient(low="#770077", high="#00AA00", limits=c(0, 1))  +
+  geom_hline(aes(yintercept=0), linetype=3, alpha=0.5) +
+  guides(shape=guide_legend(title="Training"), color=guide_legend(title="q"))) %>% 
+  label_facets(., "SNR 2", "SNR 1")
+```
+
+```{r}
+ggsave("../plots/paper/transfer_benefit_to_optimal_stopping_error_t1.png", plot=this_plot, width=10, height=10)
+```
+
+```{r}
+avg_d2 = d %>% 
+  mutate(benefit = log(sep_loss) - log(norm_loss)) %>% 
+  group_by(q, svm1, svm2, epoch) %>%
+  summarize(avg_benefit = mean(benefit))
+```
+
+```{r}
+ggplot(data=avg_d2 %>% filter(epoch %% 100 == 0), aes(x = epoch/1000, y = avg_benefit, color=q)) + 
+  geom_point(size=2)  + 
+  labs(y = "Average benefit (log-scaled)", x="Time") +
+  scale_x_continuous(breaks=c(0, 2.5, 5)) +
+  facet_grid(svm1~svm2) +
+  scale_color_manual(values=c("#9EBCDA", "#8C96C6", "#8C6BB1", "#88419D", "#4D004B") ) +
+#  scale_color_gradient(low="#770077", high="#00AA00", limits=c(0, 1))  +
+  guides(shape=guide_legend(title="Training"), color=guide_legend(title="q"))
+```
+
+```{r}
+ggsave("../plots/paper/transfer_benefit_curves.png", width=10, height=10)
+```
+
+
+# fewer (gaussian) inputs
+
+
+```{r}
+nruns = 3
+noise_vars = c(1.)
+output_sizes= c(100)
+svms = c(1, 2, 4, 10)
+num_inputss = c(100, 50, 20, 4)
+alignments = c("True", "False")
+d = data.frame()
+for (noise_var in noise_vars) {
+  for (output_size in output_sizes) {
+    for (num_inputs in num_inputss) {
+      for (svm in svms) {
+        for (aligned in alignments) {
+          for (run in 0:(nruns-1)) { 
+            this_d = read.csv(sprintf("../fewer_inputs_results/noise_var_%.2f_output_size_%i_num_inputs_%i_svm_%f_aligned_%s_run_%i.csv",noise_var, output_size, num_inputs, svm, aligned, run), header=T)
+      
+            this_d = this_d %>% 
+              mutate(noise_var=noise_var, output_size=output_size, svm=svm, num_inputs, aligned=aligned=="True", run=run, student_rank="Full rank", type="Empirical")
+            d = bind_rows(d, this_d)
+          }
+        }
+        # this_d = read.csv(sprintf("../single_generalization_comparison_results/noise_var_%.2f_svm_%f_theory_track.csv", noise_var, svm), header=T)
+        # 
+        # this_d = this_d %>% 
+        #   rename(loss=generalization_error) %>%
+        #   mutate(noise_var=noise_var, output_size=NA,  svm=svm, aligned=aligned=="True", run=NA, student_rank="Full rank", type="Theory")
+        # d = bind_rows(d, this_d)
+      }
+    }
+  }
+}
+```
+
+```{r}
+d = d %>% 
+  mutate(
+    num_inputs = factor(num_inputs),
+    svm = factor(svm),
+    log_loss = log(loss)
+  )
+```
+
+```{r}
+avg_d = d %>%
+  group_by(aligned, svm, num_inputs, type, epoch) %>%
+  summarize(mean_loss = mean(log_loss, na.rm=T), sd_loss = sd(log_loss, na.rm=T)) %>% 
+  ungroup()
+```
+
+```{r}
+ggplot(data=avg_d, aes(x=epoch, y= mean_loss, color=num_inputs)) + 
+  geom_point() +
+  scale_color_brewer(palette="Reds") + 
+  facet_wrap(~svm) +
+  labs(y="Log testing loss") +
+  ylim(-2.5, 5) #+
+  #xlim(0, 500)
+```
+
+```{r}
+ggsave("../plots/paper/fewer_inputs.png")
+```
+
+
+```{r}
+ggplot(data=avg_d, aes(x=epoch, y= mean_loss, color=num_inputs)) + 
+  geom_point() +
+  scale_color_brewer(palette="Reds") + 
+  facet_wrap(~svm) +
+  labs(y="Log testing loss") +
+  ylim(-2.5, 0) +
+  xlim(0, 500)
+```
+
+```{r}
+ggsave("../plots/paper/fewer_inputs_zoomed_in.png")
 ```

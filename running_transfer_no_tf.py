@@ -10,7 +10,7 @@ num_examples = 100
 output_sizes = [num_examples] #[10, 50, 100, 200, 400]
 sigma_zs = [1] 
 
-num_runs = 1
+num_runs = 10
 learning_rate = 0.001
 num_epochs = 5000
 batch_size = num_examples
@@ -21,9 +21,9 @@ save_every = 5
 epsilon = 1e-5
 singular_value_multiplier = 10 
 N_2_bar = 1 # rank of teacher
-qs = [0.5, 0.75, 0.25, 1, 0]
+qs = [1, 0.95, 0.9, 0.5, 0]
 singular_value_1_multipliers = [float(x) for x in [100, 10, 1, 4]]
-singular_value_2_multipliers = [float(x) for x in [100, 10, 1, 4]]
+singular_value_2_multipliers = [float(x) for x in [100, 10]]
 alignments = [True] # if false, run with random inits
 num_hidden = num_examples
 
