@@ -23,7 +23,7 @@ singular_value_multiplier = 10
 N_2_bar = 1 # rank of teacher
 qs = [1, 0.75, 0.5, 0.25, 0]
 singular_value_1_multipliers = [float(x) for x in [1, 2, 4, 6, 8, 10]]
-singular_value_2_multipliers = [float(x) for x in [1, 2, 10]]
+singular_value_2_multipliers = [float(x) for x in [2]]
 alignments = [True] # if false, run with random inits
 num_hidden = num_examples
 
@@ -43,7 +43,7 @@ for run_i in xrange(num_runs):
                             np.random.seed(run_i)
                             print("Now running noise_var: %.2f, output_size: %i, svm1: %f, alignment: %s, run: %i" % (noise_var, output_size, svm1, aligned, run_i))
 
-                            curr_filename = "noise_var_%.2f_output_size_%i_q_%f_svm1_%f_svm2_%f_aligned_%s_run_%i_y_data.csv"% (noise_var, output_size, q, svm1, svm2, aligned, run_i)
+                            curr_filename = "noise_var_%.2f_output_size_%i_q_%f_svm1_%f_svm2_%f_aligned_%s_run_%i_"% (noise_var, output_size, q, svm1, svm2, aligned, run_i)
                   
                             num_input = num_examples
                             num_output = output_size
@@ -69,8 +69,8 @@ for run_i in xrange(num_runs):
 #			U_hat_base = U_hat; V_hat_base=V_hat;
 #			U_hat = U_hat[:, :N_2_bar]; S_hat = S_hat[:N_2_bar]; V_hat = V_hat[:N_2_bar, :]; 
 
-                            np.savetxt(filename_prefix + "y_data.csv", y_data, delimiter=",")
-                            np.savetxt(filename_prefix + "noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i_noisy_y_data.csv"% (noise_var, output_size, singular_value_multiplier, aligned, run_i), noisy_y_data, delimiter=",")
+                            np.savetxt(filename_prefix + curr_filename + "y_data.csv", y_data, delimiter=",")
+                            np.savetxt(filename_prefix + curr_filename + "noisy_y_data.csv", noisy_y_data, delimiter=",")
 #		    if input_type != "one_hot":
 #		      np.savetxt(filename_prefix + "noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i_x_data.csv"% (noise_var, output_size, singular_value_multiplier, aligned, run_i), x_data, delimiter=",")
                  
@@ -138,7 +138,7 @@ for run_i in xrange(num_runs):
 #                        if track_SVD:
 #                            fsvd = open(filename_prefix + "noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i_SVD_track.csv" % (noise_var, output_size, singular_value_multiplier, aligned, run_i), "w")
 #                            fsvd.write("epoch, " + ", ".join(["s%i"%i for i in range(1)]) + ", " + ", ".join(["U%iUhat%i" %(i,j) for i in range(1) for j in range(1)]) + "\n")
-                            with open(filename_prefix + "noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i.csv" % (noise_var, output_size, singular_value_multiplier, aligned, run_i), "w") as fout:
+                            with open(filename_prefix + curr_filename + ".csv", "w") as fout:
 
                                 fout.write("epoch, norm_loss, symm_ben, t1_ben, t2_ben\n")
                                 cnl, sb, t1b, t2b = evaluate()
