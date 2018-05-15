@@ -127,8 +127,6 @@ for run_i in xrange(num_runs):
                                 t2_curr_loss = np.sum(np.square(t2_y_data - np.matmul(np.matmul(t2_W32, t2_W21), x_data)))
                                 t1_joint_curr_loss = np.sum(np.square(y_data[:100, :] - np.matmul(np.matmul(W32, W21), x_data)[:100, :]))
                                 t2_joint_curr_loss = np.sum(np.square(y_data[100:, :] - np.matmul(np.matmul(W32, W21), x_data)[100:, :]))
-                                print(curr_loss, t1_curr_loss, t2_curr_loss, t1_joint_curr_loss, t2_joint_curr_loss)
-                                exit()
                                 symm_ben = (t1_curr_loss + t2_curr_loss - curr_loss)/y_data_frob_squared
                                 t1_ben = (t1_curr_loss - t1_joint_curr_loss)/t1_y_data_frob_squared
                                 t2_ben = (t2_curr_loss - t2_joint_curr_loss)/t2_y_data_frob_squared
