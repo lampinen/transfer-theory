@@ -433,21 +433,30 @@ ggsave("../plots/paper/fig_2b.png", plot=gt, width=4, height=3)
 ```
 
 ```{r}
-d = read.csv("../figure_stuff/figure_2c.csv", header=T)
+d = read.csv("../figure_stuff/figure_2c.csv", header=T) %>%
+  mutate(S_emp_mean = ifelse(S_emp_se >= 0, S_emp_mean, NA),
+         S_emp_se = ifelse(S_emp_se >= 0, S_emp_se, NA))
 ```
 
 ```{r}
 p = ggplot(d %>% filter(sbar <= 5.), aes(x=sbar, y=S_hat, color=factor(A), group=A)) +
-  geom_line(size=2) +
+  geom_line(aes(linetype=factor("Theory")), size=2) +
+  geom_errorbar(aes(ymin=S_emp_mean-1.96*S_emp_se,
+                    ymax=S_emp_mean+1.96*S_emp_se))+
+  geom_point(aes(y=S_emp_mean, shape=factor("Empirical")), size=3) +
   scale_color_manual(values=c("#A1D99B", "#41AB5D", "#238B45", "#00441B"), breaks=c(0.25,0.5,0.75,1.)) +
   coord_cartesian(ylim=c(0,5), xlim=c(0,5)) +
   scale_x_continuous(breaks=c(0, 2.5, 5)) +
   labs(x=parse(text="bar(s)"), y= parse(text="hat(s)")) +
-  guides(color=guide_legend(title="A")) +
+  guides(color=guide_legend(title="A", order=1),
+         linetype=guide_legend(title="", order=2),
+         shape=guide_legend(title="")) +
   geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3, size=2) +
   annotation_custom(textGrob(label = "C", hjust = 2, gp = gpar(cex = 2),
       x=unit(0, "npc"), y=unit(0.95, "npc")),
-      )
+      )+ 
+  theme(legend.margin = margin(-0.25,0,-0.25,0, unit="cm"))
+
 
 gt <- ggplot_gtable(ggplot_build(p))
 gt$layout$clip[gt$layout$name == "panel"] <- "off"
@@ -472,16 +481,17 @@ d = d %>%
 ```{r}
 p = ggplot(d %>% filter(sbar <= 5.), aes(x=sbar, y=C, color=factor(A), group=A)) +
   geom_line(size=2) +
-  geom_point(aes(y=C_emp_mean)) +
-  geom_errorbar(aes(ymin = C_emp_mean - 1.96*C_emp_sem, ymax=C_emp_mean + 1.96 * C_emp_se)) +
+  geom_errorbar(aes(ymin = C_emp_mean - 1.96*C_emp_se, ymax=C_emp_mean + 1.96 * C_emp_se)) +
+  geom_point(aes(y=C_emp_mean), size=3) +
   scale_color_manual(values=c("#A1D99B", "#41AB5D", "#238B45", "#00441B"), breaks=c(0.25,0.5,0.75,1.)) +
   coord_cartesian(ylim=c(0,1), xlim=c(0,5)) +
   scale_x_continuous(breaks=c(0, 2.5, 5)) +
   labs(x=parse(text="bar(s)"), y= parse(text="Overlap")) +
-  guides(color=guide_legend(title="A")) +
+  guides(color=F) +
   annotation_custom(textGrob(label = "D", hjust = 3, gp = gpar(cex = 2),
       x=unit(0, "npc"), y=unit(0.95, "npc")),
-      )
+      ) 
+
 
 gt <- ggplot_gtable(ggplot_build(p))
 gt$layout$clip[gt$layout$name == "panel"] <- "off"
@@ -489,7 +499,7 @@ grid.draw(gt)
 ```
 
 ```{r}
-ggsave("../plots/paper/fig_2d.png", plot=gt, width=4, height=3)
+ggsave("../plots/paper/fig_2d.png", plot=gt, width=3, height=3)
 ```
 # Approximating min generalization error with only components out of the noise and misalignment
 
@@ -829,3 +839,139 @@ ggplot(data=avg_d, aes(x=epoch, y= mean_loss, color=num_inputs)) +
 ```{r}
 ggsave("../plots/paper/fewer_inputs_zoomed_in.png")
 ```
+
+ # Figure 3
+ 
+```{r}
+nruns = 5
+noise_vars = c(1.)
+output_sizes= c(100)
+svms = 1:10
+alignments = c("True", "False")
+d = data.frame()
+for (noise_var in noise_vars) {
+  for (output_size in output_sizes) {
+    for (svm in svms) {
+      for (aligned in alignments) {
+        for (run in 0:(nruns-1)) { 
+          this_d = read.csv(sprintf("../single_generalization_paper_results/noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i.csv",noise_var, output_size, svm, aligned, run), header=T)
+    
+          this_d = this_d %>% 
+            mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", run=run, student_rank="Full rank", type="Empirical")
+          d = bind_rows(d, this_d)
+        }
+      }
+      this_d = read.csv(sprintf("../single_generalization_paper_results/noise_var_%.2f_svm_%f_theory_track.csv", noise_var, svm), header=T)
+    
+      this_d = this_d %>% 
+        rename(loss=generalization_error) %>%
+        mutate(noise_var=noise_var, output_size=NA,  svm=svm, aligned=aligned=="True", run=NA, student_rank="Full rank", type="Theory")
+      d = bind_rows(d, this_d)
+    }
+  }
+}
+```
+
+
+
+```{r}
+d = d %>%
+  mutate(output_size=factor(output_size),
+         noise_var=factor(noise_var),
+         svm=factor(svm),
+         aligned=factor(aligned),
+         type=factor(type),
+         student_rank=factor(student_rank, levels=c("Full rank", "50% of full", "4% of full", "Teacher rank (1% of full)"), labels=c("Full rank", "50% of full", "4% of full", "1% of full")),
+         log_loss = log(loss))
+```
+
+```{r}
+min_d = d %>%
+  group_by(svm, aligned, noise_var, type, student_rank, run) %>%
+  summarize(min_Eg = min(log_loss), min_t = which.min(log_loss)) %>%
+  ungroup() %>%
+  group_by(svm, aligned, noise_var, student_rank, type) %>%
+  summarize(avg_min_Eg = mean(min_Eg), sd_min_Eg = sd(min_Eg),
+            avg_min_t = mean(min_t), sd_min_t = sd(min_t),
+            se_min_Eg = sd_min_Eg/sqrt(n()), ci_Eg_up= avg_min_Eg + 1.96*se_min_Eg, ci_Eg_lo= avg_min_Eg - 1.96*se_min_Eg,
+            se_min_t = sd_min_t/sqrt(n()), ci_t_up= avg_min_t + 1.96*se_min_t, ci_t_lo= avg_min_t - 1.96*se_min_t) %>%
+  ungroup()
+  
+```
+
+```{r}
+avg_d = d %>%
+  group_by(noise_var, output_size, svm, aligned, epoch, student_rank, type) %>%
+  summarize(loss=mean(loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
+  mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n())) %>%
+  ungroup() %>%
+  mutate(new_type = ifelse(type == "Theory", "Theory",
+                            ifelse(aligned == "TRUE", "Empirical aligned", "Empirical random"))) %>%
+  mutate(new_type = factor(new_type, levels=c("Theory", "Empirical aligned", "Empirical random")))
+```
+
+
+```{r}
+# ggplot(avg_d, aes(x=epoch, y=log_loss, color=as.numeric(svm), shape=student_rank, group=interaction(new_type, svm, student_rank))) +
+#   geom_line(size=1.2) +
+# #  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
+#   scale_color_gradient(low="#0000FF", high="#FF0000") +
+#   ylab("Log generalization loss") +
+#   xlab("Epoch") +
+#   guides(color=guide_colorbar(title="SNR"), linetype=guide_legend(title="Theory or empirical"))
+```
+
+```{r}
+# ggsave(sprintf("../plots/%s_theory_empirical_alignment.png", prepostfix))
+```
+```{r}
+wide_min_d = min_d %>% 
+  filter(type == "Empirical") %>%
+  select(-type, -se_min_Eg, -se_min_t) %>%
+  gather(metric, measurement, avg_min_Eg, sd_min_Eg, avg_min_t, sd_min_t, ci_t_up, ci_t_lo, ci_Eg_up, ci_Eg_lo) %>%
+  mutate(aligned = ifelse(aligned=="TRUE", "Aligned", "Random")) %>%
+  unite(am, aligned, metric) %>%
+  spread(am, measurement) %>%
+  filter(svm != 1)
+```
+
+
+```{r}
+ggplot(data=wide_min_d, aes(x=Aligned_avg_min_Eg, y=Random_avg_min_Eg, shape=student_rank, color=as.numeric(svm))) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(1, 10), breaks=c(1, 10))  +
+  geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3) +
+  labs(x="Min log generalization error (aligned init.)",
+       y="Min log generalization error (random init.)") +
+  geom_point(size=2) +
+  geom_errorbar(aes(ymin=Random_ci_Eg_lo, ymax=Random_ci_Eg_up), width=0.05) +
+  geom_errorbarh(aes(xmin=Aligned_ci_Eg_lo, xmax=Aligned_ci_Eg_up), height=0.05) +
+  guides(color=F, shape=F)
+```
+
+```{r}
+ggsave("../plots/paper/min_Eg_aligned_vs_random.png", width=5, height=5)
+```
+
+```{r}
+
+```
+
+
+```{r}
+ggplot(data=wide_min_d, aes(x=Aligned_avg_min_t, y=Random_avg_min_t, shape=student_rank, color=as.integer(svm))) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(1, 10), breaks=c(1,10))  +
+  geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3) +
+  labs(x="Optimal stopping epoch (aligned init.)",
+       y="Optimal stopping epoch (random init.)") +
+  geom_point(size=2) +
+  geom_errorbar(aes(ymin=Random_ci_t_lo, ymax=Random_ci_t_up), width=5) +
+  geom_errorbarh(aes(xmin=Aligned_ci_t_lo, xmax=Aligned_ci_t_up), height=5) +
+  xlim(200, 800) + 
+  ylim(200, 800) +
+  guides(shape=guide_legend(title="Empirical results", order=2), color=guide_colorbar(title="SNR", order=1))
+```
+
+```{r}
+ggsave("../plots/paper/min_t_aligned_vs_random.png", width=7, height=5)
+```
+
