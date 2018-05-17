@@ -127,8 +127,6 @@ def SVD_dataset(num_examples, num_outputs, num_nonempty=4, singular_value_multip
 def noisy_SVD_dataset(num_examples, num_outputs, num_nonempty=4, noise_var=0.1, singular_value_multiplier=1):
     x_data, y_data, input_modes = SVD_dataset(num_examples, num_outputs, num_nonempty=num_nonempty, singular_value_multiplier=singular_value_multiplier)
     y_data_noisy = y_data + numpy.sqrt(noise_var) * numpy.random.standard_normal(numpy.shape(y_data))
-    _, S, _ = numpy.linalg.svd(y_data)
-    print(numpy.amax(S))
     return x_data, y_data, y_data_noisy, input_modes
 
 def noisy_SVD_dataset_different_inputs(num_examples, num_outputs, num_nonempty=4, noise_var=0.1, singular_value_multiplier=1, input_type="orthogonal"):
@@ -151,9 +149,9 @@ def rank_one_correlated_dataset(num_examples, num_outputs_per, q, svm1, svm2):
     
     V = numpy.concatenate([v1, v2], axis=0)
 
-    u1 = numpy.random.randn(num_examples,  1)
+    u1 = numpy.random.randn(num_outputs_per,  1)
     u1 /= numpy.linalg.norm(u1)
-    u2 = numpy.random.randn(num_examples,  1)
+    u2 = numpy.random.randn(num_outputs_per,  1)
     u2 /= numpy.linalg.norm(u2)
 
     U = numpy.concatenate([numpy.concatenate([u1, numpy.zeros_like(u2)], axis=0), 
