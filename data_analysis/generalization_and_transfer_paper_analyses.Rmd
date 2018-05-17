@@ -1071,9 +1071,9 @@ ggsave("../plots/paper/fig_3e.png", plot=gt, width=4, height=3)
 nruns = 1 #0
 noise_vars = c(1.)
 output_sizes= c(50)
-qs = c(0, 0.1) #seq(0, 1, 0.1)
-svm1s = c(100, 30)#, 30, 10, 3, 0.84)
-svm2s = c(100, 30)#, 30, 10, 3, 0.84)
+qs = seq(0, 1, 0.1)
+svm1s = c(100, 30, 10, 3, 0.84)
+svm2s = c(100,  30, 10, 3, 0.84)
 alignments = c("True")
 d = data.frame()
 for (noise_var in noise_vars) {
@@ -1106,8 +1106,7 @@ for (noise_var in noise_vars) {
 
 ```{r}
 d = d %>% 
-  mutate(q = factor(q),
-         svm1 = factor(svm1),
+  mutate(svm1 = factor(svm1),
          svm2 = factor(svm2),
          aligned=factor(aligned),
          type=factor(type),
@@ -1141,6 +1140,7 @@ p = ggplot(data=symm_benefit_d, aes(x = q, y = avg_benefit, color=log(svm))) +
   geom_errorbar(aes(ymin=ci_lower, ymax=ci_upper), width=0.5) +
   labs(y = TeX("$(\\epsilon^{1,2}_{sep} - \\epsilon^{1,2}_{joint})/||\\bar{Y}||^2_2$"),
        x= TeX("$q$")) +
+  scale_x_continuous(breaks=c(0., 0.5, 1.)) +
   scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(log(0.84)-0.5, log(100)), 
                        breaks=c(log(0.84), log(10), log(100)),
                        labels=c(parse(text="sqrt(A,4)"), 10, 100))  +
@@ -1202,4 +1202,29 @@ grid.draw(gt)
 ```
 ```{r}
 ggsave("../plots/paper/fig_5c.png",plot=gt, width=4,height=3)
+```
+
+```{r}
+p = ggplot(data=t1_benefit_d %>% filter(svm1==0.84), aes(x = q, y = avg_benefit, color=log(svm2))) + 
+  geom_point(aes(shape=factor("Empirical")),size=2)  + 
+  geom_errorbar(aes(ymin=ci_lower, ymax=ci_upper), width=0.5) +
+  labs(y = TeX("$(\\epsilon^{1}_{sep} - \\epsilon^{1}_{joint})/||\\bar{Y}^1||^2_2$"),
+       x= TeX("$q$")) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(log(0.84)-0.5, log(100)), 
+                       breaks=c(log(0.84), log(10), log(100)),
+                       labels=c(parse(text="sqrt(A,4)"), 10, 100))  +
+#  scale_color_gradient(low="#770077", high="#00AA00", limits=c(0, 1))  +
+  geom_hline(yintercept=0, linetype=3, alpha=0.5) +
+  guides(shape=guide_legend(title=""), color=guide_colorbar(title="SNR2", order=1))  +
+  annotation_custom(textGrob(label = "B", hjust = 3.5, gp = gpar(cex = 2),
+      x=unit(0, "npc"), y=unit(0.95, "npc")),
+      ) +
+  theme(legend.margin = margin(-0.25,0,-0.25,0, unit="cm"))
+
+gt <- ggplot_gtable(ggplot_build(p))
+gt$layout$clip[gt$layout$name == "panel"] <- "off"
+grid.draw(gt) 
+```
+```{r}
+ggsave("../plots/paper/fig_5b.png",plot=gt, width=4,height=3)
 ```

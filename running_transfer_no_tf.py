@@ -24,7 +24,7 @@ N_2_bar = 1 # rank of teacher
 qs = np.arange(0, 1.1, 0.1) 
 singular_value_1_multipliers = [float(x) for x in [100, 30, 10, 3, 0.84]]
 singular_value_2_multipliers = [float(x) for x in [100, 30, 10, 3, 0.84]]
-alignments = [False] # if false, run with random inits
+alignments = [True] # if false, run with random inits
 num_hidden = 50
 
 ###
