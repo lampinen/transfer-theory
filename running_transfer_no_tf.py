@@ -24,8 +24,8 @@ N_2_bar = 1 # rank of teacher
 qs = np.arange(0, 1.1, 0.1) 
 singular_value_1_multipliers = [float(x) for x in [100, 30, 10, 3, 0.84]]
 singular_value_2_multipliers = [float(x) for x in [100, 30, 10, 3, 0.84]]
-alignments = [True] # if false, run with random inits
-num_hidden = num_examples
+alignments = [False] # if false, run with random inits
+num_hidden = 50
 
 ###
 #var_scale_init = tf.contrib.layers.variance_scaling_initializer(factor=2*np.sqrt(epsilon), mode='FAN_AVG')
@@ -53,10 +53,10 @@ for run_i in xrange(num_runs):
                             noisy_y_data = noisy_y_data.transpose()
                             y_data = y_data.transpose()
 
-                            t1_y_data = y_data[:100, :]
-                            t2_y_data = y_data[100:, :]
-                            t1_noisy_y_data = noisy_y_data[:100, :]
-                            t2_noisy_y_data = noisy_y_data[100:, :]
+                            t1_y_data = y_data[:output_size, :]
+                            t2_y_data = y_data[output_size:, :]
+                            t1_noisy_y_data = noisy_y_data[:output_size, :]
+                            t2_noisy_y_data = noisy_y_data[output_size:, :]
 
                             y_data_frob_squared = np.sum(y_data**2)
                             t1_y_data_frob_squared = np.sum(t1_y_data**2)
@@ -98,9 +98,9 @@ for run_i in xrange(num_runs):
                                 W32 = np.sqrt(epsilon) * random_orthogonal(2*num_output)[:, :num_hidden] 
 
                                 t1_W21 = np.sqrt(epsilon) * random_orthogonal(num_input)[:num_hidden, :]    #W21[:, :] 
-                                t1_W32 = np.sqrt(epsilon) * random_orthogonal(num_output)[:, :num_hidden] #W32[:num_output, :] 
+                                t1_W32 = np.sqrt(epsilon) * random_orthogonal(num_output)[:, :num_hidden]
                                 t2_W21 = np.sqrt(epsilon) * random_orthogonal(num_input)[:num_hidden, :]    #W21[:, :] 
-                                t2_W32 = np.sqrt(epsilon) * random_orthogonal(num_output)[:, :num_hidden] #W32[num_output:, :]
+                                t2_W32 = np.sqrt(epsilon) * random_orthogonal(num_output)[:, :num_hidden]
                         
                             sigma_31 = np.matmul(noisy_y_data, x_data.transpose())
                             sigma_11 = np.matmul(x_data, x_data.transpose())
@@ -125,8 +125,8 @@ for run_i in xrange(num_runs):
                                 curr_loss = np.sum(np.square(y_data - np.matmul(np.matmul(W32, W21), x_data)))
                                 t1_curr_loss = np.sum(np.square(t1_y_data - np.matmul(np.matmul(t1_W32, t1_W21), x_data)))
                                 t2_curr_loss = np.sum(np.square(t2_y_data - np.matmul(np.matmul(t2_W32, t2_W21), x_data)))
-                                t1_joint_curr_loss = np.sum(np.square(y_data[:100, :] - np.matmul(np.matmul(W32, W21), x_data)[:100, :]))
-                                t2_joint_curr_loss = np.sum(np.square(y_data[100:, :] - np.matmul(np.matmul(W32, W21), x_data)[100:, :]))
+                                t1_joint_curr_loss = np.sum(np.square(y_data[:output_size, :] - np.matmul(np.matmul(W32, W21), x_data)[:output_size, :]))
+                                t2_joint_curr_loss = np.sum(np.square(y_data[output_size:, :] - np.matmul(np.matmul(W32, W21), x_data)[output_size:, :]))
                                 symm_ben = (t1_curr_loss + t2_curr_loss - curr_loss)/y_data_frob_squared
                                 t1_ben = (t1_curr_loss - t1_joint_curr_loss)/t1_y_data_frob_squared
                                 t2_ben = (t2_curr_loss - t2_joint_curr_loss)/t2_y_data_frob_squared
