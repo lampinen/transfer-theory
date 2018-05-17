@@ -973,7 +973,7 @@ wide_min_d = min_d %>%
 
 ```{r}
 p = ggplot(data=wide_min_d, aes(x=Aligned_avg_min_Eg, y=Random_avg_min_Eg, color=as.numeric(svm))) +
-  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 5, 10), labels=c(parse(text="1/sqrt(A, 4)"), "5       ", "10     "))  +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 5, 10), labels=c(parse(text="1/sqrt(A, 4)"), "5 ", "10"))  +
   geom_abline(intercept=0, slope=1, alpha=0.5, linetype=3) +
   labs(x=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (TA)"),
        y=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (Rand.)   ")) +
@@ -1001,7 +1001,7 @@ ggsave("../plots/paper/fig_3c.png", plot=gt, width=3, height=3)
 
 ```{r}
 p = ggplot(data=wide_min_d, aes(x=Aligned_avg_min_t/1000, y=Random_avg_min_t/1000, color=as.integer(svm))) +
-  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 5, 10), labels=c(parse(text="sqrt(A, 4)"), "5       ", "10     "))  +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 5, 10), labels=c(parse(text="sqrt(A, 4)"), "5   ", "10  "))  +
   geom_line(aes(linetype=factor("Theory")), size=2, alpha=0) +  # haaaaacky
   geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3) +
   labs(x=TeX("$t_{opt}/\\tau$ (TA)"),
@@ -1065,3 +1065,141 @@ grid.draw(gt)
 ggsave("../plots/paper/fig_3e.png", plot=gt, width=4, height=3)
 ```
 
+# Fig 5(?) -- transfer results
+
+```{r}
+nruns = 1 #0
+noise_vars = c(1.)
+output_sizes= c(50)
+qs = c(0, 0.1) #seq(0, 1, 0.1)
+svm1s = c(100, 30)#, 30, 10, 3, 0.84)
+svm2s = c(100, 30)#, 30, 10, 3, 0.84)
+alignments = c("True")
+d = data.frame()
+for (noise_var in noise_vars) {
+  for (output_size in output_sizes) {
+    for (q in qs) {
+      for (svm1 in svm1s) {
+        for (svm2 in svm2s) {
+          for (aligned in alignments) {
+            for (run in 0:(nruns-1)) { 
+              this_d = read.csv(sprintf("../paper_transfer_results/noise_var_%.2f_output_size_%i_q_%f_svm1_%f_svm2_%f_aligned_%s_run_%i_.csv",noise_var, output_size, q, svm1, svm2, aligned, run), header=T)
+        
+              this_d = this_d %>% 
+                mutate(noise_var=noise_var, output_size=output_size, q=q, svm1=svm1, svm2=svm2, aligned=aligned=="True", run=run, student_rank="Full rank", type="Empirical")
+              d = bind_rows(d, this_d)
+            }
+          }
+          # this_d = read.csv(sprintf("../paper_transfer_results/noise_var_%.2f_svm_%f_theory_track.csv", noise_var, svm), header=T)
+          # 
+          # this_d = this_d %>% 
+          #   rename(loss=generalization_error) %>%
+          #   mutate(noise_var=noise_var, output_size=NA,  svm=svm, aligned=aligned=="True", run=NA, student_rank="Full rank", type="Theory")
+          # d = bind_rows(d, this_d)
+        }
+      }
+    }
+  }
+}
+
+```
+
+```{r}
+d = d %>% 
+  mutate(q = factor(q),
+         svm1 = factor(svm1),
+         svm2 = factor(svm2),
+         aligned=factor(aligned),
+         type=factor(type),
+         sep_loss=symm_ben + norm_loss,
+         t1_alone_loss = t1_ben + t1_jcl,
+         t2_alone_loss = t2_ben + t2_jcl)
+```
+
+```{r}
+symm_benefit_d = d %>%
+  filter(svm1 == svm2) %>%
+  mutate(svm=as.numeric(svm1)) %>%
+  mutate(jll = log(norm_loss),
+         sll = log(sep_loss)) %>%
+  group_by(q, svm, aligned, type, noise_var, run) %>%
+  summarize(min_jll = min(jll),
+            min_sll = min(sll)) %>%
+  ungroup() %>%
+  mutate(benefit=min_sll-min_jll) %>%
+  group_by(q, svm, aligned, type, noise_var) %>%
+  summarize(avg_benefit = mean(benefit),
+            sd_benefit = sd(benefit),
+            ci_upper = avg_benefit + 1.96*sd_benefit/sqrt(n()),
+            ci_lower =avg_benefit - 1.96*sd_benefit/sqrt(n())) %>%
+  ungroup()
+```
+ 
+```{r}
+p = ggplot(data=symm_benefit_d, aes(x = q, y = avg_benefit, color=log(svm))) + 
+  geom_point(aes(shape=factor("Empirical")),size=2)  + 
+  geom_errorbar(aes(ymin=ci_lower, ymax=ci_upper), width=0.5) +
+  labs(y = TeX("$(\\epsilon^{1,2}_{sep} - \\epsilon^{1,2}_{joint})/||\\bar{Y}||^2_2$"),
+       x= TeX("$q$")) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(log(0.84)-0.5, log(100)), 
+                       breaks=c(log(0.84), log(10), log(100)),
+                       labels=c(parse(text="sqrt(A,4)"), 10, 100))  +
+#  scale_color_gradient(low="#770077", high="#00AA00", limits=c(0, 1))  +
+  geom_hline(yintercept=0, linetype=3, alpha=0.5) +
+  guides(shape=guide_legend(title=""), color=guide_colorbar(title="SNR", order=1))  +
+  annotation_custom(textGrob(label = "A", hjust = 3.5, gp = gpar(cex = 2),
+      x=unit(0, "npc"), y=unit(0.95, "npc")),
+      ) +
+  theme(legend.margin = margin(-0.25,0,-0.25,0, unit="cm"))
+
+gt <- ggplot_gtable(ggplot_build(p))
+gt$layout$clip[gt$layout$name == "panel"] <- "off"
+grid.draw(gt) 
+```
+```{r}
+ggsave("../plots/paper/fig_5a.png",plot=gt, width=4,height=3)
+```
+
+```{r}
+t1_benefit_d = d %>%
+  mutate(jll = log(t1_jcl),
+         sll = log(t1_alone_loss)) %>%
+  group_by(q, svm1, svm2, aligned, type, noise_var, run) %>%
+  summarize(min_jll = min(jll),
+            min_sll = min(sll)) %>%
+  ungroup() %>%
+  mutate(benefit=min_sll-min_jll) %>%
+  group_by(q, svm1, svm2, aligned, type, noise_var) %>%
+  summarize(avg_benefit = mean(benefit),
+            sd_benefit = sd(benefit),
+            ci_upper = avg_benefit + 1.96*sd_benefit/sqrt(n()),
+            ci_lower =avg_benefit - 1.96*sd_benefit/sqrt(n())) %>%
+  ungroup() %>%
+  mutate(svm1=as.numeric(levels(svm1)[svm1]),
+         svm2=as.numeric(levels(svm2)[svm2]))
+```
+
+```{r}
+p = ggplot(data=t1_benefit_d %>% filter(svm1==100), aes(x = q, y = avg_benefit, color=log(svm2))) + 
+  geom_point(aes(shape=factor("Empirical")),size=2)  + 
+  geom_errorbar(aes(ymin=ci_lower, ymax=ci_upper), width=0.5) +
+  labs(y = TeX("$(\\epsilon^{1}_{sep} - \\epsilon^{1}_{joint})/||\\bar{Y}^1||^2_2$"),
+       x= TeX("$q$")) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(log(0.84)-0.5, log(100)), 
+                       breaks=c(log(0.84), log(10), log(100)),
+                       labels=c(parse(text="sqrt(A,4)"), 10, 100))  +
+#  scale_color_gradient(low="#770077", high="#00AA00", limits=c(0, 1))  +
+  geom_hline(yintercept=0, linetype=3, alpha=0.5) +
+  guides(shape=guide_legend(title=""), color=guide_colorbar(title="SNR2", order=1))  +
+  annotation_custom(textGrob(label = "C", hjust = 3.5, gp = gpar(cex = 2),
+      x=unit(0, "npc"), y=unit(0.95, "npc")),
+      ) +
+  theme(legend.margin = margin(-0.25,0,-0.25,0, unit="cm"))
+
+gt <- ggplot_gtable(ggplot_build(p))
+gt$layout$clip[gt$layout$name == "panel"] <- "off"
+grid.draw(gt) 
+```
+```{r}
+ggsave("../plots/paper/fig_5c.png",plot=gt, width=4,height=3)
+```

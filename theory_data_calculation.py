@@ -6,7 +6,7 @@ import numpy as np
 from theory_functions import *
 ### Parameters
 num_examples = 100
-output_sizes = [50]#, 100, 25, 75] 
+output_sizes = [50, 100, 25, 75] 
 sigma_zs = [1]
 #num_runs = 10 
 learning_rate = 0.001
@@ -20,10 +20,10 @@ singular_value_multiplier = 10
 epsilon = 1e-5
 delta_x = 0.001 # for the numerical integration of M-P dist
 N_2_bar = 1 # number of teacher modes
-num_hidden = 100
-singular_value_multipliers = [0.84, 2., 4., 6., 8., 10.] # np.arange(0., 10., 0.05) #
+num_hidden = 50
+singular_value_multipliers =  np.arange(0., 10., 0.05) #[0.84, 2., 4., 6., 8., 10.] #
 
-min_gen_approx = False # if true, only approximate min gen by assuming 1 or 0 learning of modes
+min_gen_approx = True # if true, only approximate min gen by assuming 1 or 0 learning of modes
 ### 
 
 base_singular_values = [float(i) for i in range(N_2_bar, 0, -1)] 
@@ -72,13 +72,14 @@ for output_size in output_sizes:
 
             if min_gen_approx:
                 with open(filename_prefix + "A_%f_min_gen_approx.csv" % (A), "a") as fout:
-                    sot = np.array([s_i if s_i/sigma_z > 1 else 0 for s_i in s_hats])
-
-                    generr = 0 #(N_2-len(singular_values))*numeric_integral_mp(delta_x*sigma_z, epoch_i, 0, 2*sigma_z) # number of points in integral estimate is constant in sigma_z 
-                    generr += np.sum(sot**2) 
-                    generr += y_frob_norm_sq
-                    generr -= 2 * np.sum(sot * s_bar * noise_multiplier) 
-                    generr /= y_frob_norm_sq
+#                    sot = np.array([s_i if s_i/sigma_z > 1 else 0 for s_i in s_hats])
+#
+#                    generr = 0 #(N_2-len(singular_values))*numeric_integral_mp(delta_x*sigma_z, epoch_i, 0, 2*sigma_z) # number of points in integral estimate is constant in sigma_z 
+#                    generr += np.sum(sot**2) 
+#                    generr += y_frob_norm_sq
+#                    generr -= 2 * np.sum(sot * s_bar * noise_multiplier) 
+#                    generr /= y_frob_norm_sq
+                    generr = 1-noise_multiplier**2
                     print("%f, %f, %f" % (sigma_z, singular_value_multiplier, generr))
                     fout.write("%f, %f, %f\n" % (sigma_z, singular_value_multiplier, generr))
                 continue

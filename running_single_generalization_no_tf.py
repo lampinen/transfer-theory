@@ -21,7 +21,7 @@ epsilon = 1e-5
 singular_value_multiplier = 10 
 N_2_bar = 1 # rank of teacher
 singular_value_multipliers = [0.84, 2., 4., 6., 8., 10.]
-num_hidden = 100#num_examples
+num_hidden = 50#num_examples
 
 ###
 #var_scale_init = tf.contrib.layers.variance_scaling_initializer(factor=2*np.sqrt(epsilon), mode='FAN_AVG')
