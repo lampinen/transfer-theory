@@ -144,7 +144,7 @@ def rank_one_correlated_dataset(num_examples, num_outputs_per, q, svm1, svm2):
     v1 = V[[1], :]
     v2 = V[[2], :]
 
-    v2 = numpy.sqrt(q) * v1 + np.sqrt(1-q) * v2 
+    v2 = numpy.sqrt(q) * v1 + numpy.sqrt(1-q) * v2 
     
     V = numpy.concatenate([v1, v2], axis=0)
 
