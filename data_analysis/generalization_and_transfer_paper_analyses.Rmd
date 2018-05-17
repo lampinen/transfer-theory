@@ -384,12 +384,12 @@ d = read.csv("../figure_stuff/figure_2b_half.csv", header=T) %>%
 p = ggplot(data=d, aes(x=sbar)) +
   geom_bar(aes(y=obsv_S_hat, fill="#1B9E77"), stat="identity") +
   geom_vline(aes(xintercept=sbar_sig, color="#D95F02"), linetype=2, size=1.1) +
-  geom_line(aes(y=pred_MP_S_hat, color="#7570B3"), size=1.1, linetype=2) +
-  scale_fill_identity(name="Empirical", guide="none", labels=c("Empirical")) +
-  scale_color_identity(name="Theoretical", guide="none", breaks=c("#D95F02", "#7570B3"), labels=c("Signal", "Noise")) +
+  geom_line(aes(x=sbar-0.1, y=pred_MP_S_hat, color="#7570B3"), size=1.1, linetype=2) + # because points are left edge of bin, shift by half binwidth
+  scale_fill_identity(name="Empirical", guide="legend", labels=c("Empirical")) +
+  scale_color_identity(name="Theoretical", guide="legend", breaks=c("#D95F02", "#7570B3"), labels=c("Signal", "Noise")) +
   scale_x_continuous(breaks=c(0., 8.)) +
   labs(x=parse(text="bar(s)"), y="Count")+
-  annotation_custom(textGrob(label = "B", hjust = 2.5, gp = gpar(cex = 2),
+  annotation_custom(textGrob(label = "A", hjust = 2.5, gp = gpar(cex = 2),
       x=unit(0, "npc"), y=unit(0.95, "npc")),
       )
 
@@ -399,7 +399,7 @@ grid.draw(gt)
 ```
 
 ```{r}
-ggsave("../plots/paper/fig_2a.png", plot=gt, width=2.75, height=3)
+ggsave("../plots/paper/fig_2a.png", plot=gt, width=6, height=3)
 ```
 
 
@@ -414,7 +414,7 @@ d = read.csv("../figure_stuff/figure_2b.csv", header=T) %>%
 p = ggplot(data=d, aes(x=sbar)) +
   geom_bar(aes(y=obsv_S_hat, fill="#1B9E77"), stat="identity") +
   geom_vline(aes(xintercept=sbar_sig, color="#D95F02"), linetype=2, size=1.1) +
-  geom_line(aes(y=pred_MP_S_hat, color="#7570B3"), size=1.1, linetype=2) +
+  geom_line(aes(x=sbar, y=pred_MP_S_hat, color="#7570B3"), size=1.1, linetype=2) + 
   scale_fill_identity(name="Empirical", guide="legend", labels=c("Empirical")) +
   scale_color_identity(name="Theoretical", guide="legend", breaks=c("#D95F02", "#7570B3"), labels=c("Signal", "Noise")) +
   scale_x_continuous(breaks=c(0., 8.)) +
@@ -452,7 +452,7 @@ p = ggplot(d %>% filter(sbar <= 5.), aes(x=sbar, y=S_hat, color=factor(A), group
          linetype=guide_legend(title="", order=2),
          shape=guide_legend(title="")) +
   geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3, size=2) +
-  annotation_custom(textGrob(label = "C", hjust = 2, gp = gpar(cex = 2),
+  annotation_custom(textGrob(label = "B", hjust = 2, gp = gpar(cex = 2),
       x=unit(0, "npc"), y=unit(0.95, "npc")),
       )+ 
   theme(legend.margin = margin(-0.25,0,-0.25,0, unit="cm"))
@@ -488,7 +488,7 @@ p = ggplot(d %>% filter(sbar <= 5.), aes(x=sbar, y=C, color=factor(A), group=A))
   scale_x_continuous(breaks=c(0, 2.5, 5)) +
   labs(x=parse(text="bar(s)"), y= parse(text="Overlap")) +
   guides(color=F) +
-  annotation_custom(textGrob(label = "D", hjust = 3, gp = gpar(cex = 2),
+  annotation_custom(textGrob(label = "C", hjust = 3, gp = gpar(cex = 2),
       x=unit(0, "npc"), y=unit(0.95, "npc")),
       ) 
 
@@ -911,7 +911,7 @@ avg_d = d %>%
   mutate(new_type = ifelse(type == "Theory", "Theory",
                             ifelse(aligned == "TRUE", "Empirical aligned", "Empirical random"))) %>%
   mutate(new_type = factor(new_type, levels=c("Theory", "Empirical aligned", "Empirical random")),
-         aligned=factor(aligned, levels=c("TRUE", "FALSE"), labels=c("Random", "TA")))
+         aligned=factor(aligned, levels=c("TRUE", "FALSE"), labels=c("TA", "Random")))
 ```
 
 ```{r}
@@ -1040,17 +1040,15 @@ for (A in As) {
 ```
 
 ```{r}
-p = ggplot(data=dapprox, aes(x=singular_value_multiplier, y=log(approx_opt_test_error), color=factor(A))) +
-  scale_color_manual(values=c("#A1D99B", "#41AB5D", "#238B45", "#00441B"), breaks=c(0.25,0.5,0.75,1.)) +
+p = ggplot(data=dapprox %>% filter(A==0.5), aes(x=singular_value_multiplier, y=log(approx_opt_test_error))) +
   labs(x = "SNR",
        y=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (TA)")) +
-  geom_line(aes(linetype=factor("Exact\ntheory")), size=2) +
-  geom_point(data=wide_min_d %>% mutate(A=factor(0.5)), aes(shape=factor("Approx.\ntheory"), x=as.numeric(levels(svm)[svm]), y=Aligned_avg_min_Eg, color=A), size=3) + 
+  geom_line(aes(linetype=factor("Approx.\ntheory")), size=2, color="#41AB5D") +
+  geom_point(data=wide_min_d %>% mutate(A=factor(0.5)), aes(shape=factor("Exact\ntheory"), x=as.numeric(levels(svm)[svm]), y=Aligned_avg_min_Eg), size=3, color="#41AB5D") + 
  # geom_errorbar(data=wide_min_d %>% mutate(A=factor(0.5)), aes(x=as.numeric(levels(svm)[svm]), y=Aligned_avg_min_Eg, ymin=Aligned_ci_Eg_lo, ymax=Aligned_ci_Eg_up), width=0.5) +
   geom_vline(xintercept=0.84, size=2, linetype=3, alpha=0.5) +
   scale_x_continuous(breaks=c(0.84, 10), labels=c( parse(text="sqrt(1/2, 4)"), "10")) +
-  guides(color=guide_legend(title="A", order=1),
-         linetype=guide_legend(title="", order=2),
+  guides(linetype=guide_legend(title="", order=2),
          shape=guide_legend(title="", order=3))+
   annotation_custom(textGrob(label = "E", hjust = 3, gp = gpar(cex = 2),
       x=unit(0, "npc"), y=unit(0.95, "npc")),
