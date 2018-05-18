@@ -211,3 +211,47 @@ def noisy_rank_k_correlated_dataset(num_examples, num_outputs_per, q, svm1, svm2
 
     return x_data, y_data, y_data_noisy
 
+
+def rank_k_correlated_nonlinear_dataset(num_examples, num_outputs_per, q, svm1, svm2, k=4):
+    def _leaky_relu(x):
+        ind = x < 0
+        x[ind] = 0.2 * x[ind] 
+        return x
+    assert(k < num_examples/2)
+    x_data = numpy.eye(num_examples)
+    singular_values = numpy.arange(k, 0, -1)/k
+    y_data = None
+    for i in range(k):
+        V = random_orthogonal(num_examples)
+        v1 = V[[1], :]
+        v2 = V[[2], :]
+
+        v2 = q * v1 + numpy.sqrt(1-q**2) * v2 
+        
+        V = numpy.concatenate([v1, v2], axis=0)
+
+        u1 = numpy.random.randn(num_outputs_per,  1)
+        u1 /= numpy.linalg.norm(u1)
+        u2 = numpy.random.randn(num_outputs_per,  1)
+        u2 /= numpy.linalg.norm(u2)
+
+        U = numpy.concatenate([numpy.concatenate([u1, numpy.zeros_like(u2)], axis=0), 
+                            numpy.concatenate([numpy.zeros_like(u1), u2], axis=0)],
+                           axis=1)
+
+        S = numpy.diag([svm1*singular_values[i], svm2*singular_values[i]])
+        if y_data is not None:
+            y_data += _leaky_relu(numpy.matmul(U, numpy.matmul(S, _leaky_relu(numpy.matmul(V, x_data)))).transpose())
+        else:
+            y_data =  _leaky_relu(numpy.matmul(U, numpy.matmul(S, _leaky_relu(numpy.matmul(V, x_data)))).transpose())
+
+
+    return x_data, y_data
+
+
+def noisy_rank_k_correlated_nonlinear_dataset(num_examples, num_outputs_per, q, svm1, svm2, noise_var, k=4):
+    x_data, y_data = rank_k_correlated_nonlinear_dataset(num_examples, num_outputs_per, q, svm1, svm2, k=k)
+    y_data_noisy = y_data + numpy.sqrt(noise_var) * numpy.random.standard_normal(numpy.shape(y_data))
+
+    return x_data, y_data, y_data_noisy
+
