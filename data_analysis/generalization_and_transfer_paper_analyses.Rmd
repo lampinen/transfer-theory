@@ -764,7 +764,7 @@ ggsave("../plots/paper/transfer_benefit_curves.png", width=10, height=10)
 
 
 ```{r}
-nruns = 1
+nruns = 10
 noise_vars = c(1.)
 output_sizes= c(50)
 svms = c(0.84, 2, 6, 10, 100)
@@ -812,7 +812,7 @@ avg_d = d %>%
 ```
 
 ```{r}
-ggplot(data=avg_d %>% filter(epoch %% 20==0, svm < 100, !aligned, mean_loss < 5.), aes(x=epoch, y= mean_loss, color=svm)) + 
+ggplot(data=avg_d %>% filter(epoch %% 20==0, svm < 100, !aligned, mean_loss < 5.), aes(x=epoch/1000, y= mean_loss, color=svm)) + 
   geom_point() +
   scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 10), labels=c( parse(text="sqrt(1/2, 4)"), "10      ")) +
   facet_wrap(~num_inputs) +
@@ -823,23 +823,10 @@ ggplot(data=avg_d %>% filter(epoch %% 20==0, svm < 100, !aligned, mean_loss < 5.
 ```
 
 ```{r}
-ggsave("../plots/paper/fewer_inputs.png")
+ggsave("../plots/paper/supp_fewer_inputs.png", width=5, height=5)
 ```
 
 
-```{r}
-ggplot(data=avg_d %>% filter(epoch %% 10==0, svm < 100, !aligned), aes(x=epoch, y= mean_loss, color=svm)) + 
-  geom_point() +
-  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 10), labels=c( parse(text="sqrt(1/2, 4)"), "10      ")) +
-  facet_wrap(~num_inputs) +
-  labs(y="Log testing loss") +
-  xlim(0, 500) +
-  ylim(-2.5,5)
-```
-
-```{r}
-ggsave("../plots/paper/fewer_inputs_zoomed_in.png")
-```
 
 # Figure 3
  

@@ -48,6 +48,7 @@ for run_i in xrange(num_runs):
                             num_input = num_examples
                             num_output = output_size
                             x_data, y_data, noisy_y_data = datasets.noisy_rank_one_correlated_dataset(num_examples, output_size, q, svm1=svm1, svm2=svm2, noise_var=scaled_noise_var) 
+                            x_data = x_data * num_inputs
 
 
                             noisy_y_data = noisy_y_data.transpose()
