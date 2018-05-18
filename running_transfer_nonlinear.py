@@ -10,11 +10,11 @@ PI = np.pi
 num_examples = 100
 output_size = 50
 num_domains = [2]
-qs = [0.5, 1.]#np.arange(0, 1.05, 0.1) 
+qs = np.arange(0, 1.05, 0.2) 
 svm1s = [0.84, 100, 3]
-svm2s = [0.84, 100, 3]
+svm2s = [0.84, 100, 3, 10, 30]
 sigma_z = 1.
-num_runs = 1 
+num_runs = 10 
 learning_rate = 0.001
 num_epochs = 5000
 batch_size = num_examples
@@ -38,13 +38,15 @@ for run_i in xrange(num_runs):
                     tf.set_random_seed(run_i)
                     print("Now running q: %.2f, num_dom: %i, run: %i" % (q, num_dom, run_i))
                     num_input = num_examples
-                    noise_var = sigma_z**2 / num_input
+                    noise_var = sigma_z**2 / num_examples
                     num_output = output_size * num_dom
-                    num_hidden = num_input 
+                    num_hidden = output_size 
                     if input_type == "one_hot":
-                        x_data, y_data, noisy_y_data = datasets.noisy_rank_k_correlated_dataset(num_examples, output_size, q=q, svm1=svm1, svm2=svm2, noise_var=noise_var, k=rank) 
+                        x_data, y_data, noisy_y_data = datasets.noisy_rank_k_correlated_nonlinear_dataset(num_examples, output_size, q=q, svm1=svm1, svm2=svm2, noise_var=noise_var, k=rank) 
                     else: 
                         raise ValueError("Not implemented")
+
+#                    x_data *= 10
 
 
                     
@@ -54,8 +56,8 @@ for run_i in xrange(num_runs):
                     W1 = tf.get_variable('W1', shape=[num_hidden, num_input], initializer=var_scale_init)
                     W2 = tf.get_variable('W2', shape=[num_output, num_hidden], initializer=var_scale_init)
                 
-                    hidden = tf.nn.relu(tf.matmul(W1, input_ph))
-                    output = tf.nn.relu(tf.matmul(W2, hidden))
+                    hidden = tf.nn.leaky_relu(tf.matmul(W1, input_ph))
+                    output = tf.nn.leaky_relu(tf.matmul(W2, hidden))
                     
                     loss = tf.nn.l2_loss(output - target_ph)
                     first_domain_loss = tf.nn.l2_loss(output[:output_size, :] - target_ph[:output_size, :])
@@ -65,8 +67,8 @@ for run_i in xrange(num_runs):
                     W11 = tf.get_variable('W11', shape=[num_hidden, num_input], initializer=var_scale_init)
                     W12 = tf.get_variable('W12', shape=[output_size, num_hidden], initializer=var_scale_init)
                 
-                    hidden1 = tf.nn.relu(tf.matmul(W11, input_ph))
-                    output1 = tf.nn.relu(tf.matmul(W12, hidden1))
+                    hidden1 = tf.nn.leaky_relu(tf.matmul(W11, input_ph))
+                    output1 = tf.nn.leaky_relu(tf.matmul(W12, hidden1))
                     
                     loss1 = tf.nn.l2_loss(output1 - target_ph[:output_size, :])
                     train1 = optimizer.minimize(loss1)	

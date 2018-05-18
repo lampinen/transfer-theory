@@ -10,6 +10,7 @@ library(tidyr)
 library(ggplot2)
 library(grid)
 library(gtable)
+library(latex2exp)
 ```
 
 ```{r}
@@ -1299,9 +1300,9 @@ ggsave("../plots/paper/fig_5b.png",plot=gt, width=3,height=3)
 nruns = 1
 noise_vars = c(0.01)
 output_sizes= c(50)
-qs = c(0., 0.1, 0.5, 1.)#seq(0, 1, 0.1)
+qs = seq(0, 1, 0.2)
 svm1s = c(0.84, 3, 100)
-svm2s = c(0.84, 3, 100)
+svm2s = c(0.84, 3, 10, 30, 100)
 alignments = c("False")
 d = data.frame()
 for (noise_var in noise_vars) {
@@ -1374,7 +1375,7 @@ p = ggplot(data=t1_benefit_d %>% filter(svm1==100), aes(x = q, y = avg_benefit, 
                        labels=c(parse(text="sqrt(A,4)"), 10, 100))  +
 #  scale_color_gradient(low="#770077", high="#00AA00", limits=c(0, 1))  +
   scale_x_continuous(breaks=c(0., 0.5, 1.)) +
-  scale_y_continuous(breaks=c(-1e-4, 0, 1e-4), labels=c(TeX("-10^{-4}"), 0, TeX("10^{-4}"))) +
+#  scale_y_continuous(breaks=c(-1e-4, 0, 1e-4), labels=c(TeX("-10^{-4}"), 0, TeX("10^{-4}"))) +
   geom_hline(yintercept=0, linetype=3, alpha=0.5) +
   guides(shape=guide_legend(title=""), color=guide_colorbar(title=TeX("\\bar{s}_B"), order=1))  +
   annotation_custom(textGrob(label = "C", hjust = 3.5, gp = gpar(cex = 2),
@@ -1387,7 +1388,7 @@ gt$layout$clip[gt$layout$name == "panel"] <- "off"
 grid.draw(gt) 
 ```
 ```{r}
-ggsave("../plots/paper/fig_7c.png",plot=gt, width=4,height=3)
+ggsave("../plots/paper/fig_7c.png",plot=gt, width=4.5,height=3)
 ```
 
 ```{r}
@@ -1442,4 +1443,64 @@ grid.draw(gt)
 ```
 ```{r}
 ggsave("../plots/paper/fig_7b.png",plot=gt, width=3,height=3)
+```
+
+
+# Supp - inputs don't matter
+
+```{r}
+nruns = 10
+noise_vars = c(0., 0.025, 0.05, 0.1, 0.2)
+output_sizes= c(10, 50, 100, 200, 400)
+input_types = c("one_hot", "ortho", "gauss")
+d = data.frame()
+for (noise_var in noise_vars) {
+  for (output_size in output_sizes) {
+    for (input_type in input_types) {
+      for (run in 0:(nruns-1)) { 
+        if (input_type == "one_hot") {
+          this_d = read.csv(sprintf("../single_generalization_results/noise_var_%.2f_output_size_%i_run_%i.csv", noise_var, output_size, run), header=T)
+        } else {
+          this_d = read.csv(sprintf("../single_generalization_%s_inputs_results/noise_var_%.2f_output_size_%i_run_%i.csv", input_type, noise_var, output_size, run), header=T)
+        }
+        this_d = this_d %>% 
+          mutate(noise_var=noise_var, output_size=output_size, run=run, input_type=input_type)
+        d = bind_rows(d, this_d)
+      }
+    }
+  }
+}
+```
+
+```{r}
+d = d %>%
+  mutate(output_size=factor(output_size),
+         sigma_z=10 * sqrt(noise_var),
+         SNR=4/sigma_z,
+         input_type=factor(input_type, levels=c("one_hot", "gauss", "ortho"), labels=c("One-hot", "Random Gaussian", "Random orthonormal")),
+         noise_var=factor(noise_var),
+         log_loss = log(loss))
+```
+
+```{r}
+avg_d = d %>%
+  group_by(SNR, output_size, epoch, input_type) %>%
+  summarize(loss=mean(loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
+  mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n())) %>%
+  ungroup() %>%
+  mutate(SNR=ifelse(is.infinite(SNR), 10, SNR))
+```
+
+
+```{r}
+ggplot(avg_d %>% filter(output_size == 100, epoch %% 100 == 0), aes(x=epoch/1000, y=log_loss, color=SNR, shape=input_type, group=interaction(factor(SNR), input_type))) +
+  geom_point(size=1.5) +
+  scale_color_gradient(low="#0000FF", high="#FF0000") + 
+#  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
+  labs(x=TeX("$t/\\tau$"), y=TeX("$\\ln\\, \\epsilon_{test}$")) +
+  guides(color=guide_colorbar(title="SNR"), shape=guide_legend(title="Input type")) 
+```
+
+```{r}
+ggsave("../plots/paper/supp_input_types_dont_matter.png", width=6, height=4)
 ```
