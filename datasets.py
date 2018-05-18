@@ -134,7 +134,7 @@ def noisy_SVD_dataset_different_inputs(num_examples, num_outputs, num_nonempty=4
     if input_type == "orthogonal":
         x_data = random_orthogonal(len(y_data)) 
     elif input_type == "gaussian":
-        x_data = numpy.random.randn(num_examples, num_examples) 
+        x_data = numpy.random.randn(num_examples, num_examples) / numpy.sqrt(num_examples) 
     else:
         raise ValueError("Unknown input type!")
     return x_data, y_data, y_data_noisy, input_modes
