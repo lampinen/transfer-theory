@@ -139,6 +139,38 @@ def noisy_SVD_dataset_different_inputs(num_examples, num_outputs, num_nonempty=4
         raise ValueError("Unknown input type!")
     return x_data, y_data, y_data_noisy, input_modes
 
+def SVD_dataset_changing_p(num_examples, num_outputs, num_inputs, num_nonempty=4, singular_value_multiplier=1, input_type="orthogonal"):
+    """Like the shared input modes dataset, but only one domain, and number of inputs can change"""
+    input_modes = random_orthogonal(num_inputs)
+    strengths = singular_value_multiplier * numpy.array(range(num_nonempty, 0, -1) + [0.]* (num_inputs - num_nonempty))
+    
+    def _strengths_to_S(strengths, num_outputs=num_outputs):
+        if num_outputs > num_examples:
+            return numpy.concatenate((numpy.diag(strengths), numpy.zeros((num_outputs-len(strengths), num_inputs))), axis=0)
+        else:
+            return numpy.diag(strengths)[:num_outputs, :]
+
+    S = _strengths_to_S(strengths)
+
+    if input_type == "one-hot":
+        x_data = numpy.eye(num_inputs)[:, :num_examples]
+    elif input_type == "orthogonal":
+        if num_inputs < num_examples:
+                raise ValueError("Cannot have more examples than input dimensionality with orthogonal inputs")
+        x_data = random_orthogonal(num_inputs)[:, :num_examples] 
+    else:
+        x_data = numpy.random.randn(num_inputs, num_examples) / numpy.sqrt(num_examples) 
+    temp = numpy.matmul(input_modes, x_data)
+    temp = numpy.matmul(S, temp)
+    y_data = numpy.transpose(numpy.matmul(random_orthogonal(num_outputs), temp))
+    x_data = x_data.transpose()
+    return x_data, y_data, input_modes
+
+def noisy_SVD_dataset_changing_p(num_examples, num_outputs, num_inputs, num_nonempty=4, noise_var=0.1, singular_value_multiplier=1, input_type="orthogonal"):
+    x_data, y_data, input_modes = SVD_dataset_changing_p(num_examples, num_outputs, num_inputs, num_nonempty=num_nonempty, singular_value_multiplier=singular_value_multiplier, input_type=input_type)
+    y_data_noisy = y_data + numpy.sqrt(noise_var) * numpy.random.standard_normal(numpy.shape(y_data))
+    return x_data, y_data, y_data_noisy, input_modes
+
 def rank_one_correlated_dataset(num_examples, num_outputs_per, q, svm1, svm2):
     V = random_orthogonal(num_examples)
     v1 = V[[1], :]
