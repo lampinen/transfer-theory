@@ -102,6 +102,7 @@ def noisy_shared_input_modes_dataset_different_inputs(num_examples, num_outputs,
     if input_type == "orthogonal":
         x_data = random_orthogonal(len(y_data)) 
     elif input_type == "gaussian":
+        raise ValueError("Improperly implemented")
         x_data = numpy.random.randn(num_examples, num_examples) 
     else:
         raise ValueError("Unknown input type!")
@@ -134,6 +135,7 @@ def noisy_SVD_dataset_different_inputs(num_examples, num_outputs, num_nonempty=4
     if input_type == "orthogonal":
         x_data = random_orthogonal(len(y_data)) 
     elif input_type == "gaussian":
+        raise ValueError("Improperly implemented")
         x_data = numpy.random.randn(num_examples, num_examples) / numpy.sqrt(num_examples) 
     else:
         raise ValueError("Unknown input type!")
