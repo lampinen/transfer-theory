@@ -22,7 +22,6 @@ singular_value_multiplier = 10
 N_2_bar = 1 # rank of teacher
 singular_value_multipliers = [1., 2., 4., 8.]
 num_hidden = 100#num_examples
-full_test = True #
 
 ###
 #var_scale_init = tf.contrib.layers.variance_scaling_initializer(factor=2*np.sqrt(epsilon), mode='FAN_AVG')
@@ -45,10 +44,13 @@ for input_type in input_types:
                             num_output = output_size
                             A = float(num_output)/num_input # aspect ratio
 
-                            if full_test and num_examples < num_input:
-                                x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset_changing_p(num_input, output_size, num_input, noise_var=scaled_noise_var, input_type=input_type, singular_value_multiplier=singular_value_multiplier, num_nonempty=N_2_bar) 
+                            if input_type == "gaussian":
+                                x_data, y_data, noisy_y_data, x_data_orth, y_data_orth, input_modes = datasets.noisy_SVD_dataset_changing_p(num_input, output_size, num_input, noise_var=scaled_noise_var, input_type=input_type, singular_value_multiplier=singular_value_multiplier, num_nonempty=N_2_bar) 
+                                x_data_orth = x_data_orth.transpose()
+                                y_data_orth = y_data_orth.transpose()
+                                y_data_orth_frob_squared = np.sum(y_data_orth**2)
                             else:
-                                x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset_changing_p(num_examples, output_size, num_input, noise_var=scaled_noise_var, input_type=input_type, singular_value_multiplier=singular_value_multiplier, num_nonempty=N_2_bar) 
+                                x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset_changing_p(num_input, output_size, num_input, noise_var=scaled_noise_var, input_type=input_type, singular_value_multiplier=singular_value_multiplier, num_nonempty=N_2_bar) 
                             
 
                             x_data = x_data.transpose()
@@ -109,10 +111,16 @@ for input_type in input_types:
                                 W32 += learning_rate * np.matmul(l, W21.transpose()) 
                                 
 
-                            def evaluate():
-                                global W21, W32
-                                curr_loss = np.sum(np.square(y_data - np.matmul(np.matmul(W32, W21), x_data)))
-                                return curr_loss/y_data_frob_squared # appropriate normalization
+                            if input_type == "gaussian":
+                                def evaluate():
+                                    global W21, W32
+                                    curr_loss = np.sum(np.square(y_data_orth - np.matmul(np.matmul(W32, W21), x_data_orth)))
+                                    return curr_loss/y_data_orth_frob_squared # appropriate normalization
+                            else:
+                                def evaluate():
+                                    global W21, W32
+                                    curr_loss = np.sum(np.square(y_data - np.matmul(np.matmul(W32, W21), x_data)))
+                                    return curr_loss/y_data_frob_squared # appropriate normalization
 
                             def evaluate_train():
                                 global W21, W32
