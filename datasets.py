@@ -170,7 +170,7 @@ def SVD_dataset_changing_p(num_examples, num_outputs, num_inputs, num_nonempty=4
     x_data = x_data.transpose()
 
     if input_type == "gaussian":
-        x_data_orth = random_orthogonal(num_inputs)[:, :num_examples] 
+        x_data_orth = random_orthogonal(num_inputs)
         temp = numpy.matmul(input_modes, x_data_orth)
         temp = numpy.matmul(S, temp)
         y_data_orth = numpy.transpose(numpy.matmul(random_orthogonal(num_outputs), temp))
