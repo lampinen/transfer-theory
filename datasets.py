@@ -136,7 +136,7 @@ def noisy_SVD_dataset_different_inputs(num_examples, num_outputs, num_nonempty=4
         x_data = random_orthogonal(len(y_data)) 
     elif input_type == "gaussian":
         raise ValueError("Improperly implemented")
-        x_data = numpy.random.randn(num_examples, num_examples) / numpy.sqrt(num_examples) 
+        x_data = numpy.random.randn(num_examples, num_examples) / numpy.sqrt(num_inputs) 
     else:
         raise ValueError("Unknown input type!")
     return x_data, y_data, y_data_noisy, input_modes
@@ -144,6 +144,7 @@ def noisy_SVD_dataset_different_inputs(num_examples, num_outputs, num_nonempty=4
 def SVD_dataset_changing_p(num_examples, num_outputs, num_inputs, num_nonempty=4, singular_value_multiplier=1, input_type="orthogonal"):
     """Like the shared input modes dataset, but only one domain, and number of inputs can change"""
     input_modes = random_orthogonal(num_inputs)
+    output_modes = random_orthogonal(num_outputs)
     strengths = singular_value_multiplier * numpy.array(range(num_nonempty, 0, -1) + [0.]* (num_inputs - num_nonempty))
     
     def _strengths_to_S(strengths, num_outputs=num_outputs):
@@ -161,19 +162,19 @@ def SVD_dataset_changing_p(num_examples, num_outputs, num_inputs, num_nonempty=4
                 raise ValueError("Cannot have more examples than input dimensionality with orthogonal inputs")
         x_data = random_orthogonal(num_inputs)[:, :num_examples] 
     elif input_type == "gaussian":
-        x_data = numpy.random.randn(num_inputs, num_examples) / numpy.sqrt(num_examples) 
+        x_data = numpy.random.randn(num_inputs, num_examples) / numpy.sqrt(num_inputs) 
     else:
         raise ValueError("Unknown input type")
     temp = numpy.matmul(input_modes, x_data)
     temp = numpy.matmul(S, temp)
-    y_data = numpy.transpose(numpy.matmul(random_orthogonal(num_outputs), temp))
+    y_data = numpy.transpose(numpy.matmul(output_modes, temp))
     x_data = x_data.transpose()
 
     if input_type == "gaussian":
         x_data_orth = random_orthogonal(num_inputs)
         temp = numpy.matmul(input_modes, x_data_orth)
         temp = numpy.matmul(S, temp)
-        y_data_orth = numpy.transpose(numpy.matmul(random_orthogonal(num_outputs), temp))
+        y_data_orth = numpy.transpose(numpy.matmul(output_modes, temp))
         x_data_orth = x_data_orth.transpose()
         return x_data, y_data, x_data_orth, y_data_orth, input_modes
     else:

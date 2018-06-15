@@ -8,7 +8,7 @@ from theory_functions import *
 num_examples = 100
 output_sizes = [100] 
 sigma_zs = [1]
-ps = [300, 200, 100]
+ps = [800, 400, 200, 100]
 #num_runs = 10 
 learning_rate = 0.001
 num_epochs = 10000
@@ -60,7 +60,7 @@ for p in ps:
 
                 noise_var = sigma_z**2
 
-                singular_values = [s * (float(p)/N_1) * singular_value_multiplier for s in base_singular_values]
+                singular_values = [s * np.sqrt(float(p)/N_1) * singular_value_multiplier for s in base_singular_values]
 
                 y_frob_norm_sq = np.sum([s**2 for s in singular_values])
 

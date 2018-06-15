@@ -21,7 +21,7 @@ theme_set(theme_bw(base_size = 15) +
 # P <= N_1
 
 ```{r}
-nruns = 10
+nruns = 1
 num_exampless = seq(10, 100, 10)
 noise_vars = c(1.)
 output_sizes = c(100)
@@ -133,7 +133,7 @@ ggsave("../plots/p_less_min_gens.png")
 
 ```{r}
 nruns = 1
-num_exampless =c(100, 200, 300)
+num_exampless =c(100, 200, 400, 800)
 noise_vars = c(1.)
 output_sizes = c(100)
 input_sizes= c(100)
@@ -224,7 +224,7 @@ min_d = d %>%
 ```{r}
 ggplot(data=min_d, aes(x=num_examples, y=gaussian_min_loss, color=SNR, group=SNR)) +
   scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(1, 10), breaks=c(1, 10))  +
-  geom_errorbar(aes(ymin=gaussian_ml_ci_low, ymax=gaussian_ml_ci_hi)) +
+#  geom_errorbar(aes(ymin=gaussian_ml_ci_low, ymax=gaussian_ml_ci_hi), width=10) +
   labs(x="Number of examples",
        y="Min log generalization error (Gaussian)") +
   geom_point(size=2) +

@@ -6,12 +6,12 @@ import numpy as np
 import datasets
 from orthogonal_matrices import random_orthogonal
 ### Parameters
-num_exampless = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10]
+num_exampless = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10] #[800, 400, 200, 100] #
 input_size = 100
 output_sizes = [100] #[10, 50, 100, 200, 400]
 sigma_zs = [1] 
-num_runs = 10
-learning_rate = 0.001
+num_runs = 1
+base_learning_rate = 0.001
 num_epochs = 10000
 filename_prefix = "p_diff_results/"
 input_types = ["gaussian", "orthogonal"]
@@ -20,7 +20,7 @@ save_every = 5
 epsilon = 1e-5
 singular_value_multiplier = 10 
 N_2_bar = 1 # rank of teacher
-singular_value_multipliers = [1., 2., 4., 8.]
+singular_value_multipliers = [8., 1., 2., 4.]
 num_hidden = 100#num_examples
 
 ###
@@ -29,6 +29,7 @@ num_hidden = 100#num_examples
 for input_type in input_types:
     for num_examples in num_exampless:
         batch_size = num_examples
+        learning_rate = base_learning_rate # hacky
         for run_i in xrange(num_runs):
             for sigma_z in sigma_zs:
                 noise_var = sigma_z**2
@@ -45,7 +46,7 @@ for input_type in input_types:
                             A = float(num_output)/num_input # aspect ratio
 
                             if input_type == "gaussian":
-                                x_data, y_data, noisy_y_data, x_data_orth, y_data_orth, input_modes = datasets.noisy_SVD_dataset_changing_p(num_input, output_size, num_input, noise_var=scaled_noise_var, input_type=input_type, singular_value_multiplier=singular_value_multiplier, num_nonempty=N_2_bar) 
+                                x_data, y_data, noisy_y_data, x_data_orth, y_data_orth, input_modes = datasets.noisy_SVD_dataset_changing_p(num_examples, output_size, num_input, noise_var=scaled_noise_var, input_type=input_type, singular_value_multiplier=singular_value_multiplier, num_nonempty=N_2_bar) 
                                 x_data_orth = x_data_orth.transpose()
                                 y_data_orth = y_data_orth.transpose()
                                 y_data_orth_frob_squared = np.sum(y_data_orth**2)
@@ -95,7 +96,7 @@ for input_type in input_types:
                                     W32 = np.sqrt(epsilon) * np.concatenate([random_orthogonal(num_output),
                                                                              random_orthogonal(num_output)[:, :(num_hidden-num_output)]], axis=1) 
                         
-                            if full_test and num_examples < num_input:
+                            if num_examples < num_input:
                                 x_data_train = x_data[:, :num_examples]
                                 sigma_31 = np.matmul(noisy_y_data[:, :num_examples], x_data_train.transpose())
                                 sigma_11 = np.matmul(x_data_train, x_data_train.transpose())
