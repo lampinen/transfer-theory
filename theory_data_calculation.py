@@ -8,7 +8,7 @@ from theory_functions import *
 num_examples = 100
 output_sizes = [100] 
 sigma_zs = [1]
-ps = [800, 400, 200, 100]
+ps = [50, 10]#, 800, 400, 200, 100, 90, 80, 70, 60, 40, 30, 20]
 #num_runs = 10 
 learning_rate = 0.001
 num_epochs = 10000
@@ -94,7 +94,7 @@ for p in ps:
 
                         sot = np.array(s_of_t(s_hats, epoch_i, epsilon, tau))
                         
-                        generr = (min(N_2, N_3)-len(singular_values))*numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-np.sqrt(A), 1+np.sqrt(A), A=A) # number of points in integral estimate is constant in sigma_z 
+                        generr = (min(p, net_rank)-len(singular_values))*numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-np.sqrt(A), 1+np.sqrt(A), A=A) # number of points in integral estimate is constant in sigma_z 
                         generr += np.sum(sot**2) 
                         generr += y_frob_norm_sq
                         generr -= 2 * np.sum(sot * s_bar * noise_multiplier) 

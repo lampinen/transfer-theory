@@ -6,11 +6,11 @@ import numpy as np
 import datasets
 from orthogonal_matrices import random_orthogonal
 ### Parameters
-num_exampless = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10] #[800, 400, 200, 100] #
+num_exampless = [100, 90, 80, 70, 60, 40, 30, 20, 50, 10, 800, 400, 200] #
 input_size = 100
 output_sizes = [100] #[10, 50, 100, 200, 400]
 sigma_zs = [1] 
-num_runs = 1
+num_runs = 10
 base_learning_rate = 0.001
 num_epochs = 10000
 filename_prefix = "p_diff_results/"
@@ -24,7 +24,6 @@ singular_value_multipliers = [8., 1., 2., 4.]
 num_hidden = 100#num_examples
 
 ###
-#var_scale_init = tf.contrib.layers.variance_scaling_initializer(factor=2*np.sqrt(epsilon), mode='FAN_AVG')
 
 for input_type in input_types:
     for num_examples in num_exampless:
@@ -45,18 +44,16 @@ for input_type in input_types:
                             num_output = output_size
                             A = float(num_output)/num_input # aspect ratio
 
-                            if input_type == "gaussian":
-                                x_data, y_data, noisy_y_data, x_data_orth, y_data_orth, input_modes = datasets.noisy_SVD_dataset_changing_p(num_examples, output_size, num_input, noise_var=scaled_noise_var, input_type=input_type, singular_value_multiplier=singular_value_multiplier, num_nonempty=N_2_bar) 
-                                x_data_orth = x_data_orth.transpose()
-                                y_data_orth = y_data_orth.transpose()
-                                y_data_orth_frob_squared = np.sum(y_data_orth**2)
-                            else:
-                                x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset_changing_p(num_input, output_size, num_input, noise_var=scaled_noise_var, input_type=input_type, singular_value_multiplier=singular_value_multiplier, num_nonempty=N_2_bar) 
+                            x_data, y_data, noisy_y_data, x_data_orth, y_data_orth, input_modes = datasets.noisy_SVD_dataset_changing_p(num_examples, output_size, num_input, noise_var=scaled_noise_var, input_type=input_type, singular_value_multiplier=singular_value_multiplier, num_nonempty=N_2_bar) 
+                            x_data_orth = x_data_orth.transpose()
+                            y_data_orth = y_data_orth.transpose()
+                            y_data_orth_frob_squared = np.sum(y_data_orth**2)
                             
 
                             x_data = x_data.transpose()
                             noisy_y_data = noisy_y_data.transpose()
                             y_data = y_data.transpose()
+
 
                             y_data_frob_squared = np.sum(y_data**2)
                             noisy_y_data_frob_squared = np.sum(noisy_y_data**2)
@@ -111,17 +108,10 @@ for input_type in input_types:
                                 W21 += learning_rate * np.matmul(W32.transpose(), l) 
                                 W32 += learning_rate * np.matmul(l, W21.transpose()) 
                                 
-
-                            if input_type == "gaussian":
-                                def evaluate():
-                                    global W21, W32
-                                    curr_loss = np.sum(np.square(y_data_orth - np.matmul(np.matmul(W32, W21), x_data_orth)))
-                                    return curr_loss/y_data_orth_frob_squared # appropriate normalization
-                            else:
-                                def evaluate():
-                                    global W21, W32
-                                    curr_loss = np.sum(np.square(y_data - np.matmul(np.matmul(W32, W21), x_data)))
-                                    return curr_loss/y_data_frob_squared # appropriate normalization
+                            def evaluate():
+                                global W21, W32
+                                curr_loss = np.sum(np.square(y_data_orth - np.matmul(np.matmul(W32, W21), x_data_orth)))
+                                return curr_loss/y_data_orth_frob_squared # appropriate normalization
 
                             def evaluate_train():
                                 global W21, W32

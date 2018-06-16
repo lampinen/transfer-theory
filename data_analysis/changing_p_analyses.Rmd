@@ -18,11 +18,10 @@ theme_set(theme_bw(base_size = 15) +
 ```
 
 
-# P <= N_1
 
 ```{r}
-nruns = 1
-num_exampless = seq(10, 100, 10)
+nruns = 10
+num_exampless = c(seq(10, 100, 10), 200, 400, 800)
 noise_vars = c(1.)
 output_sizes = c(100)
 input_sizes= c(100)
@@ -63,7 +62,6 @@ for (noise_var in noise_vars) {
 d = d %>%
   mutate(output_size=factor(output_size),
          input_size=factor(input_size),
-         num_examples=factor(num_examples),
          sigma_z=(sqrt(noise_var)),
          SNR=svm/sigma_z,
          input_type=factor(input_type),
@@ -80,8 +78,9 @@ avg_d = d %>%
 ```
 
 
+# P <= N_1
 ```{r}
-ggplot(avg_d %>% filter(epoch %% 100 == 0, num_examples %in% c(10, 50, 100), type=="empirical"), aes(x=epoch/1000, y=log_loss, color=SNR, shape=input_type, group=interaction(factor(SNR), input_type))) +
+ggplot(avg_d %>% filter(epoch %% 100 == 0, num_examples %in% c(10, 50, 100), type=="empirical"), aes(x=(epoch/1000), y=log_loss, color=SNR, shape=input_type, group=interaction(factor(SNR), input_type))) +
   geom_point(size=1.5) +
   geom_line(data=avg_d %>% filter(num_examples %in% c(10, 50, 100), type=="theory")) +
   scale_color_gradient(low="#0000FF", high="#FF0000") + 
@@ -97,11 +96,11 @@ ggsave("../plots/p_less.png", width=6, height=4)
 
 ```{r}
 min_d = d %>%
-  filter(type=="empirical") %>%
-  group_by(SNR, svm, input_size, output_size, num_examples, input_type, run) %>%
+  unite(this_type, input_type, type,  sep=".") %>%
+  group_by(SNR, svm, input_size, output_size, num_examples, this_type, run) %>%
   summarize(min_loss=min(loss)) %>%
   ungroup() %>%
-  group_by(SNR, svm, input_size, output_size, num_examples, input_type) %>%
+  group_by(SNR, svm, input_size, output_size, num_examples, this_type) %>%
   summarize(se_ml=sd(min_loss)/sqrt(n()),
             min_loss=mean(min_loss),
             ml_ci_low=min_loss-1.96*se_ml,
@@ -109,90 +108,34 @@ min_d = d %>%
   ungroup() %>%
   select(-se_ml) %>%
   gather(statistic, value, min_loss, ml_ci_low, ml_ci_hi) %>%
-  unite(blah, input_type, statistic) %>%
-  spread(blah, value)
+  unite(blah, this_type, statistic, sep=".") %>%
+  spread(blah, value) %>%
+  gather(measurement, value, gaussian.empirical.min_loss:orthogonal.theory.ml_ci_low) %>%
+  separate(measurement, c("input_type", "theory_or_empirical", "metric"), sep="\\.") %>%
+  spread(metric, value)
 ```
 
 ```{r}
-ggplot(data=min_d, aes(x=orthogonal_min_loss, y=gaussian_min_loss, color=SNR)) +
-  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(1, 10), breaks=c(1, 10))  +
-  geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3) +
-  geom_errorbar(aes(ymin=gaussian_ml_ci_low, ymax=gaussian_ml_ci_hi)) +
-  geom_errorbarh(aes(xmin=orthogonal_ml_ci_low, xmax=orthogonal_ml_ci_hi)) +
-  labs(x="Min log generalization error (Orthogonal)",
-       y="Min log generalization error (Gaussian)") +
-  geom_point(size=2) +
-  facet_wrap( ~ num_examples)
+#ggplot(data=min_d, aes(x=orthogonal_min_loss, y=gaussian_min_loss, color=SNR)) +
+#  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(1, 10), breaks=c(1, 10))  +
+#  geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3) +
+#  geom_errorbar(aes(ymin=gaussian_ml_ci_low, ymax=gaussian_ml_ci_hi)) +
+#  geom_errorbarh(aes(xmin=orthogonal_ml_ci_low, xmax=orthogonal_ml_ci_hi)) +
+#  labs(x="Min log generalization error (Orthogonal)",
+#       y="Min log generalization error (Gaussian)") +
+#  geom_point(size=2) +
+#  facet_wrap( ~ num_examples)
 ```
 
 ```{r}
-ggsave("../plots/p_less_min_gens.png")
-```
-
-# P >= N_1
-
-```{r}
-nruns = 1
-num_exampless =c(100, 200, 400, 800)
-noise_vars = c(1.)
-output_sizes = c(100)
-input_sizes= c(100)
-svms = c(1, 2, 4, 8)
-input_types = c("gaussian")
-d = data.frame()
-for (noise_var in noise_vars) {
-  for (output_size in output_sizes) {
-    for (input_size in input_sizes) {
-      for (num_examples in num_exampless) {
-        for (input_type in input_types) {
-          for (svm in svms) {
-            for (aligned in c("False")) {
-              for (run in 0:(nruns-1)) { 
-                this_d = read.csv(sprintf("../p_diff_results/noise_var_%.2f_output_size_%i_input_size_%i_num_examples_%i_input_type_%s_svm_%f_aligned_%s_run_%i.csv", noise_var, output_size, input_size, num_examples, input_type, svm, aligned, run), header=T)
-                this_d = this_d %>% 
-                  mutate(noise_var=noise_var, output_size=output_size, run=run, input_type=input_type, input_size=input_size, num_examples=num_examples, aligned=aligned, svm=svm, type="empirical")
-                d = bind_rows(d, this_d)
-              }
-              if (file.exists(sprintf("../p_diff_results/noise_var_%.2f_p_%i_svm_%f_theory_track.csv", noise_var, num_examples, svm))) {
-                this_d = read.csv(sprintf("../p_diff_results/noise_var_%.2f_p_%i_svm_%f_theory_track.csv", noise_var, num_examples, svm), header=T)
-                this_d = this_d %>% 
-                  rename(loss=generalization_error, train_loss=train_error) %>%
-                  mutate(noise_var=noise_var, output_size=output_size, run=NA, input_type=input_type, input_size=input_size, num_examples=num_examples, aligned=aligned, svm=svm, type="theory")
-                d = bind_rows(d, this_d)
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-```{r}
-d = d %>%
-  mutate(output_size=factor(output_size),
-         input_size=factor(input_size),
-         sigma_z=(sqrt(noise_var)),
-         SNR=svm/sigma_z,
-         input_type=factor(input_type),
-         noise_var=factor(noise_var),
-         log_loss = log(loss))
-```
-
-```{r}
-avg_d = d %>%
-  group_by(SNR, svm, type, input_size, output_size, num_examples, epoch, input_type) %>%
-  summarize(loss=mean(loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
-  mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n())) %>%
-  ungroup() 
+#ggsave("../plots/p_less_min_gens.png")
 ```
 
 
 ```{r}
-ggplot(avg_d %>% filter(epoch %% 100 == 0, type=="empirical"), aes(x=epoch/1000, y=log_loss, color=SNR, shape=input_type, group=interaction(factor(SNR), input_type))) +
+ggplot(avg_d %>% filter(epoch %% 100 == 0,  num_examples >= 100, type=="empirical"), aes(x=ifelse(type=="theory", sqrt(100/num_examples) *epoch/1000, epoch/1000), y=log_loss, color=SNR, shape=input_type, group=interaction(factor(SNR), input_type))) +
   geom_point(size=1.5) +
-  geom_line(data=avg_d %>% filter(type=="theory")) +
+  geom_line(data=avg_d %>% filter( num_examples >= 100, type=="theory")) +
   scale_color_gradient(low="#0000FF", high="#FF0000") + 
 #  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
   labs(x=TeX("$t/\\tau$"), y=TeX("$\\ln\\, \\epsilon_{test}$")) +
@@ -201,36 +144,21 @@ ggplot(avg_d %>% filter(epoch %% 100 == 0, type=="empirical"), aes(x=epoch/1000,
 ```
 
 ```{r}
-ggsave("../plots/p_greater.png", width=6, height=4)
+ggsave("../plots/p_greater.png", width=8, height=4)
 ```
 
 ```{r}
-min_d = d %>%
-  group_by(SNR, svm, input_size, output_size, num_examples, input_type, run) %>%
-  summarize(min_loss=min(loss)) %>%
-  ungroup() %>%
-  group_by(SNR, svm, input_size, output_size, num_examples, input_type) %>%
-  summarize(se_ml=sd(min_loss)/sqrt(n()),
-            min_loss=mean(min_loss),
-            ml_ci_low=min_loss-1.96*se_ml,
-            ml_ci_hi=min_loss+1.96*se_ml) %>%
-  ungroup() %>%
-  select(-se_ml) %>%
-  gather(statistic, value, min_loss, ml_ci_low, ml_ci_hi) %>%
-  unite(blah, input_type, statistic) %>%
-  spread(blah, value)
-```
-
-```{r}
-ggplot(data=min_d, aes(x=num_examples, y=gaussian_min_loss, color=SNR, group=SNR)) +
-  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(1, 10), breaks=c(1, 10))  +
+ggplot(data=min_d %>% filter(theory_or_empirical == "empirical"), aes(x=log(num_examples/100), y=min_loss, color=input_type, shape=input_type)) +
 #  geom_errorbar(aes(ymin=gaussian_ml_ci_low, ymax=gaussian_ml_ci_hi), width=10) +
-  labs(x="Number of examples",
+  labs(x="Log P/N_1",
        y="Min log generalization error (Gaussian)") +
-  geom_point(size=2) +
-  geom_line(size=1.2)
+  geom_point(size=3) +
+  geom_line(data=min_d %>% filter(theory_or_empirical == "theory", input_type=="orthogonal"), aes(shape=NA, color=NA, group=SNR), color="black", size=1.2) +
+  facet_wrap(~ SNR)
 ```
 
 ```{r}
-ggsave("../plots/p_greater_min_gens.png")
+ggsave("../plots/min_gen_comparison.png", width=7, height=5)
 ```
+
+
