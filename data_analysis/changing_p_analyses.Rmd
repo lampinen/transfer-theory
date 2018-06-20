@@ -21,11 +21,11 @@ theme_set(theme_bw(base_size = 15) +
 
 ```{r}
 nruns = 10
-num_exampless = c(seq(10, 100, 10), 200, 400, 800)
+num_exampless = c(seq(10, 100, 10))#, 200, 400, 800)
 noise_vars = c(1.)
 output_sizes = c(100)
 input_sizes= c(100)
-svms = c(1, 2, 4, 8)
+svms = 1:8
 input_types = c("orthogonal", "gaussian")
 d = data.frame()
 for (noise_var in noise_vars) {
@@ -161,4 +161,14 @@ ggplot(data=min_d %>% filter(theory_or_empirical == "empirical"), aes(x=log(num_
 ggsave("../plots/min_gen_comparison.png", width=7, height=5)
 ```
 
+```{r}
+ggplot(data=min_d %>% filter(theory_or_empirical == "empirical", num_examples <= 100, input_type=="orthogonal"), aes(x=(num_examples/100), y=SNR, fill=min_loss)) + 
+  geom_tile() +
+  labs(x="P/N1", y="SNR") +
+  guides(fill=guide_colorbar(title=TeX("$\\min \\, \\ln\\, \\epsilon_{test}$")))
+```
 
+
+```{r}
+ggsave("../plots/min_gen_heatmap.png", width=7, height=5)
+```
