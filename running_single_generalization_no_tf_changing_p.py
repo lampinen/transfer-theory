@@ -6,21 +6,21 @@ import numpy as np
 import datasets
 from orthogonal_matrices import random_orthogonal
 ### Parameters
-num_exampless = [100, 90, 80, 70, 60, 40, 30, 20, 50, 10, 800, 400, 200] #
+num_exampless = [400, 100] #, 90, 80, 70, 60, 40, 30, 20, 50, 10]#, 
 input_size = 100
-output_sizes = [100] #[10, 50, 100, 200, 400]
+output_sizes = [50] #[10, 50, 100, 200, 400]
 sigma_zs = [1] 
 num_runs = 10
 base_learning_rate = 0.001
 num_epochs = 10000
 filename_prefix = "p_diff_results/"
-input_types = ["gaussian", "orthogonal"]
+input_types = ["orthogonal"]
 track_SVD = False
 save_every = 5
 epsilon = 1e-5
 singular_value_multiplier = 10 
 N_2_bar = 1 # rank of teacher
-singular_value_multipliers = [8., 1., 2., 4.]
+singular_value_multipliers = [1., 2., 4., 8.]
 num_hidden = 100#num_examples
 
 ###

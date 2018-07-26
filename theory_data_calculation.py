@@ -6,29 +6,31 @@ import numpy as np
 from theory_functions import *
 ### Parameters
 num_examples = 100
-output_sizes = [100] 
-sigma_zs = [1]
-ps = [50, 10]#, 800, 400, 200, 100, 90, 80, 70, 60, 40, 30, 20]
+output_sizes = [50] 
+sigma_zs = [1] 
+ps = [100]#, 800, 400, 200, 100, 90, 80, 70, 60, 40, 30, 20]
 #num_runs = 10 
 learning_rate = 0.001
-num_epochs = 10000
+num_epochs = 150000
 #batch_size = num_examples
-filename_prefix = "p_diff_results/"
+filename_prefix = "deep_single_generalization_paper_results/"
 #input_type = "one_hot" # one_hot, orthogonal, gaussian
 #track_SVD = True
-save_every = 5
+save_every = 10
 singular_value_multiplier = 10
 epsilon = 1e-5
 delta_x = 0.001 # for the numerical integration of M-P dist
 N_2_bar = 1 # number of teacher modes
-num_hidden = 100
-singular_value_multipliers = [1., 2., 4., 8.] #np.arange(0., 10., 0.05) #[0.84, 2., 4., 6., 8., 10.] #
+num_hidden = 50
+num_hidden_layers = 3 # deeper is only supported for num_hidden_layers = 3, rank 1 and sigma z = 1 right now, not because of theoretical limitations, just to save me time
+inverse_theory_num_points = 1000
+singular_value_multipliers = [10., 0.84, 2., 4., 6., 8.] #[1., 2., 4., 8.] #np.arange(0., 10., 0.05) #
 
 min_gen_approx = False # if true, only approximate min gen by assuming 1 or 0 learning of modes
 ### 
 
+tau = 1./learning_rate
 base_singular_values = [float(i) for i in range(N_2_bar, 0, -1)] 
-
 
 def numeric_integral_mp(delta_x, t, x_min, x_max, A=1):
     x = np.arange(x_min, x_max, delta_x)
@@ -52,6 +54,33 @@ for p in ps:
 
         for sigma_z in sigma_zs:
             assert(sigma_z == 1) # for now code doesn't work with other sigma_z
+            if num_hidden_layers > 1:
+                #prepare inverse theory solutions for MP dist integral
+                x_min, x_max, this_delta_x = 1-np.sqrt(A), 1+np.sqrt(A), delta_x*sigma_z
+                mp_x = np.arange(x_min, x_max, this_delta_x)
+                deep_mp_sots = {}
+
+                for x in mp_x:
+                    points = np.arange(epsilon, x, (x - epsilon)/inverse_theory_num_points)
+                    starting_point =   np.arctanh(np.sqrt(epsilon/x))/(2*x**1.5) - 0.5/(x*np.sqrt(epsilon))
+                    times = tau* (np.arctanh(np.sqrt(points/x))/(2*x**1.5) - 0.5/(x*np.sqrt(points)) - starting_point)
+
+                    sot = []
+                    for epoch_i in xrange(1, num_epochs + 1, save_every):
+                        this_index = np.argmin(np.abs(times-epoch_i)) # find closest time point to this
+                        sot.append(points[this_index]) # use s value from that time point
+                    deep_mp_sots[x] = sot
+
+                def numeric_integral_mp_deep(delta_x, t, x_min, x_max, A=1):
+                    x = np.arange(x_min, x_max, delta_x)
+                    these_s_of_t = [deep_mp_sots[this_x][(t-1)//save_every] for this_x in x]
+                    return np.sum(mp(x, sigma_z, A=A)* (np.array(these_s_of_t)**2 )* delta_x)
+
+                def train_numeric_integral_mp_deep(delta_x, t, x_min, x_max, A=1):
+                    x = np.arange(x_min, x_max, delta_x)
+                    these_s_of_t = [deep_mp_sots[this_x][(t-1)//save_every] for this_x in x]
+                    return np.sum(mp(x, sigma_z, A=A)* ((np.array(these_s_of_t) - x)**2 )* delta_x)
+
             for singular_value_multiplier in singular_value_multipliers:
 
                 N_2 = num_hidden
@@ -65,7 +94,6 @@ for p in ps:
                 y_frob_norm_sq = np.sum([s**2 for s in singular_values])
 
                 net_rank = min(N_1, N_2, N_3)
-                tau = 1./learning_rate
                 sigma_z = np.sqrt(noise_var)
 
 #	s_hats = s_hat(singular_values, sigma_z)
@@ -90,32 +118,58 @@ for p in ps:
                 with open(filename_prefix + "noise_var_%.2f_p_%i_svm_%f_theory_track.csv" % (noise_var, p, singular_value_multiplier), "w") as fout:
                     fout.write("epoch, generalization_error, s0, train_error\n")
                     noisy_y_frob_norm_sq = np.sum(np.array(s_hats)**2) +  (min(N_2, N_3)-len(singular_values)) * numeric_integral_mp(delta_x*sigma_z, 1e6, 1-np.sqrt(A), 1+np.sqrt(A), A=A) # hacky
-                    for epoch_i in xrange(1, num_epochs + 1, save_every):
 
-                        sot = np.array(s_of_t(s_hats, epoch_i, epsilon, tau))
-                        
-                        generr = (min(p, net_rank)-len(singular_values))*numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-np.sqrt(A), 1+np.sqrt(A), A=A) # number of points in integral estimate is constant in sigma_z 
-                        generr += np.sum(sot**2) 
-                        generr += y_frob_norm_sq
-                        generr -= 2 * np.sum(sot * s_bar * noise_multiplier) 
-                        generr /= y_frob_norm_sq
-                        trainerr = np.sum((s_hats[:net_rank]-sot[:net_rank])**2)
-                        trainerr += (min(N_2, N_3)-len(singular_values)) * train_numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-np.sqrt(A), 1+np.sqrt(A), A=A)
-                        trainerr /= noisy_y_frob_norm_sq
-                        print("%i, %f, %f, %f" % (epoch_i, generr, sot[0], trainerr))
-                        fout.write("%i, %f, %f, %f\n" % (epoch_i, generr, sot[0], trainerr))
+                    if num_hidden_layers == 1:
+                        for epoch_i in xrange(1, num_epochs + 1, save_every):
 
-            #    print()
-            #    print()
-            #    print(s_hats)
-            #    print(noise_multiplier)
-            #    generr = 0 #numeric_integral_mp(0.001, epoch_i, 0, 2)
-            #    generr += np.sum(np.array(s_hats)**2) 
-            #    print(generr)
-            #    generr += y_frob_norm_sq
-            #    print(generr)
-            #    generr -= 2 * np.sum(s_hats * s_bar * noise_multiplier) 
-            #    print(generr)
-            #    generr /= y_frob_norm_sq
-            #    print(generr) 
-            #        
+                            sot = np.array(s_of_t(s_hats, epoch_i, epsilon, tau))
+                            
+                            generr = (min(p, net_rank)-len(singular_values))*numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-np.sqrt(A), 1+np.sqrt(A), A=A) # number of points in integral estimate is constant in sigma_z 
+                            generr += np.sum(sot**2) 
+                            generr += y_frob_norm_sq
+                            generr -= 2 * np.sum(sot * s_bar * noise_multiplier) 
+                            generr /= y_frob_norm_sq
+                            trainerr = np.sum((s_hats[:net_rank]-sot[:net_rank])**2)
+                            trainerr += (min(N_2, N_3)-len(singular_values)) * train_numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-np.sqrt(A), 1+np.sqrt(A), A=A)
+                            trainerr /= noisy_y_frob_norm_sq
+                            print("%i, %f, %f, %f" % (epoch_i, generr, sot[0], trainerr))
+                            fout.write("%i, %f, %f, %f\n" % (epoch_i, generr, sot[0], trainerr))
+
+                    elif num_hidden_layers == 3:  # num hidden layers = 3, need inverse theory
+                        this_s = s_hats[0] # we assume rank 1 so I don't have to write this code vectorized
+                        points = np.arange(epsilon, this_s, (this_s - epsilon)/inverse_theory_num_points)
+
+                        starting_point =   np.arctanh(np.sqrt(epsilon/this_s))/(2*this_s**1.5) - 0.5/(this_s*np.sqrt(epsilon))
+
+                        est_times =  tau* (np.arctanh(np.sqrt(points/this_s))/(2*this_s**1.5) - 0.5/(this_s*np.sqrt(points)) - starting_point)
+
+                        for epoch_i in xrange(1, num_epochs + 1, save_every):
+
+                            this_index = np.argmin(np.abs(est_times-epoch_i)) # find closest time point to this
+                            sot = np.array([points[this_index]]) # use s value from that time point
+                            
+                            generr = (min(p, net_rank)-1)*numeric_integral_mp_deep(delta_x*sigma_z, epoch_i, 1-np.sqrt(A), 1+np.sqrt(A), A=A) # number of points in integral estimate is constant in sigma_z 
+                            generr += np.sum(sot**2) 
+                            generr += y_frob_norm_sq
+                            generr -= 2 * np.sum(sot * s_bar * noise_multiplier) 
+                            generr /= y_frob_norm_sq
+                            trainerr = np.sum((s_hats[:net_rank]-sot[:net_rank])**2)
+                            trainerr += (min(N_2, N_3)-len(singular_values)) * train_numeric_integral_mp_deep(delta_x*sigma_z, epoch_i, 1-np.sqrt(A), 1+np.sqrt(A), A=A)
+                            trainerr /= noisy_y_frob_norm_sq
+                            print("%i, %f, %f, %f" % (epoch_i, generr, sot[0], trainerr))
+                            fout.write("%i, %f, %f, %f\n" % (epoch_i, generr, sot[0], trainerr))
+
+                #    print()
+                #    print()
+                #    print(s_hats)
+                #    print(noise_multiplier)
+                #    generr = 0 #numeric_integral_mp(0.001, epoch_i, 0, 2)
+                #    generr += np.sum(np.array(s_hats)**2) 
+                #    print(generr)
+                #    generr += y_frob_norm_sq
+                #    print(generr)
+                #    generr -= 2 * np.sum(s_hats * s_bar * noise_multiplier) 
+                #    print(generr)
+                #    generr /= y_frob_norm_sq
+                #    print(generr) 
+                #        
