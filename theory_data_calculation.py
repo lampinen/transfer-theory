@@ -23,7 +23,7 @@ delta_x = 0.001 # for the numerical integration of M-P dist
 N_2_bar = 1 # number of teacher modes
 num_hidden = 50
 num_hidden_layers = 3 # deeper is only supported for num_hidden_layers = 3, rank 1 and sigma z = 1 right now, not because of theoretical limitations, just to save me time
-inverse_theory_num_points = 1000
+inverse_theory_num_points = 2000
 singular_value_multipliers = [10., 0.84, 2., 4., 6., 8.] #[1., 2., 4., 8.] #np.arange(0., 10., 0.05) #
 
 min_gen_approx = False # if true, only approximate min gen by assuming 1 or 0 learning of modes
