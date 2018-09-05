@@ -111,7 +111,8 @@ def noisy_shared_input_modes_dataset_different_inputs(num_examples, num_outputs,
 def SVD_dataset(num_examples, num_outputs, num_nonempty=4, singular_value_multiplier=1):
     """Like the shared input modes dataset, but only one domain"""
     input_modes = random_orthogonal(num_examples)
-    strengths = singular_value_multiplier * numpy.array(range(num_nonempty, 0, -1) + [0.]* (num_examples - num_nonempty))
+    strengths = numpy.zeros(num_examples)
+    strengths[:num_nonempty] = singular_value_multiplier * (numpy.array(range(num_nonempty, 0, -1)))
     
     def _strengths_to_S(strengths, num_outputs=num_outputs):
         if num_outputs > num_examples:
@@ -145,7 +146,8 @@ def SVD_dataset_changing_p(num_examples, num_outputs, num_inputs, num_nonempty=4
     """Like the shared input modes dataset, but only one domain, and number of inputs can change"""
     input_modes = random_orthogonal(num_inputs)
     output_modes = random_orthogonal(num_outputs)
-    strengths = singular_value_multiplier * numpy.array(range(num_nonempty, 0, -1) + [0.]* (num_inputs - num_nonempty))
+    strengths = numpy.zeros(num_examples)
+    strengths[:num_nonempty] = singular_value_multiplier * (numpy.array(range(num_nonempty, 0, -1)))
     
     def _strengths_to_S(strengths, num_outputs=num_outputs):
         if num_outputs > num_examples:
@@ -159,8 +161,9 @@ def SVD_dataset_changing_p(num_examples, num_outputs, num_inputs, num_nonempty=4
         x_data = numpy.eye(num_inputs)[:, :num_examples]
     elif input_type == "orthogonal":
         if num_inputs < num_examples:
-                raise ValueError("Cannot have more examples than input dimensionality with orthogonal inputs")
-        x_data = random_orthogonal(num_inputs)[:, :num_examples] 
+            x_data = random_orthogonal(num_examples)[:num_inputs, :] * numpy.sqrt(num_examples/float(num_inputs)) 
+        else:
+            x_data = random_orthogonal(num_inputs)[:, :num_examples] 
     elif input_type == "gaussian":
         x_data = numpy.random.randn(num_inputs, num_examples) / numpy.sqrt(num_inputs) 
     else:
@@ -170,25 +173,17 @@ def SVD_dataset_changing_p(num_examples, num_outputs, num_inputs, num_nonempty=4
     y_data = numpy.transpose(numpy.matmul(output_modes, temp))
     x_data = x_data.transpose()
 
-    if input_type == "gaussian":
-        x_data_orth = random_orthogonal(num_inputs)
-        temp = numpy.matmul(input_modes, x_data_orth)
-        temp = numpy.matmul(S, temp)
-        y_data_orth = numpy.transpose(numpy.matmul(output_modes, temp))
-        x_data_orth = x_data_orth.transpose()
-        return x_data, y_data, x_data_orth, y_data_orth, input_modes
-    else:
-        return x_data, y_data, input_modes
+    x_data_orth = random_orthogonal(num_inputs)
+    temp = numpy.matmul(input_modes, x_data_orth)
+    temp = numpy.matmul(S, temp)
+    y_data_orth = numpy.transpose(numpy.matmul(output_modes, temp))
+    x_data_orth = x_data_orth.transpose()
+    return x_data, y_data, x_data_orth, y_data_orth, input_modes
 
 def noisy_SVD_dataset_changing_p(num_examples, num_outputs, num_inputs, num_nonempty=4, noise_var=0.1, singular_value_multiplier=1, input_type="orthogonal"):
-    if input_type == "gaussian":
         x_data, y_data, x_data_orth, y_data_orth, input_modes = SVD_dataset_changing_p(num_examples, num_outputs, num_inputs, num_nonempty=num_nonempty, singular_value_multiplier=singular_value_multiplier, input_type=input_type)
         y_data_noisy = y_data + numpy.sqrt(noise_var) * numpy.random.standard_normal(numpy.shape(y_data))
         return x_data, y_data, y_data_noisy, x_data_orth, y_data_orth, input_modes
-    else:
-        x_data, y_data, input_modes = SVD_dataset_changing_p(num_examples, num_outputs, num_inputs, num_nonempty=num_nonempty, singular_value_multiplier=singular_value_multiplier, input_type=input_type)
-        y_data_noisy = y_data + numpy.sqrt(noise_var) * numpy.random.standard_normal(numpy.shape(y_data))
-        return x_data, y_data, y_data_noisy, input_modes
 
 def rank_one_correlated_dataset(num_examples, num_outputs_per, q, svm1, svm2):
     V = random_orthogonal(num_examples)
