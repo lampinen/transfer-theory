@@ -9,19 +9,19 @@ from orthogonal_matrices import random_orthogonal
 num_examples = 100
 output_sizes = [50] #[10, 50, 100, 200, 400]
 sigma_zs = [1] 
-num_runs = 4
+num_runs = 10
 learning_rate = 0.001
 num_epochs = 150000
 batch_size = num_examples
-filename_prefix = "deep_single_generalization_paper_results/"
+filename_prefix = "deep_rank3_single_generalization_paper_results/"
 input_type = "one_hot" # one_hot, orthogonal, gaussian
 # track_SVD = False # not updated for deeper networks
 save_every = 10
 epsilon = 1e-5
 num_layers = 4 # not counting input, not actually a changable parameter
 singular_value_multiplier = 10 
-N_2_bar = 1 # rank of teacher
-singular_value_multipliers = [10., 0.84, 2., 4., 6., 8.]
+N_2_bar = 3 # rank of teacher
+singular_value_multipliers = [2., 3.]
 num_hidden = 50#num_examples
 
 ###

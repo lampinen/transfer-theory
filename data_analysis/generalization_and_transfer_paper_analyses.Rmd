@@ -1800,5 +1800,130 @@ grid.draw(gt)
 ```
 
 ```{r}
-%%ggsave("../plots/paper/rebuttal_d.png", plot=gt,  width=4, height=3)
+#ggsave("../plots/paper/rebuttal_d.png", plot=gt,  width=4, height=3)
 ```
+
+# Deep rank 3 figures
+ 
+```{r}
+nruns = 4
+noise_vars = c(1.)
+output_sizes= c(50)
+svms = c(2., 3.)
+alignments = c("True", "False")
+d = data.frame()
+for (noise_var in noise_vars) {
+  for (output_size in output_sizes) {
+    for (svm in svms) {
+      for (aligned in alignments) {
+        for (run in 0:(nruns-1)) { 
+          this_d = read.csv(sprintf("../deep_rank3_single_generalization_paper_results/noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i.csv",noise_var, output_size, svm, aligned, run), header=T)
+    
+          this_d = this_d %>% 
+            mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", run=run, student_rank="Full rank", type="Empirical")
+          d = bind_rows(d, this_d)
+        }
+      }
+      this_d = read.csv(sprintf("../deep_rank3_single_generalization_paper_results/noise_var_%.2f_p_100_svm_%f_theory_track.csv", noise_var, svm), header=T)
+
+      this_d = this_d %>%
+        rename(loss=generalization_error) %>%
+        mutate(noise_var=noise_var, output_size=NA,  svm=svm, aligned=aligned=="True", run=NA, student_rank="Full rank", type="Theory")
+      d = bind_rows(d, this_d)
+    }
+  }
+}
+```
+
+
+
+```{r}
+d = d %>%
+  mutate(output_size=factor(output_size),
+         train_loss=ifelse(type=="Theory", train_error, train_loss),
+         noise_var=factor(noise_var),
+         svm=factor(svm),
+         aligned=factor(aligned),
+         type=factor(type),
+         student_rank=factor(student_rank, levels=c("Full rank", "50% of full", "4% of full", "Teacher rank (1% of full)"), labels=c("Full rank", "50% of full", "4% of full", "1% of full")),
+         log_loss = log(loss),
+         log_train_loss = log(train_loss))
+```
+
+```{r}
+min_d = d %>%
+  group_by(svm, aligned, noise_var, type, student_rank, run) %>%
+  summarize(min_Eg = min(log_loss), min_t = which.min(log_loss)) %>%
+  ungroup() %>%
+  group_by(svm, aligned, noise_var, student_rank, type) %>%
+  summarize(avg_min_Eg = mean(min_Eg), sd_min_Eg = sd(min_Eg),
+            avg_min_t = mean(min_t), sd_min_t = sd(min_t),
+            se_min_Eg = sd_min_Eg/sqrt(n()), ci_Eg_up= avg_min_Eg + 1.96*se_min_Eg, ci_Eg_lo= avg_min_Eg - 1.96*se_min_Eg,
+            se_min_t = sd_min_t/sqrt(n()), ci_t_up= avg_min_t + 1.96*se_min_t, ci_t_lo= avg_min_t - 1.96*se_min_t) %>%
+  ungroup()
+  
+```
+
+```{r}
+avg_d = d %>%
+  group_by(noise_var, output_size, svm, aligned, epoch, student_rank, type) %>%
+  summarize(loss=mean(loss), log_tr_loss_sd=sd(log_train_loss), log_tr_loss=mean(log_train_loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
+  mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n()),
+         log_tr_loss_95_low=log_tr_loss-1.96*log_tr_loss_sd/sqrt(n()), log_tr_loss_95_high=log_tr_loss+1.96*log_tr_loss_sd/sqrt(n())) %>%
+  ungroup() %>%
+  mutate(new_type = ifelse(type == "Theory", "Theory",
+                            ifelse(aligned == "TRUE", "Empirical aligned", "Empirical random"))) %>%
+  mutate(new_type = factor(new_type, levels=c("Theory", "Empirical aligned", "Empirical random")),
+         aligned=factor(aligned, levels=c("TRUE", "FALSE"), labels=c("TA", "Random")))
+```
+
+```{r}
+p = ggplot(avg_d %>% filter(type=="Theory", svm %in% c(2., 3.)), aes(x=epoch/1000, y=log_tr_loss, color=as.numeric(levels(svm)[svm]), group=interaction(new_type, svm, student_rank))) +
+ geom_line(aes(linetype=factor("Theory")), size=1.5) +
+  geom_point(data=avg_d %>% filter(grepl("Empirical", type), svm %in% c(2., 3.), aligned=="TA", epoch %% 200 == 0), aes(shape=aligned), size=2) +
+#  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
+  scale_x_continuous(breaks=c(0., 75., 150.)) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 4), breaks=c(0.84, 4), labels=c( parse(text="sqrt(1/2, 4)"), "4      ")) +
+  labs(x=TeX("$t/\\tau$"),
+       y=TeX("$\\ln \\, \\epsilon_{train}$")) +
+  guides(color=F, linetype=F, shape=F)+
+  annotation_custom(textGrob(label = "A", hjust = 3, gp = gpar(cex = 2),
+      x=unit(0, "npc"), y=unit(0.95, "npc")),
+      ) 
+
+
+gt <- ggplot_gtable(ggplot_build(p))
+gt$layout$clip[gt$layout$name == "panel"] <- "off"
+grid.draw(gt)
+```
+
+```{r}
+ggsave("../plots/paper/deep_a.png", plot=gt, width=3, height=3)
+```
+
+
+```{r}
+p = ggplot(avg_d %>% filter(type=="Theory", svm %in% c(2., 3.), epoch %% 1000 == 1), aes(x=epoch/1000, y=log_loss, color=as.numeric(levels(svm)[svm]), group=interaction(new_type, svm, student_rank))) +
+ geom_line(aes(linetype=factor("Theory")), size=1.5) +
+  geom_point(data=avg_d %>% filter(grepl("Empirical", type), svm %in% c(2., 3.), aligned=="TA", epoch %% 200 == 0), aes(shape=aligned), size=2) +
+#  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 4), breaks=c(0.84, 4), labels=c( parse(text="sqrt(1/2, 4)"), "4      ")) +
+  scale_x_continuous(breaks=c(0., 75., 150.)) +
+  labs(x=TeX("$t/\\tau$"),
+       y=TeX("$\\ln \\, \\epsilon_{test}$")) +
+  guides(color=guide_colorbar(title="min SNR", order=3), linetype=guide_legend(title="", order=1), shape=guide_legend(title="Empirical", order=2))+
+  annotation_custom(textGrob(label = "B", hjust = 3, gp = gpar(cex = 2),
+      x=unit(0, "npc"), y=unit(0.95, "npc")),
+      )  +
+  theme(legend.margin = margin(-0.1,0,-0.1,0, unit="cm"))
+
+
+gt <- ggplot_gtable(ggplot_build(p))
+gt$layout$clip[gt$layout$name == "panel"] <- "off"
+grid.draw(gt)
+```
+
+```{r}
+ggsave("../plots/paper/deep_b.png", plot=gt, width=4, height=3)
+```
+

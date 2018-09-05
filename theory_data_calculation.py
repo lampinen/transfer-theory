@@ -13,18 +13,18 @@ ps = [100]#, 800, 400, 200, 100, 90, 80, 70, 60, 40, 30, 20]
 learning_rate = 0.001
 num_epochs = 150000
 #batch_size = num_examples
-filename_prefix = "deep_single_generalization_paper_results/"
+filename_prefix = "deep_rank3_single_generalization_paper_results/"
 #input_type = "one_hot" # one_hot, orthogonal, gaussian
 #track_SVD = True
 save_every = 10
 singular_value_multiplier = 10
 epsilon = 1e-5
 delta_x = 0.001 # for the numerical integration of M-P dist
-N_2_bar = 1 # number of teacher modes
+N_2_bar = 3 # number of teacher modes
 num_hidden = 50
 num_hidden_layers = 3 # deeper is only supported for num_hidden_layers = 3, rank 1 and sigma z = 1 right now, not because of theoretical limitations, just to save me time
 inverse_theory_num_points = 2000
-singular_value_multipliers = [10., 0.84, 2., 4., 6., 8.] #[1., 2., 4., 8.] #np.arange(0., 10., 0.05) #
+singular_value_multipliers = [2., 3.] #[10., 0.84, 2., 4., 6., 8.] #[1., 2., 4., 8.] #np.arange(0., 10., 0.05) #
 
 min_gen_approx = False # if true, only approximate min gen by assuming 1 or 0 learning of modes
 ### 
@@ -136,17 +136,25 @@ for p in ps:
                             fout.write("%i, %f, %f, %f\n" % (epoch_i, generr, sot[0], trainerr))
 
                     elif num_hidden_layers == 3:  # num hidden layers = 3, need inverse theory
-                        this_s = s_hats[0] # we assume rank 1 so I don't have to write this code vectorized
-                        points = np.arange(epsilon, this_s, (this_s - epsilon)/inverse_theory_num_points)
+                        #this_s = s_hats[0] # we assume rank 1 so I don't have to write this code vectorized
+                        points = []
+                        est_times = []
+                        for this_s in s_hats:
+                            these_points = np.arange(epsilon, this_s, (this_s - epsilon)/inverse_theory_num_points)
 
-                        starting_point =   np.arctanh(np.sqrt(epsilon/this_s))/(2*this_s**1.5) - 0.5/(this_s*np.sqrt(epsilon))
+                            starting_point = np.arctanh(np.sqrt(epsilon/this_s))/(2*this_s**1.5) - 0.5/(this_s*np.sqrt(epsilon))
 
-                        est_times =  tau* (np.arctanh(np.sqrt(points/this_s))/(2*this_s**1.5) - 0.5/(this_s*np.sqrt(points)) - starting_point)
+                            these_est_times =  tau* (np.arctanh(np.sqrt(these_points/this_s))/(2*this_s**1.5) - 0.5/(this_s*np.sqrt(these_points)) - starting_point)
+                            points.append(these_points)
+                            est_times.append(these_est_times)
 
                         for epoch_i in xrange(1, num_epochs + 1, save_every):
 
-                            this_index = np.argmin(np.abs(est_times-epoch_i)) # find closest time point to this
-                            sot = np.array([points[this_index]]) # use s value from that time point
+                            sot = [] 
+                            for i in range(N_2_bar):
+                                this_index = np.argmin(np.abs(est_times[i]-epoch_i)) # find closest time point to this
+                                sot.append(points[i][this_index]) # use s value from that time point
+                            sot = np.array(sot)
                             
                             generr = (min(p, net_rank)-1)*numeric_integral_mp_deep(delta_x*sigma_z, epoch_i, 1-np.sqrt(A), 1+np.sqrt(A), A=A) # number of points in integral estimate is constant in sigma_z 
                             generr += np.sum(sot**2) 
