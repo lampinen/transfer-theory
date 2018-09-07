@@ -21,18 +21,18 @@ epsilon = 1e-5
 num_layers = 4 # not counting input, not actually a changable parameter
 singular_value_multiplier = 10 
 N_2_bar = 3 # rank of teacher
-singular_value_multipliers = [2., 3.]
+singular_value_multipliers = [1.33] #2., 3.]
 num_hidden = 50#num_examples
 
 ###
 #var_scale_init = tf.contrib.layers.variance_scaling_initializer(factor=2*np.sqrt(epsilon), mode='FAN_AVG')
 eps_per = np.power(epsilon, 1./num_layers)
 
-for run_i in xrange(num_runs):
-    for sigma_z in sigma_zs:
-        noise_var = sigma_z**2
-	for singular_value_multiplier in singular_value_multipliers:
-	    for aligned in [True, False]:
+for aligned in [True, False]:
+    for run_i in xrange(num_runs):
+        for sigma_z in sigma_zs:
+            noise_var = sigma_z**2
+            for singular_value_multiplier in singular_value_multipliers:
 		for output_size in output_sizes:
 		    
 		    scaled_noise_var = noise_var/num_examples
