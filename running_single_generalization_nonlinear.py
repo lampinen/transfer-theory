@@ -9,21 +9,24 @@ from orthogonal_matrices import random_orthogonal
 ### Parameters
 num_examples = 100
 output_sizes = [50] #[10, 50, 100, 200, 400]
-sigma_zs = [1]
-num_runs = 10
+num_layers = 4 # not actually a changeable parameter
+sigma_zs = [1.]
+num_runs = 1
 learning_rate = 0.001
-num_epochs = 5000
+num_epochs = 150000
 num_hidden = 50
+N_2_bar = 3
 batch_size = num_examples
-filename_prefix = "paper_nonlinear_single_generalization_results/"
+filename_prefix = "paper_nonlinear_deep_rank3_results/"
 input_type = "one_hot" # one_hot, orthogonal, gaussian
 track_SVD = True
-save_every = 5
-epsilon = 0.0001
-singular_value_multipliers = [100]  
+save_every = 50
+epsilon = 1e-5 
+singular_value_multipliers = [1.33, 2., 3.]  
 
 ###
 #var_scale_init = tf.contrib.layers.variance_scaling_initializer(factor=2*np.sqrt(epsilon), mode='FAN_AVG')
+eps_per = np.power(epsilon, 1./num_layers)
 
 for run_i in xrange(num_runs):
     for sigma_z in sigma_zs:
@@ -40,9 +43,9 @@ for run_i in xrange(num_runs):
                 num_input = num_examples
                 num_output = output_size
                 if input_type == "one_hot":
-                    x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset(num_examples, output_size, noise_var=scaled_noise_var, singular_value_multiplier=singular_value_multiplier, num_nonempty=1) 
+                    x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset(num_examples, output_size, noise_var=scaled_noise_var, singular_value_multiplier=singular_value_multiplier, num_nonempty=N_2_bar) 
                 else:
-                    x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset_different_inputs(num_examples, output_size, noise_var=scaled_noise_var, input_type="orthogonal", singular_value_multiplier=singular_value_multiplier, num_nonempty=1) 
+                    x_data, y_data, noisy_y_data, input_modes = datasets.noisy_SVD_dataset_different_inputs(num_examples, output_size, noise_var=scaled_noise_var, input_type="orthogonal", singular_value_multiplier=singular_value_multiplier, num_nonempty=N_2_bar) 
 
                 y_data_frob_squared = np.sum(y_data**2)
                 noisy_y_data_frob_squared = np.sum(noisy_y_data**2)
@@ -65,13 +68,19 @@ for run_i in xrange(num_runs):
       
                 # initialize weights as random orthogonal matrices and scale so
                 # product has singular values of epsilon
-                O1 = np.sqrt(epsilon) * random_orthogonal(num_input)[:num_hidden, :] 
-                O2 = np.sqrt(epsilon) * random_orthogonal(num_output)[:, :num_hidden] 
+                O1 = eps_per * random_orthogonal(num_input)[:num_hidden, :] 
+                O2 = eps_per * random_orthogonal(num_hidden)
+                O3 = eps_per * random_orthogonal(num_hidden)
+                O4 = eps_per * random_orthogonal(num_output)[:, :num_hidden] 
                 W1 = tf.get_variable('W1', shape=[num_hidden, num_input], initializer=tf.constant_initializer(O1))
-                W2 = tf.get_variable('W2', shape=[num_output, num_hidden], initializer=tf.constant_initializer(O2))
+                W2 = tf.get_variable('W2', shape=[num_hidden, num_hidden], initializer=tf.constant_initializer(O2))
+                W3 = tf.get_variable('W3', shape=[num_hidden, num_hidden], initializer=tf.constant_initializer(O3))
+                W4 = tf.get_variable('W4', shape=[num_output, num_hidden], initializer=tf.constant_initializer(O4))
             
-                hidden = tf.nn.leaky_relu(tf.matmul(W1, input_ph))
-                output = tf.nn.leaky_relu(tf.matmul(W2, hidden))
+                hidden = tf.nn.relu(tf.matmul(W1, input_ph))
+                hidden = tf.nn.relu(tf.matmul(W2, hidden))
+                hidden = tf.nn.relu(tf.matmul(W3, hidden))
+                output = (tf.matmul(W4, hidden))
                 
                 loss = tf.reduce_sum(tf.square(output-target_ph))#2*tf.nn.l2_loss(output - target_ph)
                 optimizer = tf.train.GradientDescentOptimizer(learning_rate)
