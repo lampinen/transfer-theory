@@ -1572,7 +1572,7 @@ p = ggplot(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0, ep
   labs(x=TeX("$t/\\tau$"),
        y=TeX("$\\ln \\, \\epsilon_{train}$")) +
   guides(color=F, linetype=F, shape=F)+
-  annotation_custom(textGrob(label = "E", hjust = 2.5, gp = gpar(cex = 2),
+  annotation_custom(textGrob(label = "A", hjust = 2.5, gp = gpar(cex = 2),
       x=unit(0, "npc"), y=unit(0.95, "npc")),
       ) 
 
@@ -1598,7 +1598,7 @@ p = ggplot(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0, ep
   labs(x=TeX("$t/\\tau$"),
        y=TeX("$\\ln \\, \\epsilon_{test}$")) +
   guides(color=guide_colorbar(title="SNR", order=3), linetype=guide_legend(title="", order=1), shape=guide_legend(title="Empirical", order=2))+
-  annotation_custom(textGrob(label = "F", hjust = 2.5, gp = gpar(cex = 2),
+  annotation_custom(textGrob(label = "B", hjust = 2.5, gp = gpar(cex = 2),
       x=unit(0, "npc"), y=unit(0.95, "npc")),
       )  +
   theme(legend.margin = margin(-0.1,0,-0.1,0, unit="cm"))
