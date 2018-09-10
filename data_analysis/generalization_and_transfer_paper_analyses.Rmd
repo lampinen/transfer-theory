@@ -1498,7 +1498,7 @@ ggsave("../plots/paper/supp_input_types_dont_matter.png", width=6, height=4)
 nruns = 1
 noise_vars = c(1.)
 output_sizes= c(50)
-svms = c(2.)
+svms = c(1.33, 2., 3.)
 d = data.frame()
 for (noise_var in noise_vars) {
   for (output_size in output_sizes) {
@@ -1507,7 +1507,7 @@ for (noise_var in noise_vars) {
         this_d = read.csv(sprintf("../paper_nonlinear_deep_rank3_results/noise_var_%.2f_output_size_%i_svm_%f_run_%i_.csv",noise_var, output_size, svm, run), header=T)
   
         this_d = this_d %>% 
-          mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", run=run, student_rank="Full rank", type="Empirical")
+          mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned="FALSE", run=run, student_rank="Full rank", type="Empirical")
         d = bind_rows(d, this_d)
       }
     }
@@ -1567,8 +1567,8 @@ p = ggplot(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0), a
   geom_point(aes(shape=aligned), size=2) +
  geom_line( size=0.5) +
   geom_errorbar(aes(ymin=log_tr_loss_95_low, ymax=log_tr_loss_95_high)) +
-  scale_x_continuous(breaks=c(0., 5., 10.)) +
-  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 100), labels=c( parse(text="sqrt(1/2, 4)"), "100   ")) +
+  scale_x_continuous(breaks=c(0., 75., 150.)) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 4), breaks=c(0.84, 4), labels=c( parse(text="sqrt(1/2, 4)"), "4      ")) +
   labs(x=TeX("$t/\\tau$"),
        y=TeX("$\\ln \\, \\epsilon_{train}$")) +
   guides(color=F, linetype=F, shape=F)+
@@ -1593,8 +1593,8 @@ p = ggplot(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0), a
   geom_point(aes(shape=aligned), size=2) +
   geom_errorbar(aes(ymin=log_loss_95_low, ymax=log_loss_95_high)) +
 #  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
-  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 100), breaks=c(0.84, 100), labels=c( parse(text="sqrt(1/2, 4)"), "100     ")) +
-  scale_x_continuous(breaks=c(0., 5., 10.)) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 4), breaks=c(0.84, 4), labels=c( parse(text="sqrt(1/2, 4)"), "4       ")) +
+  scale_x_continuous(breaks=c(0., 75., 150.)) +
   labs(x=TeX("$t/\\tau$"),
        y=TeX("$\\ln \\, \\epsilon_{test}$")) +
   guides(color=guide_colorbar(title="SNR", order=3), linetype=guide_legend(title="", order=1), shape=guide_legend(title="Empirical", order=2))+
@@ -1810,7 +1810,7 @@ nruns = 10
 noise_vars = c(1.)
 output_sizes= c(50)
 svms = c(1.33, 2., 3.)
-alignments = c("True")#, "False")
+alignments = c("True", "False")
 d = data.frame()
 for (noise_var in noise_vars) {
   for (output_size in output_sizes) {
@@ -1927,3 +1927,64 @@ grid.draw(gt)
 ggsave("../plots/paper/deep_b.png", plot=gt, width=4, height=3)
 ```
 
+
+```{r}
+wide_min_d = min_d %>% 
+  filter(type == "Empirical") %>%
+  select(-type, -se_min_Eg, -se_min_t) %>%
+  gather(metric, measurement, avg_min_Eg, sd_min_Eg, avg_min_t, sd_min_t, ci_t_up, ci_t_lo, ci_Eg_up, ci_Eg_lo) %>%
+  mutate(aligned = ifelse(aligned=="TRUE", "Aligned", "Random")) %>%
+  unite(am, aligned, metric) %>%
+  spread(am, measurement) 
+```
+
+```{r}
+p = ggplot(data=wide_min_d, aes(x=Aligned_avg_min_Eg, y=Random_avg_min_Eg, color=as.numeric(svm))) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 5, 10), labels=c(parse(text="1/sqrt(A, 4)"), "5 ", "10"))  +
+  geom_abline(intercept=0, slope=1, alpha=0.5, linetype=3) +
+  labs(x=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (TA)"),
+       y=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (Rand.)   ")) +
+  geom_errorbar(aes(ymin=Random_ci_Eg_lo, ymax=Random_ci_Eg_up), width=0.05) +
+  geom_errorbarh(aes(xmin=Aligned_ci_Eg_lo, xmax=Aligned_ci_Eg_up), height=0.05) +
+  geom_point(size=2) +
+  guides(color=F, shape=F)  +
+  annotation_custom(textGrob(label = "C", hjust = 2.5, gp = gpar(cex = 2),
+      x=unit(0, "npc"), y=unit(0.97, "npc")),
+      ) 
+
+gt <- ggplot_gtable(ggplot_build(p))
+gt$layout$clip[gt$layout$name == "panel"] <- "off"
+grid.draw(gt)
+```
+
+```{r}
+ggsave("../plots/paper/deep_c.png", plot=gt, width=3, height=3)
+```
+
+```{r}
+p = ggplot(data=wide_min_d, aes(x=Aligned_avg_min_t/1000, y=Random_avg_min_t/1000, color=as.integer(svm))) +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 5, 10), labels=c(parse(text="sqrt(A, 4)"), "5   ", "10  "))  +
+  geom_line(aes(linetype=factor("Theory")), size=2, alpha=0) +  # haaaaacky
+  geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3) +
+  labs(x=TeX("$t_{opt}/\\tau$ (TA)"),
+       y=TeX("$t_{opt}/\\tau$ (Rand.)")) +
+  geom_point(aes(shape=factor("Empirical")), size=2) +
+  geom_errorbar(aes(ymin=Random_ci_t_lo/1000, ymax=Random_ci_t_up/1000), width=0.01) +
+  geom_errorbarh(aes(xmin=Aligned_ci_t_lo/1000, xmax=Aligned_ci_t_up/1000), height=0.01) +
+  guides(color=guide_colorbar(title="SNR", order=1),
+         linetype=guide_legend(title="", order=2, override.aes=list(alpha=c(1), linetype=c("solid"))),
+         shape=guide_legend(title=""), order=3) +
+  annotation_custom(textGrob(label = "D", hjust = 3, gp = gpar(cex = 2),
+      x=unit(0, "npc"), y=unit(0.95, "npc")),
+      ) + 
+  theme(legend.margin = margin(-0.25,0,-0.25,0, unit="cm"))
+
+
+gt <- ggplot_gtable(ggplot_build(p))
+gt$layout$clip[gt$layout$name == "panel"] <- "off"
+grid.draw(gt)
+```
+
+```{r}
+ggsave("../plots/paper/deep_d.png", plot=gt,  width=4, height=3)
+```
