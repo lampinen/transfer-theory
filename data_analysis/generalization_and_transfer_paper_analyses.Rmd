@@ -1563,7 +1563,7 @@ avg_d = d %>%
 ```
 
 ```{r}
-p = ggplot(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0), aes(x=epoch/1000, y=log_tr_loss, color=as.numeric(levels(svm)[svm]), group=interaction(new_type, svm, student_rank))) +
+p = ggplot(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0, epoch < 1e5), aes(x=epoch/1000, y=log_tr_loss, color=as.numeric(levels(svm)[svm]), group=interaction(new_type, svm, student_rank))) +
   geom_point(aes(shape=aligned), size=2) +
  geom_line( size=0.5) +
   geom_errorbar(aes(ymin=log_tr_loss_95_low, ymax=log_tr_loss_95_high)) +
@@ -1572,7 +1572,7 @@ p = ggplot(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0), a
   labs(x=TeX("$t/\\tau$"),
        y=TeX("$\\ln \\, \\epsilon_{train}$")) +
   guides(color=F, linetype=F, shape=F)+
-  annotation_custom(textGrob(label = "A", hjust = 3, gp = gpar(cex = 2),
+  annotation_custom(textGrob(label = "E", hjust = 2.5, gp = gpar(cex = 2),
       x=unit(0, "npc"), y=unit(0.95, "npc")),
       ) 
 
@@ -1588,7 +1588,7 @@ ggsave("../plots/paper/deep_nonlinear_A.png", plot=gt, width=3, height=3)
 
 
 ```{r}
-p = ggplot(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0), aes(x=epoch/1000, y=log_loss, color=as.numeric(levels(svm)[svm]), group=interaction(new_type, svm, student_rank))) +
+p = ggplot(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0, epoch < 1e5), aes(x=epoch/1000, y=log_loss, color=as.numeric(levels(svm)[svm]), group=interaction(new_type, svm, student_rank))) +
  geom_line( size=0.5) +
   geom_point(aes(shape=aligned), size=2) +
   geom_errorbar(aes(ymin=log_loss_95_low, ymax=log_loss_95_high)) +
@@ -1598,7 +1598,7 @@ p = ggplot(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0), a
   labs(x=TeX("$t/\\tau$"),
        y=TeX("$\\ln \\, \\epsilon_{test}$")) +
   guides(color=guide_colorbar(title="SNR", order=3), linetype=guide_legend(title="", order=1), shape=guide_legend(title="Empirical", order=2))+
-  annotation_custom(textGrob(label = "B", hjust = 3, gp = gpar(cex = 2),
+  annotation_custom(textGrob(label = "F", hjust = 2.5, gp = gpar(cex = 2),
       x=unit(0, "npc"), y=unit(0.95, "npc")),
       )  +
   theme(legend.margin = margin(-0.1,0,-0.1,0, unit="cm"))
@@ -1940,7 +1940,7 @@ wide_min_d = min_d %>%
 
 ```{r}
 p = ggplot(data=wide_min_d, aes(x=Aligned_avg_min_Eg, y=Random_avg_min_Eg, color=as.numeric(svm))) +
-  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 5, 10), labels=c(parse(text="1/sqrt(A, 4)"), "5 ", "10"))  +
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 4), breaks=c(0.84, 4), labels=c(parse(text="1/sqrt(A, 4)"), "4 "))  +
   geom_abline(intercept=0, slope=1, alpha=0.5, linetype=3) +
   labs(x=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (TA)"),
        y=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (Rand.)   ")) +
@@ -1963,21 +1963,21 @@ ggsave("../plots/paper/deep_c.png", plot=gt, width=3, height=3)
 
 ```{r}
 p = ggplot(data=wide_min_d, aes(x=Aligned_avg_min_t/1000, y=Random_avg_min_t/1000, color=as.integer(svm))) +
-  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 5, 10), labels=c(parse(text="sqrt(A, 4)"), "5   ", "10  "))  +
-  geom_line(aes(linetype=factor("Theory")), size=2, alpha=0) +  # haaaaacky
+  scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 4), breaks=c(0.84, 4), labels=c(parse(text="1/sqrt(A, 4)"), "4 "))  +
   geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3) +
   labs(x=TeX("$t_{opt}/\\tau$ (TA)"),
        y=TeX("$t_{opt}/\\tau$ (Rand.)")) +
   geom_point(aes(shape=factor("Empirical")), size=2) +
-  geom_errorbar(aes(ymin=Random_ci_t_lo/1000, ymax=Random_ci_t_up/1000), width=0.01) +
-  geom_errorbarh(aes(xmin=Aligned_ci_t_lo/1000, xmax=Aligned_ci_t_up/1000), height=0.01) +
+  geom_errorbar(aes(ymin=Random_ci_t_lo/1000, ymax=Random_ci_t_up/1000), width=0.3) +
+  geom_errorbarh(aes(xmin=Aligned_ci_t_lo/1000, xmax=Aligned_ci_t_up/1000), height=0.3) +
+  xlim(4, 12) +
+  ylim(4, 12) +
   guides(color=guide_colorbar(title="SNR", order=1),
-         linetype=guide_legend(title="", order=2, override.aes=list(alpha=c(1), linetype=c("solid"))),
-         shape=guide_legend(title=""), order=3) +
+         shape=F) +
   annotation_custom(textGrob(label = "D", hjust = 3, gp = gpar(cex = 2),
       x=unit(0, "npc"), y=unit(0.95, "npc")),
       ) + 
-  theme(legend.margin = margin(-0.25,0,-0.25,0, unit="cm"))
+  theme(legend.margin = margin(-1,0,-0.25,0, unit="cm"))
 
 
 gt <- ggplot_gtable(ggplot_build(p))
