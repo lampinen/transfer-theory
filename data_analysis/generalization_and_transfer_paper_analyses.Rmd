@@ -1989,38 +1989,41 @@ grid.draw(gt)
 ggsave("../plots/paper/deep_d.png", plot=gt,  width=4, height=3)
 ```
 
-# Figure 3 Redux
+# Figure 3 Redux + deeper figure
  
 ```{r}
 nruns = 10
+depths = c(1, 3)
 N_2_bars = c(1, 3)
 noise_vars = c(1.)
 output_sizes= c(50)
 svms = c(0.84, 4., 8., 2., 6.)
 alignments = c("True", "False")
 d = data.frame()
-for (n2b in N_2_bars) {
-  for (noise_var in noise_vars) {
-    for (output_size in output_sizes) {
-      for (svm in svms) {
-        for (aligned in alignments) {
-          for (run in 0:(nruns-1)) { 
-            this_d = read.csv(sprintf("../sg_1l_results/n2b_%i_noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i.csv", n2b, noise_var, output_size, svm, aligned, run), header=T)
-      
+for (depth in depths) {
+  for (n2b in N_2_bars) {
+    for (noise_var in noise_vars) {
+      for (output_size in output_sizes) {
+        for (svm in svms) {
+          for (aligned in alignments) {
+            for (run in 0:(nruns-1)) { 
+              this_d = read.csv(sprintf("../sg_1l_results/n2b_%i_noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i.csv", n2b, noise_var, output_size, svm, aligned, run), header=T)
+        
+              this_d = this_d %>% 
+                mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", run=run, teacher_rank=n2b, student_rank="Full rank", type="Empirical")
+              d = bind_rows(d, this_d)
+            }
+          }
+          theory_filename = sprintf("../sg_1l_results/n2b_%i_noise_var_%.2f_p_100_svm_%f_theory_track.csv", n2b, noise_var, svm)
+          if(file.exists(theory_filename)) { # min_d only theory is omitted
+            this_d = read.csv(theory_filename, header=T)
+          
             this_d = this_d %>% 
-              mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", run=run, teacher_rank=n2b, student_rank="Full rank", type="Empirical")
+              filter(epoch <=10000) %>% # generated too long of tracks
+              rename(loss=generalization_error) %>%
+              mutate(noise_var=noise_var, output_size=NA,  svm=svm, aligned=aligned=="True", teacher_rank=n2b, run=NA, student_rank="Full rank", type="Theory")
             d = bind_rows(d, this_d)
           }
-        }
-        theory_filename = sprintf("../sg_1l_results/n2b_%i_noise_var_%.2f_p_100_svm_%f_theory_track.csv", n2b, noise_var, svm)
-        if(file.exists(theory_filename)) { # min_d only theory is omitted
-          this_d = read.csv(theory_filename, header=T)
-        
-          this_d = this_d %>% 
-            filter(epoch <=10000) %>% # generated too long of tracks
-            rename(loss=generalization_error) %>%
-            mutate(noise_var=noise_var, output_size=NA,  svm=svm, aligned=aligned=="True", teacher_rank=n2b, run=NA, student_rank="Full rank", type="Theory")
-          d = bind_rows(d, this_d)
         }
       }
     }
@@ -2150,19 +2153,19 @@ make_fig3_plots = function(avg_d, wide_min_d, file_prefix, lets) {
     geom_point(aes(shape=factor("Empirical")), size=2) +
     geom_errorbar(aes(ymin=Random_ci_t_lo/1000, ymax=Random_ci_t_up/1000), width=0.01) +
     geom_errorbarh(aes(xmin=Aligned_ci_t_lo/1000, xmax=Aligned_ci_t_up/1000), height=0.01) +
-    guides(color=guide_colorbar(title="SNR", order=3),
-           linetype=guide_legend(title="", order=1, override.aes=list(alpha=c(1), linetype=c("solid"))),
-           shape=guide_legend(title="", order=2)) +
+    guides(color=guide_colorbar(title="SNR", order=1),
+           linetype=guide_legend(title="", order=2, override.aes=list(alpha=c(1), linetype=c("solid"))),
+           shape=guide_legend(title="", order=3)) +
     annotation_custom(textGrob(label = lets[4], hjust = 3, gp = gpar(cex = 2),
         x=unit(0, "npc"), y=unit(0.95, "npc")),
         ) + 
-    theme(legend.margin = margin(-0.25,0,-0.25,0, unit="cm"))
+    theme(legend.margin = margin(0.,0,-0.6,0, unit="cm"))
   
   
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"
   grid.draw(gt)
-  ggsave(paste(file_prefix, lets[4], ".png", sep=""), plot=gt, width=4, height=3)
+  ggsave(paste(file_prefix, lets[4], ".png", sep=""), plot=gt, width=4.25, height=3)
 }
 ```
 
@@ -2192,20 +2195,23 @@ nruns = 1
 N_2_bars = c(1, 3)
 noise_vars = c(1.)
 output_sizes= c(50)
-svms = c(0.84, 4., 8., 2., 6.)
+svms = c(2.)
+depths = c(1, 3)
 alignments = c("False")
 d = data.frame()
-for (n2b in N_2_bars) {
-  for (noise_var in noise_vars) {
-    for (output_size in output_sizes) {
-      for (svm in svms) {
-        for (aligned in alignments) {
-          for (run in 0:(nruns-1)) { 
-            this_d = read.csv(sprintf("../sg_1l_results/n2b_%i_noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i_SVD_track.csv", n2b, noise_var, output_size, svm, aligned, run), header=T)
-      
-            this_d = this_d %>% 
-              mutate(noise_var=noise_var, output_size=output_size, svm=svm, run=run, teacher_rank=n2b, student_rank="Full rank", type="Empirical")
-            d = bind_rows(d, this_d)
+for (depth in depths) {
+  for (n2b in N_2_bars) {
+    for (noise_var in noise_vars) {
+      for (output_size in output_sizes) {
+        for (svm in svms) {
+          for (aligned in alignments) {
+            for (run in 0:(nruns-1)) { 
+              this_d = read.csv(sprintf("../sg_%il_results/n2b_%i_noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i_SVD_track.csv", depth, n2b, noise_var, output_size, svm, aligned, run), header=T)
+        
+              this_d = this_d %>% 
+                mutate(noise_var=noise_var, output_size=output_size, svm=svm, run=run, teacher_rank=n2b, depth=depth, student_rank="Full rank", type="Empirical")
+              d = bind_rows(d, this_d)
+            }
           }
         }
       }
@@ -2213,3 +2219,101 @@ for (n2b in N_2_bars) {
   }
 }
 ```
+
+```{r}
+d2 = d %>%
+  mutate(output_size=factor(output_size),
+         noise_var=factor(noise_var),
+         svm=factor(svm),
+         aligned=factor(aligned),
+         type=factor(type),
+         student_rank=factor(student_rank, levels=c("Full rank", "50% of full", "4% of full", "Teacher rank (1% of full)"), labels=c("Full rank", "50% of full", "4% of full", "1% of full"))) %>%
+  gather(observation, value, matches("hat")) %>% #gather all SVD obsvs
+  separate(observation, c("obs_type", "mode"), sep=c(-1)) %>%
+  mutate(obs_type=factor(obs_type, levels=c("UUhat", "VVhat", "NormShat"), labels=c("U", "V", "s")),
+         value=abs(value)) # plots are less confusing if alignments are positive, since signs are arbitrary
+```
+
+```{r}
+make_alignment_time_plot = function(d2, file_prefix, let, x_breaks=c(0., 5., 10.), legend=T) {
+  p = ggplot(data=d2, aes(x=epoch/1000, y=value, color=obs_type)) +
+    geom_point() +
+    scale_color_brewer(palette="Dark2",
+                       breaks = c("U", "V", "s"),
+                       labels = c(TeX("\\hat{u}}"), TeX("{\\bf v}\\cdot{\\bf\\hat{v}}"), TeX("s/\\hat{s}"))) + # TODO: Don't know why this doesn't work, debug given time
+    scale_x_continuous(breaks=x_breaks) +
+    labs(x=TeX("$t/\\tau$"),
+         y="Alignment") +
+    scale_y_continuous(breaks=c(0., 1.)) +
+    annotation_custom(textGrob(label = let, hjust = 2, gp = gpar(cex = 2),
+        x=unit(0, "npc"), y=unit(0.95, "npc")),
+        )
+  
+  if (legend) {
+    p = p + guides(color=guide_legend(title="")) 
+  } else {
+    p = p + guides(color=F)
+  }
+  
+  
+  gt <- ggplot_gtable(ggplot_build(p))
+  gt$layout$clip[gt$layout$name == "panel"] <- "off"
+  grid.draw(gt)
+  ggsave(paste(file_prefix, let, ".png", sep=""), plot=gt, width=ifelse(legend, 4, 3), height=3)
+}
+```
+
+```{r}
+make_alignment_time_plot(d2 %>% filter(depth == 1,
+                                       teacher_rank == 1),
+                         file_prefix="../plots/paper/supp_alignment_time_",
+                         let="A")
+
+make_alignment_time_plot(d2 %>% filter(depth == 1,
+                                       teacher_rank == 3, 
+                                       mode==0),
+                         file_prefix="../plots/paper/supp_alignment_time_",
+                         let="B",
+                         legend=F)
+make_alignment_time_plot(d2 %>% filter(depth == 1,
+                                       teacher_rank == 3, 
+                                       mode==1),
+                         file_prefix="../plots/paper/supp_alignment_time_",
+                         let="C",
+                         legend=F)
+make_alignment_time_plot(d2 %>% filter(depth == 1,
+                                       teacher_rank == 3, 
+                                       mode==2),
+                         file_prefix="../plots/paper/supp_alignment_time_",
+                         let="D")
+```
+
+```{r}
+make_alignment_time_plot(d2 %>% filter(depth == 3,
+                                       teacher_rank == 1),
+                         file_prefix="../plots/paper/supp_alignment_time_",
+                         let="E",
+                         x_breaks=c(0., 75., 150.))
+
+make_alignment_time_plot(d2 %>% filter(depth == 3,
+                                       teacher_rank == 3, 
+                                       mode==0),
+                         file_prefix="../plots/paper/supp_alignment_time_",
+                         let="F",
+                         legend=F,
+                         x_breaks=c(0., 75., 150.))
+make_alignment_time_plot(d2 %>% filter(depth == 3,
+                                       teacher_rank == 3, 
+                                       mode==1),
+                         file_prefix="../plots/paper/supp_alignment_time_",
+                         let="G",
+                         legend=F,
+                         x_breaks=c(0., 75., 150.))
+make_alignment_time_plot(d2 %>% filter(depth == 3,
+                                       teacher_rank == 3, 
+                                       mode==2),
+                         file_prefix="../plots/paper/supp_alignment_time_",
+                         let="H",
+                         x_breaks=c(0., 75., 150.))
+```
+
