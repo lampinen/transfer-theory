@@ -1498,7 +1498,7 @@ ggsave("../plots/paper/supp_input_types_dont_matter.png", width=6, height=4)
 nruns = 1
 noise_vars = c(1.)
 output_sizes= c(50)
-svms = c(1.33, 2., 3.)
+svms = c(1.33, 2., 3., 5., 10.)
 d = data.frame()
 for (noise_var in noise_vars) {
   for (output_size in output_sizes) {
@@ -1567,7 +1567,7 @@ p = ggplot(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0, ep
   geom_point(aes(shape=aligned), size=2) +
  geom_line( size=0.5) +
   geom_errorbar(aes(ymin=log_tr_loss_95_low, ymax=log_tr_loss_95_high)) +
-  scale_x_continuous(breaks=c(0., 75., 150.)) +
+  scale_x_continuous(breaks=c(0., 50., 100.)) +
   scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 4), breaks=c(0.84, 4), labels=c( parse(text="sqrt(1/2, 4)"), "4      ")) +
   labs(x=TeX("$t/\\tau$"),
        y=TeX("$\\ln \\, \\epsilon_{train}$")) +
@@ -1594,7 +1594,7 @@ p = ggplot(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0, ep
   geom_errorbar(aes(ymin=log_loss_95_low, ymax=log_loss_95_high)) +
 #  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
   scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 4), breaks=c(0.84, 4), labels=c( parse(text="sqrt(1/2, 4)"), "4       ")) +
-  scale_x_continuous(breaks=c(0., 75., 150.)) +
+  scale_x_continuous(breaks=c(0., 50., 100.)) +
   labs(x=TeX("$t/\\tau$"),
        y=TeX("$\\ln \\, \\epsilon_{test}$")) +
   guides(color=guide_colorbar(title="SNR", order=3), linetype=guide_legend(title="", order=1), shape=guide_legend(title="Empirical", order=2))+
@@ -1629,7 +1629,7 @@ for (noise_var in noise_vars) {
         for (run in 0:(nruns-1)) { 
           this_d = read.csv(sprintf("../deep_single_generalization_paper_results/noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i.csv",noise_var, output_size, svm, aligned, run), header=T)
     
-          this_d = this_d %>% 
+          this_d = this_d %>% s
             mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", run=run, student_rank="Full rank", type="Empirical")
           d = bind_rows(d, this_d)
         }
@@ -1987,4 +1987,229 @@ grid.draw(gt)
 
 ```{r}
 ggsave("../plots/paper/deep_d.png", plot=gt,  width=4, height=3)
+```
+
+# Figure 3 Redux
+ 
+```{r}
+nruns = 10
+N_2_bars = c(1, 3)
+noise_vars = c(1.)
+output_sizes= c(50)
+svms = c(0.84, 4., 8., 2., 6.)
+alignments = c("True", "False")
+d = data.frame()
+for (n2b in N_2_bars) {
+  for (noise_var in noise_vars) {
+    for (output_size in output_sizes) {
+      for (svm in svms) {
+        for (aligned in alignments) {
+          for (run in 0:(nruns-1)) { 
+            this_d = read.csv(sprintf("../sg_1l_results/n2b_%i_noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i.csv", n2b, noise_var, output_size, svm, aligned, run), header=T)
+      
+            this_d = this_d %>% 
+              mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", run=run, teacher_rank=n2b, student_rank="Full rank", type="Empirical")
+            d = bind_rows(d, this_d)
+          }
+        }
+        theory_filename = sprintf("../sg_1l_results/n2b_%i_noise_var_%.2f_p_100_svm_%f_theory_track.csv", n2b, noise_var, svm)
+        if(file.exists(theory_filename)) { # min_d only theory is omitted
+          this_d = read.csv(theory_filename, header=T)
+        
+          this_d = this_d %>% 
+            filter(epoch <=10000) %>% # generated too long of tracks
+            rename(loss=generalization_error) %>%
+            mutate(noise_var=noise_var, output_size=NA,  svm=svm, aligned=aligned=="True", teacher_rank=n2b, run=NA, student_rank="Full rank", type="Theory")
+          d = bind_rows(d, this_d)
+        }
+      }
+    }
+  }
+}
+```
+
+```{r}
+d = d %>%
+  mutate(output_size=factor(output_size),
+         train_loss=ifelse(type=="Theory", train_error, train_loss),
+         noise_var=factor(noise_var),
+         svm=factor(svm),
+         aligned=factor(aligned),
+         type=factor(type),
+         student_rank=factor(student_rank, levels=c("Full rank", "50% of full", "4% of full", "Teacher rank (1% of full)"), labels=c("Full rank", "50% of full", "4% of full", "1% of full")),
+         log_loss = log(loss),
+         log_train_loss = log(train_loss))
+```
+
+```{r}
+min_d = d %>%
+  group_by(svm, aligned, noise_var, type, teacher_rank, student_rank, run) %>%
+  summarize(min_Eg = min(log_loss), min_t = which.min(log_loss)) %>%
+  ungroup() %>%
+  group_by(svm, aligned, noise_var, teacher_rank, student_rank, type) %>%
+  summarize(avg_min_Eg = mean(min_Eg), sd_min_Eg = sd(min_Eg),
+            avg_min_t = mean(min_t), sd_min_t = sd(min_t),
+            se_min_Eg = sd_min_Eg/sqrt(n()), ci_Eg_up= avg_min_Eg + 1.96*se_min_Eg, ci_Eg_lo= avg_min_Eg - 1.96*se_min_Eg,
+            se_min_t = sd_min_t/sqrt(n()), ci_t_up= avg_min_t + 1.96*se_min_t, ci_t_lo= avg_min_t - 1.96*se_min_t) %>%
+  ungroup()
+  
+```
+
+```{r}
+avg_d = d %>%
+  group_by(noise_var, output_size, svm, aligned, epoch, teacher_rank,student_rank, type) %>%
+  summarize(loss=mean(loss), log_tr_loss_sd=sd(log_train_loss), log_tr_loss=mean(log_train_loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
+  mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n()),
+         log_tr_loss_95_low=log_tr_loss-1.96*log_tr_loss_sd/sqrt(n()), log_tr_loss_95_high=log_tr_loss+1.96*log_tr_loss_sd/sqrt(n())) %>%
+  ungroup() %>%
+  mutate(new_type = ifelse(type == "Theory", "Theory",
+                            ifelse(aligned == "TRUE", "Empirical aligned", "Empirical random"))) %>%
+  mutate(new_type = factor(new_type, levels=c("Theory", "Empirical aligned", "Empirical random")),
+         aligned=factor(aligned, levels=c("TRUE", "FALSE"), labels=c("TA", "Random")))
+```
+
+```{r}
+wide_min_d = min_d %>% 
+  filter(type == "Empirical") %>%
+  select(-type, -se_min_Eg, -se_min_t) %>%
+  gather(metric, measurement, avg_min_Eg, sd_min_Eg, avg_min_t, sd_min_t, ci_t_up, ci_t_lo, ci_Eg_up, ci_Eg_lo) %>%
+  mutate(aligned = ifelse(aligned=="TRUE", "Aligned", "Random")) %>%
+  unite(am, aligned, metric) %>%
+  spread(am, measurement) 
+```
+
+
+```{r}
+make_fig3_plots = function(avg_d, wide_min_d, file_prefix, lets) {
+  # train 
+  p = ggplot(avg_d %>% filter(type=="Theory"), aes(x=epoch/1000, y=log_tr_loss, color=as.numeric(levels(svm)[svm]), group=interaction(new_type, svm, student_rank))) +
+   geom_line(aes(linetype=factor("Theory")), size=2) +
+    geom_point(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0), aes(shape=aligned), size=2) +
+    scale_x_continuous(breaks=c(0., 5., 10.)) +
+    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 10), labels=c( parse(text="sqrt(1/2, 4)"), "10      ")) +
+    labs(x=TeX("$t/\\tau$"),
+         y=TeX("$\\ln \\, \\epsilon_{train}$")) +
+    guides(color=F, linetype=F, shape=F)+
+    annotation_custom(textGrob(label = lets[1], hjust = 2.5, gp = gpar(cex = 2),
+        x=unit(0, "npc"), y=unit(0.95, "npc")),
+        ) 
+  
+  
+  gt <- ggplot_gtable(ggplot_build(p))
+  gt$layout$clip[gt$layout$name == "panel"] <- "off"
+  grid.draw(gt)
+  ggsave(paste(file_prefix, lets[1], ".png", sep=""), plot=gt, width=3, height=3)
+  
+  # test
+  p = ggplot(avg_d %>% filter(type=="Theory"), aes(x=epoch/1000, y=log_loss, color=as.numeric(levels(svm)[svm]), group=interaction(new_type, svm, student_rank))) +
+   geom_line(aes(linetype=factor("Theory")), size=2) +
+    geom_point(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0), aes(shape=aligned), size=2) +
+  #  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
+    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 10), labels=c( parse(text="sqrt(1/2, 4)"), "10      ")) +
+    scale_x_continuous(breaks=c(0., 5., 10.)) +
+    labs(x=TeX("$t/\\tau$"),
+         y=TeX("$\\ln \\, \\epsilon_{test}$")) +
+    guides(color=F, linetype=F, shape=F)+
+#    guides(color=guide_colorbar(title="SNR", order=3), linetype=guide_legend(title="", order=1), shape=guide_legend(title="Empirical", order=2))+
+    annotation_custom(textGrob(label = lets[2], hjust = 2.5, gp = gpar(cex = 2),
+        x=unit(0, "npc"), y=unit(0.95, "npc")),
+        )  +
+    theme(legend.margin = margin(-0.1,0,-0.1,0, unit="cm"))
+  
+  
+  gt <- ggplot_gtable(ggplot_build(p))
+  gt$layout$clip[gt$layout$name == "panel"] <- "off"
+  grid.draw(gt)
+  ggsave(paste(file_prefix, lets[2], ".png", sep=""), plot=gt, width=3, height=3)
+  
+  p = ggplot(data=wide_min_d, aes(x=Aligned_avg_min_Eg, y=Random_avg_min_Eg, color=as.numeric(svm))) +
+    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 10), labels=c( parse(text="sqrt(1/2, 4)"), "10      ")) +
+    geom_abline(intercept=0, slope=1, alpha=0.5, linetype=3) +
+    labs(x=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (TA)"),
+         y=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (Rand.)   ")) +
+    geom_errorbar(aes(ymin=Random_ci_Eg_lo, ymax=Random_ci_Eg_up), width=0.05) +
+    geom_errorbarh(aes(xmin=Aligned_ci_Eg_lo, xmax=Aligned_ci_Eg_up), height=0.05) +
+    geom_point(size=2) +
+    guides(color=F, shape=F)  +
+    annotation_custom(textGrob(label = lets[3], hjust = 2.5, gp = gpar(cex = 2),
+        x=unit(0, "npc"), y=unit(0.97, "npc")),
+        ) 
+  
+  gt <- ggplot_gtable(ggplot_build(p))
+  gt$layout$clip[gt$layout$name == "panel"] <- "off"
+  grid.draw(gt)
+  ggsave(paste(file_prefix, lets[3], ".png", sep=""), plot=gt, width=3, height=3)
+  
+  
+  p = ggplot(data=wide_min_d, aes(x=Aligned_avg_min_t/1000, y=Random_avg_min_t/1000, color=as.integer(svm))) +
+    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 10), labels=c( parse(text="sqrt(1/2, 4)"), "10      ")) +
+    geom_line(aes(linetype=factor("Theory")), size=2, alpha=0) +  # haaaaacky
+    geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3) +
+    labs(x=TeX("$t_{opt}/\\tau$ (TA)"),
+         y=TeX("$t_{opt}/\\tau$ (Rand.)")) +
+    geom_point(aes(shape=factor("Empirical")), size=2) +
+    geom_errorbar(aes(ymin=Random_ci_t_lo/1000, ymax=Random_ci_t_up/1000), width=0.01) +
+    geom_errorbarh(aes(xmin=Aligned_ci_t_lo/1000, xmax=Aligned_ci_t_up/1000), height=0.01) +
+    guides(color=guide_colorbar(title="SNR", order=3),
+           linetype=guide_legend(title="", order=1, override.aes=list(alpha=c(1), linetype=c("solid"))),
+           shape=guide_legend(title="", order=2)) +
+    annotation_custom(textGrob(label = lets[4], hjust = 3, gp = gpar(cex = 2),
+        x=unit(0, "npc"), y=unit(0.95, "npc")),
+        ) + 
+    theme(legend.margin = margin(-0.25,0,-0.25,0, unit="cm"))
+  
+  
+  gt <- ggplot_gtable(ggplot_build(p))
+  gt$layout$clip[gt$layout$name == "panel"] <- "off"
+  grid.draw(gt)
+  ggsave(paste(file_prefix, lets[4], ".png", sep=""), plot=gt, width=4, height=3)
+}
+```
+
+
+```{r}
+make_fig3_plots(avg_d %>% filter(teacher_rank==1,
+                                 svm %in% c(0.84, 4., 8.)),
+                wide_min_d %>% filter(teacher_rank==1),
+                file_prefix="../plots/paper/fig3_redux_",
+                lets=c("A", "B", "C", "D"))
+```
+
+```{r}
+make_fig3_plots(avg_d %>% filter(teacher_rank==3,
+                                 svm %in% c(0.84, 4., 8.)),
+                wide_min_d %>% filter(teacher_rank==3),
+                file_prefix="../plots/paper/fig3_redux_",
+                lets=c("E", "F", "G", "H"))
+```
+
+
+# supplemental alignment time figure
+
+
+```{r}
+nruns = 1
+N_2_bars = c(1, 3)
+noise_vars = c(1.)
+output_sizes= c(50)
+svms = c(0.84, 4., 8., 2., 6.)
+alignments = c("False")
+d = data.frame()
+for (n2b in N_2_bars) {
+  for (noise_var in noise_vars) {
+    for (output_size in output_sizes) {
+      for (svm in svms) {
+        for (aligned in alignments) {
+          for (run in 0:(nruns-1)) { 
+            this_d = read.csv(sprintf("../sg_1l_results/n2b_%i_noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i_SVD_track.csv", n2b, noise_var, output_size, svm, aligned, run), header=T)
+      
+            this_d = this_d %>% 
+              mutate(noise_var=noise_var, output_size=output_size, svm=svm, run=run, teacher_rank=n2b, student_rank="Full rank", type="Empirical")
+            d = bind_rows(d, this_d)
+          }
+        }
+      }
+    }
+  }
+}
 ```
