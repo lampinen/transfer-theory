@@ -21,7 +21,7 @@ epsilon = 1e-5
 singular_value_multiplier = 10 
 #N_2_bar = 1 # rank of teacher
 N_2_bars = [1, 3]
-singular_value_multipliers = [0.84, 2.,  4., 6., 8.]
+singular_value_multipliers = [2.] # [0.84, 2.,  4., 6., 8.]
 num_hidden = 50#num_examples
 
 ###
@@ -131,7 +131,7 @@ for N_2_bar in N_2_bars:
                                         U = U[:, :N_2_bar]; S = S[:N_2_bar]; V = V[:N_2_bar, :]; 
                                         norm_S = S/S_hat
                                         U_dots = np.diag(np.dot(U.transpose(), U_hat))
-                                        V_dots = np.diag(np.dot(V.transpose(), V_hat))
+                                        V_dots = np.diag(np.dot(V, V_hat.transpose()))
                                         fsvd.write("%i, " % epoch_i + ", ".join(["%f" % U_dots[i] for i in range(N_2_bar)]) + ", " + ", ".join(["%f" % V_dots[i] for i in range(N_2_bar)]) + ", " + ", ".join(["%f" % norm_S[i] for i in range(N_2_bar)]) + "\n")
 
                         if track_SVD:

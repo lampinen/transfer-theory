@@ -2007,21 +2007,25 @@ for (depth in depths) {
         for (svm in svms) {
           for (aligned in alignments) {
             for (run in 0:(nruns-1)) { 
-              this_d = read.csv(sprintf("../sg_1l_results/n2b_%i_noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i.csv", n2b, noise_var, output_size, svm, aligned, run), header=T)
+              filename = sprintf("../sg_%il_results/n2b_%i_noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i.csv", depth, n2b, noise_var, output_size, svm, aligned, run)
+              if (!file.exists(filename)) {
+                next
+              }
+              this_d = read.csv(filename, header=T)
         
               this_d = this_d %>% 
-                mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", run=run, teacher_rank=n2b, student_rank="Full rank", type="Empirical")
+                mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", run=run, depth=depth, teacher_rank=n2b, student_rank="Full rank", type="Empirical")
               d = bind_rows(d, this_d)
             }
           }
-          theory_filename = sprintf("../sg_1l_results/n2b_%i_noise_var_%.2f_p_100_svm_%f_theory_track.csv", n2b, noise_var, svm)
+          theory_filename = sprintf("../sg_%il_results/n2b_%i_noise_var_%.2f_p_100_svm_%f_theory_track.csv", depth, n2b, noise_var, svm)
           if(file.exists(theory_filename)) { # min_d only theory is omitted
             this_d = read.csv(theory_filename, header=T)
           
             this_d = this_d %>% 
-              filter(epoch <=10000) %>% # generated too long of tracks
+              filter(epoch <=10000 | depth==3) %>% # generated too long of tracks
               rename(loss=generalization_error) %>%
-              mutate(noise_var=noise_var, output_size=NA,  svm=svm, aligned=aligned=="True", teacher_rank=n2b, run=NA, student_rank="Full rank", type="Theory")
+              mutate(noise_var=noise_var, output_size=NA,  svm=svm, aligned=aligned=="True",  depth=depth, teacher_rank=n2b, run=NA, student_rank="Full rank", type="Theory")
             d = bind_rows(d, this_d)
           }
         }
@@ -2046,10 +2050,10 @@ d = d %>%
 
 ```{r}
 min_d = d %>%
-  group_by(svm, aligned, noise_var, type, teacher_rank, student_rank, run) %>%
+  group_by(svm, depth, aligned, noise_var, type, teacher_rank, student_rank, run) %>%
   summarize(min_Eg = min(log_loss), min_t = which.min(log_loss)) %>%
   ungroup() %>%
-  group_by(svm, aligned, noise_var, teacher_rank, student_rank, type) %>%
+  group_by(svm, depth, aligned, noise_var, teacher_rank, student_rank, type) %>%
   summarize(avg_min_Eg = mean(min_Eg), sd_min_Eg = sd(min_Eg),
             avg_min_t = mean(min_t), sd_min_t = sd(min_t),
             se_min_Eg = sd_min_Eg/sqrt(n()), ci_Eg_up= avg_min_Eg + 1.96*se_min_Eg, ci_Eg_lo= avg_min_Eg - 1.96*se_min_Eg,
@@ -2060,7 +2064,7 @@ min_d = d %>%
 
 ```{r}
 avg_d = d %>%
-  group_by(noise_var, output_size, svm, aligned, epoch, teacher_rank,student_rank, type) %>%
+  group_by(depth, noise_var, output_size, svm, aligned, epoch, teacher_rank,student_rank, type) %>%
   summarize(loss=mean(loss), log_tr_loss_sd=sd(log_train_loss), log_tr_loss=mean(log_train_loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
   mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n()),
          log_tr_loss_95_low=log_tr_loss-1.96*log_tr_loss_sd/sqrt(n()), log_tr_loss_95_high=log_tr_loss+1.96*log_tr_loss_sd/sqrt(n())) %>%
@@ -2083,12 +2087,12 @@ wide_min_d = min_d %>%
 
 
 ```{r}
-make_fig3_plots = function(avg_d, wide_min_d, file_prefix, lets) {
+make_fig3_plots = function(avg_d, wide_min_d, file_prefix, lets, x_breaks=c(0., 5., 10.)) {
   # train 
   p = ggplot(avg_d %>% filter(type=="Theory"), aes(x=epoch/1000, y=log_tr_loss, color=as.numeric(levels(svm)[svm]), group=interaction(new_type, svm, student_rank))) +
    geom_line(aes(linetype=factor("Theory")), size=2) +
     geom_point(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0), aes(shape=aligned), size=2) +
-    scale_x_continuous(breaks=c(0., 5., 10.)) +
+    scale_x_continuous(breaks=x_breaks) +
     scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 10), labels=c( parse(text="sqrt(1/2, 4)"), "10      ")) +
     labs(x=TeX("$t/\\tau$"),
          y=TeX("$\\ln \\, \\epsilon_{train}$")) +
@@ -2109,7 +2113,7 @@ make_fig3_plots = function(avg_d, wide_min_d, file_prefix, lets) {
     geom_point(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 200 == 0), aes(shape=aligned), size=2) +
   #  geom_ribbon(aes(ymin=log_loss_95_low, ymax=log_loss_95_high, fill=features), alpha=0.5) +
     scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 10), labels=c( parse(text="sqrt(1/2, 4)"), "10      ")) +
-    scale_x_continuous(breaks=c(0., 5., 10.)) +
+    scale_x_continuous(breaks=x_breaks) +
     labs(x=TeX("$t/\\tau$"),
          y=TeX("$\\ln \\, \\epsilon_{test}$")) +
     guides(color=F, linetype=F, shape=F)+
@@ -2172,20 +2176,50 @@ make_fig3_plots = function(avg_d, wide_min_d, file_prefix, lets) {
 
 ```{r}
 make_fig3_plots(avg_d %>% filter(teacher_rank==1,
-                                 svm %in% c(0.84, 4., 8.)),
-                wide_min_d %>% filter(teacher_rank==1),
+                                 svm %in% c(0.84, 4., 8.),
+                                 depth==1),
+                wide_min_d %>% filter(teacher_rank==1,
+                                 depth==1),
                 file_prefix="../plots/paper/fig3_redux_",
                 lets=c("A", "B", "C", "D"))
 ```
 
 ```{r}
 make_fig3_plots(avg_d %>% filter(teacher_rank==3,
-                                 svm %in% c(0.84, 4., 8.)),
-                wide_min_d %>% filter(teacher_rank==3),
+                                 svm %in% c(0.84, 4., 8.),
+                                 depth==1),
+                wide_min_d %>% filter(teacher_rank==3,
+                                 depth==1),
                 file_prefix="../plots/paper/fig3_redux_",
                 lets=c("E", "F", "G", "H"))
 ```
 
+
+```{r}
+make_fig3_plots(avg_d %>% filter(teacher_rank==1,
+                                 epoch %% 500==0 | type=="Theory",
+                                 svm %in% c(0.84, 4., 8.),
+                                 depth==3,
+                                 new_type != "Empirical random"),
+                wide_min_d %>% filter(teacher_rank==1,
+                                 depth==3),
+                file_prefix="../plots/paper/deep_fig_redux_",
+                lets=c("A", "B", "C", "D"),
+                x_breaks=c(0., 75., 150.))
+```
+
+```{r}
+make_fig3_plots(avg_d %>% filter(teacher_rank==3,
+                                 epoch %% 500 == 0 | type=="Theory",
+                                 svm %in% c(0.84, 4., 8.),
+                                 depth==3,
+                                 new_type != "Empirical random"),
+                wide_min_d %>% filter(teacher_rank==3,
+                                 depth==3),
+                file_prefix="../plots/paper/deep_fig_redux_",
+                lets=c("E", "F", "G", "H"),
+                x_breaks=c(0., 75., 150.))
+```
 
 # supplemental alignment time figure
 
@@ -2317,3 +2351,146 @@ make_alignment_time_plot(d2 %>% filter(depth == 3,
                          x_breaks=c(0., 75., 150.))
 ```
 
+
+# Nonlinear figure redux
+ 
+```{r}
+nruns = 1
+depths = c(2, 4)
+N_2_bars = c(1, 3)
+noise_vars = c(1.)
+output_sizes= c(50)
+svms = c(1., 2., 5., 10., 20.)
+d = data.frame()
+for (depth in depths) {
+  for (n2b in N_2_bars) {
+    for (noise_var in noise_vars) {
+      for (output_size in output_sizes) {
+        for (svm in svms) {
+          for (aligned in alignments) {
+            for (run in 0:(nruns-1)) { 
+              filename = sprintf("../sg_nl_results/depth_%i_n2b_%i_noise_var_%.2f_output_size_%i_svm_%f_run_%i_.csv", depth, n2b, noise_var, output_size, svm, run)
+              if (!file.exists(filename)) {
+                next
+              }
+              this_d = read.csv(filename, header=T)
+        
+              this_d = this_d %>% 
+                mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", run=run, depth=depth-1, teacher_rank=n2b, student_rank="Full rank", type="Empirical")
+              d = bind_rows(d, this_d)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+```{r}
+d = d %>%
+  mutate(output_size=factor(output_size),
+         noise_var=factor(noise_var),
+         svm=factor(svm),
+         type=factor(type),
+         log_loss = log(loss),
+         log_train_loss = log(train_loss))
+```
+
+```{r}
+avg_d = d %>%
+  group_by(depth, noise_var, output_size, svm, epoch, teacher_rank, type) %>%
+  summarize(loss=mean(loss), log_tr_loss_sd=sd(log_train_loss), log_tr_loss=mean(log_train_loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
+  mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n()),
+         log_tr_loss_95_low=log_tr_loss-1.96*log_tr_loss_sd/sqrt(n()), log_tr_loss_95_high=log_tr_loss+1.96*log_tr_loss_sd/sqrt(n())) %>%
+  ungroup() %>%
+  mutate(new_type = ifelse(type == "Theory", "Theory",
+                            ifelse(aligned == "TRUE", "Empirical aligned", "Empirical random"))) %>%
+  mutate(new_type = factor(new_type, levels=c("Theory", "Empirical aligned", "Empirical random")),
+         aligned=factor(aligned, levels=c("TRUE", "FALSE"), labels=c("TA", "Random")))
+```
+
+```{r}
+make_nonlinear_fig_plots = function(avg_d, file_prefix, lets, x_breaks=c(0., 5., 10.), legend=F) {
+  # train 
+  p = ggplot(avg_d %>% filter(epoch %% 50 == 0), aes(x=epoch/1000, y=log_tr_loss, color=as.numeric(levels(svm)[svm]), group=interaction(new_type, svm))) +
+    geom_line() +
+    geom_point(size=2) +
+    scale_x_continuous(breaks=x_breaks) +
+    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 20), breaks=c(1., 20)) +
+    labs(x=TeX("$t/\\tau$"),
+         y=TeX("$\\ln \\, \\epsilon_{train}$")) +
+    annotation_custom(textGrob(label = lets[1], hjust = 2.5, gp = gpar(cex = 2),
+        x=unit(0, "npc"), y=unit(0.95, "npc")),
+        ) 
+  if (legend) {
+    p = p + guides(color=guide_colorbar(title="SNR", order=1))
+    
+  } else {
+    p = p + guides(color=F, linetype=F, shape=F)
+  }
+  
+  gt <- ggplot_gtable(ggplot_build(p))
+  gt$layout$clip[gt$layout$name == "panel"] <- "off"
+  grid.draw(gt)
+  ggsave(paste(file_prefix, lets[1], ".png", sep=""), plot=gt, width=3, height=3)
+  
+  # test
+  p = ggplot(avg_d %>% filter(epoch %% 50 == 0), aes(x=epoch/1000, y=log_loss, color=as.numeric(levels(svm)[svm]), group=interaction(new_type, svm))) +
+    geom_line() +
+    geom_point(size=2) +
+    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 20), breaks=c(1., 20)) +
+    scale_x_continuous(breaks=x_breaks) +
+    labs(x=TeX("$t/\\tau$"),
+         y=TeX("$\\ln \\, \\epsilon_{test}$")) +
+    annotation_custom(textGrob(label = lets[2], hjust = 2.5, gp = gpar(cex = 2),
+        x=unit(0, "npc"), y=unit(0.95, "npc")),
+        )  +
+    theme(legend.margin = margin(-0.1,0,-0.1,0, unit="cm"))
+  if (legend) {
+    p = p + guides(color=guide_colorbar(title="SNR", order=1))
+    
+  } else {
+    p = p + guides(color=F, linetype=F, shape=F)
+  }
+  
+  
+  
+  gt <- ggplot_gtable(ggplot_build(p))
+  gt$layout$clip[gt$layout$name == "panel"] <- "off"
+  grid.draw(gt)
+  ggsave(paste(file_prefix, lets[2], ".png", sep=""), plot=gt, width=3, height=3)
+
+}
+```
+
+```{r}
+make_nonlinear_fig_plots(avg_d %>% filter(depth==1,
+                                          teacher_rank==1),
+                         file_prefix="../plots/paper/nl_fig_redux_",
+                         lets=c("A", "E"))
+```
+
+```{r}
+make_nonlinear_fig_plots(avg_d %>% filter(depth==1,
+                                          teacher_rank==3),
+                         file_prefix="../plots/paper/nl_fig_redux_",
+                         lets=c("B", "F"))
+```
+
+
+```{r}
+make_nonlinear_fig_plots(avg_d %>% filter(depth==3,
+                                          teacher_rank==1),
+                         file_prefix="../plots/paper/nl_fig_redux_",
+                         lets=c("C", "G"),
+                         x_breaks=c(0., 75., 150.))
+```
+
+```{r}
+make_nonlinear_fig_plots(avg_d %>% filter(depth==3,
+                                          teacher_rank==3),
+                         file_prefix="../plots/paper/nl_fig_redux_",
+                         lets=c("D", "H"),
+                         x_breaks=c(0., 75., 150.))
+```
