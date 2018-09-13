@@ -2197,7 +2197,7 @@ make_fig3_plots(avg_d %>% filter(teacher_rank==3,
 
 ```{r}
 make_fig3_plots(avg_d %>% filter(teacher_rank==1,
-                                 epoch %% 500==0 | type=="Theory",
+                                 epoch %% 1000 %in% c(0,1),
                                  svm %in% c(0.84, 4., 8.),
                                  depth==3,
                                  new_type != "Empirical random"),
@@ -2210,7 +2210,7 @@ make_fig3_plots(avg_d %>% filter(teacher_rank==1,
 
 ```{r}
 make_fig3_plots(avg_d %>% filter(teacher_rank==3,
-                                 epoch %% 500 == 0 | type=="Theory",
+                                 epoch %% 1000 %in% c(0,1),
                                  svm %in% c(0.84, 4., 8.),
                                  depth==3,
                                  new_type != "Empirical random"),
@@ -2360,7 +2360,7 @@ depths = c(2, 4)
 N_2_bars = c(1, 3)
 noise_vars = c(1.)
 output_sizes= c(50)
-svms = c(1., 2., 5., 10., 20.)
+svms = c(2., 5., 10., 30.)
 d = data.frame()
 for (depth in depths) {
   for (n2b in N_2_bars) {
@@ -2369,7 +2369,7 @@ for (depth in depths) {
         for (svm in svms) {
           for (aligned in alignments) {
             for (run in 0:(nruns-1)) { 
-              filename = sprintf("../sg_nl_results/depth_%i_n2b_%i_noise_var_%.2f_output_size_%i_svm_%f_run_%i_.csv", depth, n2b, noise_var, output_size, svm, run)
+              filename = sprintf("../sg_nl_results_orth_leaky/depth_%i_n2b_%i_noise_var_%.2f_output_size_%i_svm_%f_run_%i_.csv", depth, n2b, noise_var, output_size, svm, run)
               if (!file.exists(filename)) {
                 next
               }
@@ -2417,7 +2417,7 @@ make_nonlinear_fig_plots = function(avg_d, file_prefix, lets, x_breaks=c(0., 5.,
     geom_line() +
     geom_point(size=2) +
     scale_x_continuous(breaks=x_breaks) +
-    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 20), breaks=c(1., 20)) +
+    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 30), breaks=c(1., 30)) +
     labs(x=TeX("$t/\\tau$"),
          y=TeX("$\\ln \\, \\epsilon_{train}$")) +
     annotation_custom(textGrob(label = lets[1], hjust = 2.5, gp = gpar(cex = 2),
@@ -2433,13 +2433,13 @@ make_nonlinear_fig_plots = function(avg_d, file_prefix, lets, x_breaks=c(0., 5.,
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"
   grid.draw(gt)
-  ggsave(paste(file_prefix, lets[1], ".png", sep=""), plot=gt, width=3, height=3)
+  ggsave(paste(file_prefix, lets[1], ".png", sep=""), plot=gt, width=ifelse(legend,4,3), height=3)
   
   # test
   p = ggplot(avg_d %>% filter(epoch %% 50 == 0), aes(x=epoch/1000, y=log_loss, color=as.numeric(levels(svm)[svm]), group=interaction(new_type, svm))) +
     geom_line() +
     geom_point(size=2) +
-    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 20), breaks=c(1., 20)) +
+    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 30), breaks=c(1., 30)) +
     scale_x_continuous(breaks=x_breaks) +
     labs(x=TeX("$t/\\tau$"),
          y=TeX("$\\ln \\, \\epsilon_{test}$")) +
@@ -2459,7 +2459,7 @@ make_nonlinear_fig_plots = function(avg_d, file_prefix, lets, x_breaks=c(0., 5.,
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"
   grid.draw(gt)
-  ggsave(paste(file_prefix, lets[2], ".png", sep=""), plot=gt, width=3, height=3)
+  ggsave(paste(file_prefix, lets[2], ".png", sep=""), plot=gt, width=ifelse(legend,4,3), height=3)
 
 }
 ```
@@ -2492,5 +2492,6 @@ make_nonlinear_fig_plots(avg_d %>% filter(depth==3,
                                           teacher_rank==3),
                          file_prefix="../plots/paper/nl_fig_redux_",
                          lets=c("D", "H"),
-                         x_breaks=c(0., 75., 150.))
+                         x_breaks=c(0., 75., 150.),
+                         legend=T)
 ```
