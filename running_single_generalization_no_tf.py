@@ -9,7 +9,7 @@ from orthogonal_matrices import random_orthogonal
 num_examples = 100
 output_sizes = [50] #[10, 50, 100, 200, 400]
 sigma_zs = [1] 
-num_runs = 10
+num_runs = 1
 learning_rate = 0.001
 num_epochs = 10000
 batch_size = num_examples
@@ -56,6 +56,7 @@ for randomized in [True, False]:
                             
                             if randomized:
                                 noisy_y_data = np.sqrt(noisy_y_data_frob_squared/(num_examples*num_output)) * np.random.standard_normal(noisy_y_data.shape) 
+                                noisy_y_data_frob_squared = np.sum(noisy_y_data**2)
                   
                             if track_SVD:
                                 U_bar, S_bar, V_bar = np.linalg.svd(y_data, full_matrices=False)
