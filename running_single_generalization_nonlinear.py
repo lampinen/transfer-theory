@@ -10,10 +10,10 @@ from orthogonal_matrices import random_orthogonal
 num_examples = 100
 output_sizes = [50] #[10, 50, 100, 200, 400]
 #num_layers = 4 # not actually a changeable parameter
-num_layerss = [2, 4]
+num_layerss = [4, 2]
 sigma_zs = [1.]
 num_runs = 1
-learning_rate = 0.001
+learning_rate = 0.0001
 num_hidden = 50
 N_2_bars = [1, 3]
 #N_2_bar = 3
@@ -23,14 +23,14 @@ input_type = "one_hot" # one_hot, orthogonal, gaussian
 track_SVD = True
 save_every = 50
 epsilon = 1e-5 
-singular_value_multipliers = [30.]#[1., 2., 3., 5., 10., 20.]  
+singular_value_multipliers = [30., 10., 5.]#[1., 2., 3., 5., 10., 20.]  
 leak_alpha = 0.1
 
 ###
 #var_scale_init = tf.contrib.layers.variance_scaling_initializer(factor=2*np.sqrt(epsilon), mode='FAN_AVG')
 
 for num_layers in num_layerss:
-    num_epochs = 150000 if num_layers != 2 else 10000
+    num_epochs = 500000 if num_layers != 2 else 40000
     eps_per = np.power(epsilon, 1./num_layers)
     for N_2_bar in N_2_bars:
         for run_i in xrange(num_runs):

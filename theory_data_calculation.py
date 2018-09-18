@@ -11,9 +11,9 @@ sigma_zs = [1]
 ps = [100]#, 800, 400, 200, 100, 90, 80, 70, 60, 40, 30, 20]
 #num_runs = 10 
 learning_rate = 0.001
-num_epochs = 150000
+num_epochs = 120000
 #batch_size = num_examples
-filename_prefix = "sg_1l_results/"#"deep_rank3_single_generalization_paper_results/"
+filename_prefix = "sg_3l_results/"#"deep_rank3_single_generalization_paper_results/"
 #input_type = "one_hot" # one_hot, orthogonal, gaussian
 #track_SVD = True
 save_every = 10
@@ -23,9 +23,9 @@ delta_x = 0.001 # for the numerical integration of M-P dist
 #N_2_bar = 3 # number of teacher modes
 N_2_bars = [1, 3]
 num_hidden = 50
-num_hidden_layers = 1# 3 # deeper is only supported for num_hidden_layers = 3, and sigma z = 1 right now, not because of theoretical limitations, just to save me time
+num_hidden_layers = 3# 1 # deeper is only supported for num_hidden_layers = 3, and sigma z = 1 right now, not because of theoretical limitations, just to save me time
 inverse_theory_num_points = 2000
-singular_value_multipliers = [0.84, 4. ,8.] # [1.33] #2., 3.] #[10., 0.84, 2., 4., 6., 8.] #[1., 2., 4., 8.] #np.arange(0., 10., 0.05) #
+singular_value_multipliers = [2.] #0.84, 4. ,8.] # [1.33] #2., 3.] #[10., 0.84, 2., 4., 6., 8.] #[1., 2., 4., 8.] #np.arange(0., 10., 0.05) #
 
 min_gen_approx = False # if true, only approximate min gen by assuming 1 or 0 learning of modes
 ### 

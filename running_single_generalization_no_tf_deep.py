@@ -23,7 +23,7 @@ num_layers = 4 # not counting input, not actually a changable parameter
 singular_value_multiplier = 10 
 N_2_bars = [1, 3]
 #N_2_bar = 3 # rank of teacher
-singular_value_multipliers =[0.84, 2., 4., 6., 8.] #[2.]# 2., 3.]
+singular_value_multipliers = [1.]#[0.84, 2., 4., 6., 8.] #[2.]# 2., 3.]
 num_hidden = 50#num_examples
 
 ###

@@ -21,7 +21,7 @@ epsilon = 1e-5
 singular_value_multiplier = 10 
 #N_2_bar = 1 # rank of teacher
 N_2_bars = [1, 3]
-singular_value_multipliers = [2.] # [0.84, 2.,  4., 6., 8.]
+singular_value_multipliers = [1.] # [0.84, 2.,  4., 6., 8.]
 num_hidden = 50#num_examples
 
 ###
