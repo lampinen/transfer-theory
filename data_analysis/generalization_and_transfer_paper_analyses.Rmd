@@ -2505,7 +2505,7 @@ randomizeds = c("True", "False")
 N_2_bars = c(3)
 noise_vars = c(1.)
 output_sizes= c(50)
-svms = c(2.)
+svms = c(10.)
 d = data.frame()
 spectra_d = data.frame()
 for (rand in randomizeds) {
@@ -2563,31 +2563,67 @@ avg_d = d %>%
 ```
 
 ```{r}
-make_randomizing_fig_plots = function(avg_d, spectra_d, file_prefix, lets, x_breaks=c(0., 5., 10.)) {
+make_randomizing_fig_plots = function(avg_d, spectra_d, file_prefix, lets, x_breaks=c(0., 2.)) {
     # spectra
-    p = ggplot(spectra_d, aes(x=singular_value, color=randomized)) +
-    geom_histogram(position="dodge") +
-    scale_color_brewer(palette="Dark2") +
+    theory_colors = c("#B3DE69", "#FDB462")
+    p = ggplot(spectra_d, aes(x=singular_value, fill=randomized)) +
+    geom_histogram(position="dodge", binwidth=0.5) +
+    scale_fill_brewer(palette="Set1", drop=F) +
+    scale_color_manual(breaks=c("Signal values", "Noise endpoints"), values=theory_colors) +
     labs(x=TeX("$s$"),
-         y=TeX("Density")) +
-    annotation_custom(textGrob(label = lets[1], hjust = 3, gp = gpar(cex = 2),
+         y=TeX("Count")) +
+    annotation_custom(textGrob(label = lets[1], hjust = 1, gp = gpar(cex = 2),
         x=unit(0, "npc"), y=unit(0.95, "npc")),
         ) +
-    guides(color=F)
+    facet_grid(randomized ~ .) +
+    guides(fill=guide_legend(title="Randomized"), color=guide_legend(title="Theory")) +
+    theme(strip.text=element_blank(), strip.background = element_blank())
   
+
+  this_svm = spectra_d$svm[1]
+  # why yes, this is a manually unrolled for loop to get around stupid variable weirdness with ggplot
+  s = 1.
+  this_s = s * this_svm
+  inflated1 = sqrt((1+this_s^2)*(0.5+this_s^2))/this_s
+  p = p +
+    geom_vline(data=spectra_d %>% filter(randomized=="False"), aes(xintercept=inflated1, color="Signal values"), linetype="dashed", size=0.66)
+  s=2.
+  this_s = s * this_svm
+  inflated2 = sqrt((1+this_s^2)*(0.5+this_s^2))/this_s
+  p = p +
+    geom_vline(data=spectra_d %>% filter(randomized=="False"), aes(xintercept=inflated2, color="Signal values"), linetype="dashed", size=0.66)
+  s=3.
+  this_s = s * this_svm
+  inflated3 = sqrt((1+this_s^2)*(0.5+this_s^2))/this_s
+  p = p +
+    geom_vline(data=spectra_d %>% filter(randomized=="False"), aes(xintercept=inflated3, color="Signal values"), linetype="dashed", size=0.66)
+  
+  p = p +
+    geom_vline(data=spectra_d %>% filter(randomized=="False"), aes(xintercept=1-sqrt(0.5), color="Noise endpoints"), linetype="dashed", size=0.66)
+  p = p +
+    geom_vline(data=spectra_d %>% filter(randomized=="False"), aes(xintercept=1+sqrt(0.5), color="Noise endpoints"), linetype="dashed", size=0.66)
+  
+  
+  sigma_r = sqrt(sum((c(1., 2., 3.)*this_svm)^2)/50 + 1)
+  p = p +
+    geom_vline(data=spectra_d %>% filter(randomized=="True"), aes(xintercept=sigma_r*(1-sqrt(0.5)), color="Noise endpoints"), linetype="dashed", size=0.66)
+  p = p +
+    geom_vline(data=spectra_d %>% filter(randomized=="True"), aes(xintercept=sigma_r*(1+sqrt(0.5)), color="Noise endpoints"), linetype="dashed", size=0.66)
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"
   grid.draw(gt)
-  ggsave(paste(file_prefix, lets[1], ".png", sep=""), plot=gt, width=3, height=3)
+  ggsave(paste(file_prefix, lets[1], ".png", sep=""), plot=gt, width=4.5, height=3)
   
+
   # train 
-  p = ggplot(avg_d %>% filter(epoch %% 50 == 0), aes(x=epoch/1000, y=tr_loss, color=randomized, group=interaction(new_type, svm))) +
+  p = ggplot(avg_d %>% filter(epoch %% 10 == 0), aes(x=epoch/1000, y=tr_loss, color=randomized, group=interaction(randomized, svm))) +
+    geom_line() +
     geom_point(size=2) +
-    scale_x_continuous(breaks=x_breaks) +
-    scale_color_brewer(palette="Dark2") +
+    scale_x_continuous(breaks=x_breaks, limits=c(x_breaks[1], x_breaks[2])) +
+    scale_color_brewer(palette="Set1", drop=F) +
     labs(x=TeX("$t/\\tau$"),
          y=TeX("$\\epsilon_{train}$")) +
-    annotation_custom(textGrob(label = lets[1], hjust = 3, gp = gpar(cex = 2),
+    annotation_custom(textGrob(label = lets[2], hjust = 3, gp = gpar(cex = 2),
         x=unit(0, "npc"), y=unit(0.95, "npc")),
         ) +
     guides(color=guide_legend(title="Randomized"))
@@ -2596,7 +2632,7 @@ make_randomizing_fig_plots = function(avg_d, spectra_d, file_prefix, lets, x_bre
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"
   grid.draw(gt)
-  ggsave(paste(file_prefix, lets[2], ".png", sep=""), plot=gt, width=4, height=3)
+  ggsave(paste(file_prefix, lets[2], ".png", sep=""), plot=gt, width=4.5, height=3)
 }
 ```
 
@@ -2605,10 +2641,4 @@ make_randomizing_fig_plots(avg_d,
                            spectra_d,
                            file_prefix = "../plots/paper/randomized_fig_",
                            lets=c("A", "B"))
-```
-
-```{r}
-# make_randomizing_fig_plots(avg_d %>% filter(randomized=="True"),
-#                            file_prefix="../plots/paper/randomized_fig_",
-#                            lets=c("C"))
 ```
