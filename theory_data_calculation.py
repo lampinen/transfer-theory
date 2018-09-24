@@ -107,6 +107,19 @@ for N_2_bar in N_2_bars:
                     sigma_z = np.sqrt(noise_var)
 
 #	s_hats = s_hat(singular_values, sigma_z)
+                    if D < 1. or N_2 < min(N_3):
+                        f_cut = 1-float(min(p, N_2))/N_3
+                        sqrt_D_or_sub = np.sqrt(min(D, float(N_2)/N_3))
+                        delt = 2*sqrt_D_or_sub/inverse_theory_num_points # reusing the inverse theory variable for... kinda the same purpose
+                        points = np.arange(1-sqrt_D_or_sub+delt, 1+sqrt_D_or_sub, delt) 
+                        cum_probs = np.array([prob_check_mp(1-sqrt_D_or_sub, point, delt) for point in points])
+                        f_ind = np.argwhere(cum_probs > f_cut)
+                        # f is the point where f_cut of probability is to left 
+                        f = points[f_ind]
+                    else: 
+                        f = None
+
+
                     A_or_D = min(A, D)
                     s_hats = s_hat_by_A(singular_values, A=A_or_D)
                     s_bar = np.array(singular_values)
