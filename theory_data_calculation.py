@@ -6,14 +6,14 @@ import numpy as np
 from theory_functions import *
 ### Parameters
 num_examples = 100
-output_sizes = [50] 
+output_sizes = [100] 
 sigma_zs = [1] 
-ps = [100]#, 800, 400, 200, 100, 90, 80, 70, 60, 40, 30, 20]
+ps = [20, 100, 200]#, 200, 40, 60, 80, 120, 140, 160, 180]
 #num_runs = 10 
 learning_rate = 0.001
-num_epochs = 120000
+num_epochs = 10000
 #batch_size = num_examples
-filename_prefix = "sg_3l_results/"#"deep_rank3_single_generalization_paper_results/"
+filename_prefix = "changing_p_results/"#"deep_rank3_single_generalization_paper_results/"
 #input_type = "one_hot" # one_hot, orthogonal, gaussian
 #track_SVD = True
 save_every = 10
@@ -21,16 +21,14 @@ singular_value_multiplier = 10
 epsilon = 1e-5
 delta_x = 0.001 # for the numerical integration of M-P dist
 #N_2_bar = 3 # number of teacher modes
-N_2_bars = [1, 3]
-num_hidden = 50
-num_hidden_layers = 3# 1 # deeper is only supported for num_hidden_layers = 3, and sigma z = 1 right now, not because of theoretical limitations, just to save me time
+N_2_bars = [1]
+num_hidden = 100
+num_hidden_layers = 1# 3 # deeper is only supported for num_hidden_layers = 3, p=N_1 and sigma z = 1 right now, not because of theoretical limitations, just to save me time
 inverse_theory_num_points = 2000
-singular_value_multipliers = [2.] #0.84, 4. ,8.] # [1.33] #2., 3.] #[10., 0.84, 2., 4., 6., 8.] #[1., 2., 4., 8.] #np.arange(0., 10., 0.05) #
+singular_value_multipliers = [3.] #0.84, 4. ,8.] # [1.33] #2., 3.] #[10., 0.84, 2., 4., 6., 8.] #[1., 2., 4., 8.] #np.arange(0., 10., 0.05) #
 
 min_gen_approx = False # if true, only approximate min gen by assuming 1 or 0 learning of modes
 ### 
-
-tau = 1./learning_rate
 
 def numeric_integral_mp(delta_x, t, x_min, x_max, A=1):
     x = np.arange(x_min, x_max, delta_x)
@@ -47,6 +45,7 @@ def prob_check_mp(delta_x, x_min, x_max, A=1):
 for N_2_bar in N_2_bars:
     base_singular_values = [float(i) for i in range(N_2_bar, 0, -1)] 
     for p in ps:
+
         for output_size in output_sizes:
             A = float(output_size)/num_examples
 #    print(prob_check_mp(delta_x*1, 1-np.sqrt(A), 1+np.sqrt(A), A=A ))
@@ -88,22 +87,33 @@ for N_2_bar in N_2_bars:
                     N_2 = num_hidden
                     N_1 = num_examples
                     N_3 = output_size
+                    if p != N_1 and (N_2 != N_1 or N_3 != N_1):
+                        raise ValueError("Changing P is not suppported currently if ! N_2 == N_1 == N_3")
+
+                    D = float(p)/N_1 # data density
+                    sqrt_D = np.sqrt(D)
+                    tau = 1./(learning_rate) if D <= 1. else 1./ (sqrt_D*learning_rate) # time scaling for P > N_1
 
                     noise_var = sigma_z**2
 
-                    singular_values = [s * np.sqrt(float(p)/N_1) * singular_value_multiplier for s in base_singular_values]
-
-                    y_frob_norm_sq = np.sum([s**2 for s in singular_values])
+                    singular_values = [s * sqrt_D * singular_value_multiplier for s in base_singular_values]
+        
+                    if D < 1.:
+                        y_frob_norm_sq = np.sum([(s*singular_value_multiplier)**2 for s in base_singular_values])
+                    else:
+                        y_frob_norm_sq = np.sum([(s)**2 for s in singular_values])
 
                     net_rank = min(N_1, N_2, N_3)
                     sigma_z = np.sqrt(noise_var)
 
 #	s_hats = s_hat(singular_values, sigma_z)
-                    s_hats = s_hat_by_A(singular_values, A=A)
+                    A_or_D = min(A, D)
+                    s_hats = s_hat_by_A(singular_values, A=A_or_D)
                     s_bar = np.array(singular_values)
-                    noise_multiplier = get_noise_multiplier(s_bar, sigma_z, A=A) 
+                    noise_multiplier = get_noise_multiplier(s_bar, sigma_z, A=A_or_D) 
 
                     if min_gen_approx:
+                        raise NotImplementedError("This code is out of date")
                         with open(filename_prefix + "A_%f_min_gen_approx.csv" % (A), "a") as fout:
 #                    sot = np.array([s_i if s_i/sigma_z > 1 else 0 for s_i in s_hats])
 #
@@ -119,20 +129,19 @@ for N_2_bar in N_2_bars:
 
                     with open(filename_prefix + "n2b_%i_noise_var_%.2f_p_%i_svm_%f_theory_track.csv" % (N_2_bar, noise_var, p, singular_value_multiplier), "w") as fout:
                         fout.write("epoch, generalization_error, s0, train_error\n")
-                        noisy_y_frob_norm_sq = np.sum(np.array(s_hats)**2) +  (min(N_2, N_3)-len(singular_values)) * numeric_integral_mp(delta_x*sigma_z, 1e6, 1-np.sqrt(A), 1+np.sqrt(A), A=A) # hacky
-
+                        noisy_y_frob_norm_sq = np.sum(np.array(s_hats)**2) +  (min(p, N_2, N_3)-len(singular_values)) * numeric_integral_mp(delta_x*sigma_z, 1e6, 1-np.sqrt(A_or_D), 1+np.sqrt(A_or_D), A=A_or_D) # hacky
                         if num_hidden_layers == 1:
                             for epoch_i in xrange(1, num_epochs + 1, save_every):
 
                                 sot = np.array(s_of_t(s_hats, epoch_i, epsilon, tau))
                                 
-                                generr = (min(p, net_rank)-len(singular_values))*numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-np.sqrt(A), 1+np.sqrt(A), A=A) # number of points in integral estimate is constant in sigma_z 
+                                generr = (min(p, net_rank)-len(singular_values))*numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-np.sqrt(A_or_D), 1+np.sqrt(A_or_D), A=A_or_D) # number of points in integral estimate is constant in sigma_z 
                                 generr += np.sum(sot**2) 
+                                generr -= 2  * np.sum(sot * s_bar * noise_multiplier) 
                                 generr += y_frob_norm_sq
-                                generr -= 2 * np.sum(sot * s_bar * noise_multiplier) 
                                 generr /= y_frob_norm_sq
                                 trainerr = np.sum((s_hats[:net_rank]-sot[:net_rank])**2)
-                                trainerr += (min(N_2, N_3)-len(singular_values)) * train_numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-np.sqrt(A), 1+np.sqrt(A), A=A)
+                                trainerr += (min(p, N_2, N_3)-len(singular_values)) * train_numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-np.sqrt(A_or_D), 1+np.sqrt(A_or_D), A=A_or_D)
                                 trainerr /= noisy_y_frob_norm_sq
                                 print("%i, %f, %f, %f" % (epoch_i, generr, sot[0], trainerr))
                                 fout.write("%i, %f, %f, %f\n" % (epoch_i, generr, sot[0], trainerr))

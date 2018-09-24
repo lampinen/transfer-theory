@@ -6,34 +6,34 @@ import numpy as np
 import datasets
 from orthogonal_matrices import random_orthogonal
 ### Parameters
-num_exampless = [400, 100] #, 90, 80, 70, 60, 40, 30, 20, 50, 10]#, 
+num_exampless = [20, 100, 200, 40, 60, 80, 120, 140, 160, 180] #, 90, 80, 70, 60, 40, 30, 20, 50, 10]#, 
 input_size = 100
-output_sizes = [50] #[10, 50, 100, 200, 400]
+output_sizes = [100] #[10, 50, 100, 200, 400]
 sigma_zs = [1] 
 num_runs = 10
 base_learning_rate = 0.001
 num_epochs = 10000
-filename_prefix = "p_diff_results/"
+filename_prefix = "changing_p_results/"
 input_types = ["orthogonal"]
 track_SVD = False
 save_every = 5
 epsilon = 1e-5
 singular_value_multiplier = 10 
 N_2_bar = 1 # rank of teacher
-singular_value_multipliers = [1., 2., 4., 8.]
+singular_value_multipliers = [3., 2., 4.]
 num_hidden = 100#num_examples
 
 ###
 
-for input_type in input_types:
-    for num_examples in num_exampless:
-        batch_size = num_examples
-        learning_rate = base_learning_rate # hacky
-        for run_i in xrange(num_runs):
+for run_i in xrange(num_runs):
+    for input_type in input_types:
+        for num_examples in num_exampless:
+            batch_size = num_examples
+            learning_rate = base_learning_rate # hacky
             for sigma_z in sigma_zs:
                 noise_var = sigma_z**2
                 for singular_value_multiplier in singular_value_multipliers:
-                    for aligned in [False]:
+                    for aligned in [True]: #False]:
                         for output_size in output_sizes:
                             
                             scaled_noise_var = noise_var/input_size
@@ -57,6 +57,9 @@ for input_type in input_types:
 
                             y_data_frob_squared = np.sum(y_data**2)
                             noisy_y_data_frob_squared = np.sum(noisy_y_data**2)
+                            print(noisy_y_data_frob_squared)
+                            print(y_data_orth_frob_squared)
+                            exit()
                   
 #		    if track_SVD:
 #			U_bar, S_bar, V_bar = np.linalg.svd(y_data, full_matrices=False)
@@ -70,12 +73,19 @@ for input_type in input_types:
                             if input_type != "one_hot":
                               np.savetxt(filename_prefix + "noise_var_%.2f_output_size_%i_svm_%f_aligned_%s_run_%i_x_data.csv"% (noise_var, output_size, singular_value_multiplier, aligned, run_i), x_data, delimiter=",")
                  
-                             
+                            if num_examples < num_input:
+                                x_data_train = x_data[:, :num_examples]
+                                sigma_31 = np.matmul(noisy_y_data[:, :num_examples], x_data_train.transpose())
+                                sigma_11 = np.matmul(x_data_train, x_data_train.transpose())
+                            else:
+                                sigma_31 = np.matmul(noisy_y_data, x_data.transpose())
+                                sigma_11 = np.matmul(x_data, x_data.transpose())
+
                             if aligned:
                                 # initialize weights aligned with noisy data moddes and scale so
                                 # product has singular values of epsilon
                                 if not track_SVD:
-                                    U_hat, S_hat, V_hat = np.linalg.svd(noisy_y_data, full_matrices=True)
+                                    U_hat, S_hat, V_hat = np.linalg.svd(sigma_31, full_matrices=True)
                                     U_hat_base = U_hat; V_hat_base=V_hat;
                                 W21 = np.sqrt(epsilon) * V_hat_base[:num_hidden, :]
                                 if num_hidden <= num_output: 
@@ -93,14 +103,6 @@ for input_type in input_types:
                                     W32 = np.sqrt(epsilon) * np.concatenate([random_orthogonal(num_output),
                                                                              random_orthogonal(num_output)[:, :(num_hidden-num_output)]], axis=1) 
                         
-                            if num_examples < num_input:
-                                x_data_train = x_data[:, :num_examples]
-                                sigma_31 = np.matmul(noisy_y_data[:, :num_examples], x_data_train.transpose())
-                                sigma_11 = np.matmul(x_data_train, x_data_train.transpose())
-                            else:
-                                sigma_31 = np.matmul(noisy_y_data, x_data.transpose())
-                                sigma_11 = np.matmul(x_data, x_data.transpose())
-
                             
                             def train_epoch():
                                 global W21, W32
