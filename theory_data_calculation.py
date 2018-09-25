@@ -8,7 +8,7 @@ from theory_functions import *
 num_examples = 100
 output_sizes = [100] 
 sigma_zs = [1] 
-ps = [20, 100, 200]#, 200, 40, 60, 80, 120, 140, 160, 180]
+ps = [160]#, 100, 20]#, 200, 40, 60, 80, 120, 140, 160, 180]
 #num_runs = 10 
 learning_rate = 0.001
 num_epochs = 10000
@@ -37,6 +37,11 @@ def numeric_integral_mp(delta_x, t, x_min, x_max, A=1):
 def train_numeric_integral_mp(delta_x, t, x_min, x_max, A=1):
     x = np.arange(x_min, x_max, delta_x)
     return np.sum(mp(x, sigma_z, A=A)* ((np.array(s_of_t(x, t, epsilon, tau)) - x)**2 )* delta_x)
+
+# for modes that can't be learned, because there are more patterns than output units, e.g.
+def unlearnable_numeric_integral_mp(delta_x, x_min, x_max, A=1):
+    x = np.arange(x_min, x_max, delta_x)
+    return np.sum(mp(x, sigma_z, A=A) * (x**2) * delta_x)
 
 def prob_check_mp(delta_x, x_min, x_max, A=1):
     x = np.arange(x_min, x_max, delta_x)
@@ -106,18 +111,14 @@ for N_2_bar in N_2_bars:
                     net_rank = min(N_1, N_2, N_3)
                     sigma_z = np.sqrt(noise_var)
 
-#	s_hats = s_hat(singular_values, sigma_z)
-                    if D < 1. or N_2 < min(N_3):
-                        f_cut = 1-float(min(p, N_2))/N_3
-                        sqrt_D_or_sub = np.sqrt(min(D, float(N_2)/N_3))
-                        delt = 2*sqrt_D_or_sub/inverse_theory_num_points # reusing the inverse theory variable for... kinda the same purpose
-                        points = np.arange(1-sqrt_D_or_sub+delt, 1+sqrt_D_or_sub, delt) 
-                        cum_probs = np.array([prob_check_mp(1-sqrt_D_or_sub, point, delt) for point in points])
-                        f_ind = np.argwhere(cum_probs > f_cut)
-                        # f is the point where f_cut of probability is to left 
-                        f = points[f_ind]
+                    if p > N_3:
+                        R = float(N_3)/p 
+                        f_cut = 1-R
+                        sqrt_R = np.sqrt(R)
+                        unlearnable_frobs_sq = (p-N_3) * unlearnable_numeric_integral_mp(delta_x, 1-sqrt_R, 1 + sqrt_R, A=R)
+
                     else: 
-                        f = None
+                        R = None
 
 
                     A_or_D = min(A, D)
@@ -142,7 +143,11 @@ for N_2_bar in N_2_bars:
 
                     with open(filename_prefix + "n2b_%i_noise_var_%.2f_p_%i_svm_%f_theory_track.csv" % (N_2_bar, noise_var, p, singular_value_multiplier), "w") as fout:
                         fout.write("epoch, generalization_error, s0, train_error\n")
-                        noisy_y_frob_norm_sq = np.sum(np.array(s_hats)**2) +  (min(p, N_2, N_3)-len(singular_values)) * numeric_integral_mp(delta_x*sigma_z, 1e6, 1-np.sqrt(A_or_D), 1+np.sqrt(A_or_D), A=A_or_D) # hacky
+                        if R is not None:
+                            noisy_y_frob_norm_sq = np.sum(np.array(s_hats)**2) + unlearnable_frobs_sq + (min(p, N_2, N_3)-len(singular_values)) * numeric_integral_mp(delta_x*sigma_z, 1e6, 1-sqrt_R, 1+sqrt_R, A=R) # hacky
+                                     
+                        else:
+                            noisy_y_frob_norm_sq = np.sum(np.array(s_hats)**2) +  (min(p, N_2, N_3)-len(singular_values)) * numeric_integral_mp(delta_x*sigma_z, 1e6, 1-np.sqrt(A_or_D), 1+np.sqrt(A_or_D), A=A_or_D) # hacky
                         if num_hidden_layers == 1:
                             for epoch_i in xrange(1, num_epochs + 1, save_every):
 
@@ -154,7 +159,11 @@ for N_2_bar in N_2_bars:
                                 generr += y_frob_norm_sq
                                 generr /= y_frob_norm_sq
                                 trainerr = np.sum((s_hats[:net_rank]-sot[:net_rank])**2)
-                                trainerr += (min(p, N_2, N_3)-len(singular_values)) * train_numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-np.sqrt(A_or_D), 1+np.sqrt(A_or_D), A=A_or_D)
+                                if R is not None:
+                                    trainerr += (min(p, N_2, N_3)-len(singular_values)) * train_numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-sqrt_R, 1+sqrt_R, A=R) 
+                                    trainerr += unlearnable_frobs_sq 
+                                else:
+                                    trainerr += (min(p, N_2, N_3)-len(singular_values)) * train_numeric_integral_mp(delta_x*sigma_z, epoch_i, 1-np.sqrt(A_or_D), 1+np.sqrt(A_or_D), A=A_or_D)
                                 trainerr /= noisy_y_frob_norm_sq
                                 print("%i, %f, %f, %f" % (epoch_i, generr, sot[0], trainerr))
                                 fout.write("%i, %f, %f, %f\n" % (epoch_i, generr, sot[0], trainerr))

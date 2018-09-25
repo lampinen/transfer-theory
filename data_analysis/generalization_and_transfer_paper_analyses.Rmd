@@ -2665,7 +2665,7 @@ make_randomizing_fig_plots(avg_d,
 # changing P redux
 ```{r}
 nruns = 10
-ps = c(20, 100, 200)#, 40, 60, 80, 120, 140, 160, 180)
+ps = c(20, 100, 160, 200)#, 40, 60, 80, 120, 140, 160, 180)
 noise_vars = c(1.)
 output_sizes= c(100)
 svms = c(3.)
@@ -2761,9 +2761,9 @@ make_changing_p_plots = function(avg_d, wide_min_d, file_prefix, lets, x_breaks=
   # train 
   p = ggplot(avg_d %>% filter(type=="Theory", svm==3.), aes(x=epoch/(1000), y=log_tr_loss, color=as.numeric(levels(p)[p])/100, group=interaction(new_type, svm, p, student_rank))) +
    geom_line(aes(linetype=factor("Theory")), size=1.5) +
-    geom_point(data=avg_d %>% filter(grepl("Empirical", type), svm==3., epoch %% 250 == 0), aes(shape=aligned), size=3) +
+    geom_point(data=avg_d %>% filter(grepl("Empirical", type), svm==3., epoch %% 1000 == 0), aes(shape=aligned), size=3) +
     scale_x_continuous(breaks=x_breaks) +
-    scale_color_gradient(low="#0000FF", high="#FFD700", limits=c(0, 2), breaks=c(0., 1., 2.)) +
+    scale_color_gradient(low="#008800", high="#FFD700", limits=c(0, 2), breaks=c(0., 1., 2.)) +
     labs(x=TeX("$t/\\tau$"),
          y=TeX("$\\ln \\, \\epsilon_{train}$")) +
     guides(color=F, linetype=F, shape=F)+
@@ -2780,11 +2780,11 @@ make_changing_p_plots = function(avg_d, wide_min_d, file_prefix, lets, x_breaks=
   p = ggplot(avg_d %>% filter(type=="Theory"), aes(x=epoch/(1000), y=log_loss, color=as.numeric(levels(p)[p])/100, group=interaction(new_type, svm, p, student_rank))) +
    geom_line(aes(linetype=factor("Theory")), size=1.5) +
     geom_point(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 1000 == 0), aes(shape=aligned), size=3) +
-    scale_color_gradient(low="#0000FF", high="#FFD700", limits=c(0, 2), breaks=c(0., 1., 2.)) +
+    scale_color_gradient(low="#008800", high="#FFD700", limits=c(0, 2), breaks=c(0., 1., 2.)) +
     scale_x_continuous(breaks=x_breaks) +
     labs(x=TeX("$t/\\tau$"),
          y=TeX("$\\ln \\, \\epsilon_{test}$")) +
-    guides(color=guide_colorbar(title="P", order=3), linetype=guide_legend(title="", order=1), shape=guide_legend(title="Empirical", order=2))+
+    guides(color=guide_colorbar(title=TeX("$P/N_1$"), order=3), linetype=guide_legend(title="", order=1), shape=guide_legend(title="Empirical", order=2))+
     annotation_custom(textGrob(label = lets[2], hjust = 2.5, gp = gpar(cex = 2),
         x=unit(0, "npc"), y=unit(0.95, "npc")))  +
     theme(legend.margin = margin(-0.1,0,-0.1,0, unit="cm"))
