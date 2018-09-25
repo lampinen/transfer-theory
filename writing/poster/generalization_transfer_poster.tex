@@ -1,0 +1,1030 @@
+\documentclass[final]{beamer}
+\usepackage[size=a0]{beamerposter}
+\mode<presentation>{\usetheme{lampinen}}
+\usepackage{float}
+\usepackage{url}           
+%\usepackage{booktabs}      
+\usepackage{amsfonts}      
+%\usepackage{blkarray}
+\usepackage{amssymb}
+\usepackage{amsmath}
+%\usepackage{nicefrac}      
+%\usepackage{microtype}   
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{subcaption}
+\usepackage[numbers]{natbib}
+\usetikzlibrary{matrix,backgrounds}
+\usetikzlibrary{positioning}
+\usetikzlibrary{shapes,arrows}
+\usetikzlibrary{decorations.pathreplacing,angles,quotes}
+
+
+\tikzstyle{netnode} = [circle, draw, thick, inner sep=0pt, minimum size=0.5cm]
+\tikzstyle{relunode} = [rectangle, draw, thick, inner sep=0pt, minimum size=0.5cm]
+
+\tikzstyle{line} = [draw, line width=0.5pt, -latex']
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\bb}[1]{{\bf\overline{#1}}}
+\newcommand{\bh}[1]{{\bf\hat{#1}}}
+\newcommand{\sg}[1]{{\color{red} #1}}
+\newcommand{\eopt}[1]{\varepsilon^\text{opt}_{#1}}
+
+
+\newcommand{\trainerr}{\mathcal{\varepsilon}_\text{train}}
+\newcommand{\generr}{\mathcal{\varepsilon}_\text{test}}
+
+\newcommand{\toptn}{{t}^\text{opt}_\text{neural}}
+\newcommand{\eoptn}{\mathcal{\varepsilon}^\text{opt}_\text{neural}}
+\newcommand{\eoptnn}{\mathcal{\varepsilon}^\text{opt}_\text{non-neural}}
+
+\newcommand{\wa}{{\bf{W}^{21}}}
+\newcommand{\wb}{{\bf{W}^{32}}}
+\newcommand{\ddt}{\frac{d}{dt}}
+\newcommand{\ovn}{\overline{N}}
+
+\setlength{\parskip}{0.5em}
+
+
+% The \author macro works with any number of authors. There are two
+% commands used to separate the names and addresses of multiple
+% authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to
+% break the lines. Using \AND forces a line break at that point. So,
+% if LaTeX puts 3 of 4 authors names on the first line, and the last
+% on the second line, try using \AND instead of \And before the third
+% author name.
+
+\title{An analytic theory of generalization dynamics and transfer learning in deep linear networks}
+\author{Andrew K. Lampinen$^1$ \& Surya Ganguli$^2$}
+\institute{$^1$Department of Psychology, Stanford University, $^2$Department of Applied Physics, Stanford University}
+
+\begin{document}
+% \nipsfinalcopy is no longer used
+
+\begin{frame}[t]{}
+\begin{columns}
+
+\begin{column}{0.25\textwidth}
+\begin{block}{\large Introduction \& background}
+There are many puzzles about generalization in deep learning. How can large neural networks generalize well when they have the capacity to just memorize the labels \citep{Zhang2016}? Why is it that neural networks learn real structure faster than they memorize randomized labels \citep{Arpit2017}? Under what circumstances does gradient descent fail to find the parameters which yield optimal generalization performance? Multi-task learning can help generalization \citep[e.g.]{Dong2015, Luong2016}, but how and why does it do so? We address all these questions within the simplified framework of linear neural networks.\par 
+We build off prior theory in linear neural networks \citep{Saxe2013,Saxe2013a}, which shows that linear networks have \emph{nonlinear} learning dynamics which capture many of the interesting features of learning in nonlinear neural networks. A recent related paper \citep{Advani2017} studied generalization in shallow and deep linear networks, but that work was limited to networks with a single output, thereby precluding the possibility of addressing multi-task learning or the many interesting modern tasks that require higher dimensional outputs, for example in language \cite{Dong2015}, image generation \cite{Goodfellow2014}, reinforcement learning \cite{Mnih2015, Silver2016}, etc. 
+\end{block}
+%
+%Much attention has been devoted recently to the generalization puzzle in deep learning: large deep networks can generalize well, but existing theories bounding generalization error cannot explain this striking performance as they are exceedingly loose. Furthermore, a major hope is that knowledge may transfer across tasks, so that multi-task learning can improve generalization on individual tasks. However we lack analytic theories that can quantitatively predict how the degree of knowledge transfer depends on the relationship between the tasks. We develop an analytic theory of the nonlinear dynamics of generalization in deep linear networks, both within and across tasks. In particular, our theory provides analytic solutions to the training and testing error of deep networks as a function of training time, network size and initialization, and the task structure and SNR. Our theory reveals that deep networks progressively learn the most important task structure first, so that generalization error at the early stopping time primarily depends on task structure and is independent of network size. This explains observations about real data being learned faster than random data, and suggests any tight bound on generalization error must take into account task structure.  Intriguingly our theory also reveals the existence of a non-neural learning algorithm that proveably out-performs neural network training through gradient descent. Finally, for transfer learning, our theory reveals that knowledge transfer depends sensitively, but computably, on the SNRs and input feature alignments of pairs of tasks.
+%
+%Legions of deep learning practitioners closely monitor both training and test errors over training, hoping to achieve both a small training error and a small generalization error, or gap between testing and training errors. Training is usually stopped early, before overfitting sets in and increases the test error. This procedure often results in large networks that generalize well on structured tasks, raising an important generalization puzzle \citep{Zhang2016}: many existing theories that upper bound generalization error \citep{Bartlett2002, Neyshabur2015, Dziugaite2017, Golowich2017, Neyshabur2017a, Bartlett2017, Arora2018} in terms of various measures of network complexity, yield exceedingly loose bounds, and therefore cannot explain the good generalization of deep nets. 
+%
+%In the absence of any such useful, computable theory of deep network generalization error, we develop an analytic theory of generalization error for deep linear networks. Such networks exhibit highly nonlinear learning dynamics  including many prominent phenomena like learning plateaus, saddle points, and sudden drops in training error. Moreover, theory developed for the learning dynamics of deep linear networks directly inspired better initialization schemes for nonlinear networks \citep{Schoenholz2016, Pennington2017, Pennington2018}. Here we show that deep linear networks also provide a good theoretical model for generalization dynamics. In particular we develop an analytic theory for {\it both} the training and test error of a deep linear network as a function of training time, network architecture, initialization, and task structure and SNR. Our theory has an excellent match with simulations and it reveals that deep networks with small weight initialization learn the most important aspects of a task first. Thus the optimal test error at the early stopping time depends largely on task structure and SNR, and not on network architecture, as long as the architecture is expressive enough to attain small training error. Thus our exact analysis of generalization dynamics reveals the important lesson that any theory that seeks to upper bound generalization error based only on network architecture, and not on the structure of the task, is likely to yield exceedingly loose upper bounds. Intriguingly our theory also reveals the existence of a non-neural learning algorithm that proveably out-performs neural network training through gradient descent. 
+
+
+
+\begin{block}{\large Theoretical framework}
+We work in a student-teacher scenario in which we consider a noisy teacher network that generates training data for a potentially more complex student network, and define the training and test errors whose dynamics we wish to understand. \par 
+
+\textbf{Teacher:} We consider a 3-layer linear teacher with \(\overline{N}_i\) units in layer \(i\), and weight matrices \({\bf\overline{W}}^{21} \in \R^{\overline{N_2} \times \overline{N}_1}\) and \({\bf\overline{W}}^{32} \in \R^{\overline{N_3} \times \overline{N_2}}\) between the input to hidden, and hidden to output layers, respectively. 
+The teacher network thus computes the composite map \(\bb{y} = \bb{W} \bf{x}\), where \( \bb{W} \equiv \bb{W}^{32}\bb{W}^{21} \). Of critical importance is the singular value decomposition (SVD) of \(\bb{W}\):
+\begin{equation}
+\bb{W} = \bb{U}\,\bb{S}\,\bb{V}^T = \sum_{\alpha=1}^{\overline{N_2}} \overline{s}^\alpha \bb{u}^\alpha \bb{v}^\alpha{}^T,
+\label{eq:teachersvd}
+\end{equation}
+We work in the limit $\overline{N_1}, \overline{N_3} \rightarrow \infty$ with an $O(1)$ aspect ratio $\mathcal{A}=\overline{N_3}/\overline{N_1} \in (0,1]$ so that the teacher has fewer outputs than inputs. We study generalization performance as a function of the \(\overline{N}_2\) teacher singular values. \\[10pt] 
+We assume the teacher generates noisy outputs from a set of \(\overline{N}_1\) orthonormal inputs:
+\begin{equation}
+\bh{y}^{\mu} = \bb{W}\bh{x}^\mu + \bf{z} ^ \mu \qquad \text{for} \quad \mu = 1, \dots, \overline{N}_1.
+\label{eq:traindata}
+\end{equation}
+This training set yields important second-order training statistics that will guide student learning:
+\begin{equation}
+{\bf\Sigma}^{11} \equiv \sum_{\mu=1}^{\overline{N}_1} {\bh x}^\mu {\bh x}^\mu{}^T = {\bf I},
+\qquad
+{\bf \Sigma}^{31} \equiv \sum_{\mu=1}^{\overline{N_1}} \bh{y}^\mu {\bh x}^\mu{}^T = \bb{W} + {\bf Z}{\bh X}^T.
+\label{eq:secondorder}
+\end{equation}
+Here the input covariance \({\bf\Sigma}^{11}\) is assumed to be white, and \({\bf Z} \in \R^{\overline{N}_3 \times \overline{N}_1}\) is the noise matrix, whose $\mu$'th column is $\bf{z}^\mu$. Its matrix elements \(z^\mu_i\) are drawn iid. from a Gaussian with zero mean and variance \(\sigma_z^2 / {\overline{N}_1}\). As generalization performance will depend on the {\it ratio} of teacher singular values to the noise variance parameter $\sigma^2_z$, we simply set $\sigma_z=1$ in the following. Thus we can think of teacher singular values as signal to noise ratios (SNRs). \\[0.5em]
+\textbf{Student:} Consider a student network with \(N_i\) units in each layer. We assume the first and last layers match the teacher (i.e. \(N_1 = \overline{N_1}\) and \(N_3 = \overline{N_3}\)) but \(N_2 \geq \overline{N_2}\), allowing the student to have more hidden units than the teacher. (The student may also be deeper.) Now consider any student whose input-output map is given by \({\bf y} = {\bf W}^{32} {\bf W}^{21} \equiv {\bf Wx}\). Its training error on the teacher dataset in \eqref{eq:traindata} and its test error on any set of {\it new} \(\overline{N}_1 \) white inputs with \({\bb{x}}^\mu\) obeying \(\sum_{\mu} {\bb{x}}^\mu {\bb{x}}^\mu{}^T = {\bf I}\) can be expressed in terms of the student, training data and teacher SVDs (see the paper for details), which we denote by: 
+\({\bf W} = {\bf U}{\bf S}{\bf V}^T \),  
+\({\bf \Sigma}^{31} = {\bh U}{\bh S}{\bh V}^T \), and 
+\(\bb{W} = \bb{U}\, \bb{S}\,\bb{V}^T\) respectively. Specifically,
+\begin{align}
+\trainerr &= \left[\sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2\right]^{-1} 
+\left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2 +  \sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2
+- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_3}  s_{\alpha} \hat{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bf{\hat u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bf{\hat v}^{\beta} \right)\right] \label{eq:trainerr}\\
+\generr &= \left[\sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2\right]^{-1} 
+\left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2 +  \sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2
+- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_2}  s_{\alpha} \overline{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bb{u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bb{v}^{\beta} \right)\right] \label{eq:generr}
+\end{align}
+\end{block}
+\end{column}
+\begin{column}{0.25\textwidth}
+\begin{block}{\large Student training dynamics}
+\begin{figure}[H]
+\vspace{-0.5em}
+\centering
+\begin{subfigure}[t]{0.35\textwidth}
+\includegraphics[width=\textwidth]{../../plots/paper/fig_1a.png}
+\label{s_of_t_a}
+\end{subfigure}~
+\begin{subfigure}[t]{0.35\textwidth}
+\includegraphics[width=\textwidth]{../../plots/paper/fig_1b.png}
+\label{s_of_t_b}
+\end{subfigure}
+\vspace{-1em}
+\caption{Learning dynamics as a function of singular dimension strength. (a) shows how modes of different singular value are learned, (b) shows that there is a wave of learning that picks up singular dimensions with smaller and smaller singular values as \(t \rightarrow \infty\).}
+\vspace{-0.5em}
+\end{figure}
+We assume batch gradient descent with learning rate $\lambda$ on the squared error $\sum_{\mu}||\bh{y}^\mu - \wb\wa \bh{x}^\mu||_2^2$. We consider two classes of student initializations.  The first is a {\it random student} initialized with random orthogonal matrices and all singular values equal to $\epsilon$. However, because of complex coupling between the student and teacher modes, the exact learning dynamics are difficult to obtain in this case. \\[0.5em]
+Thus we also consider a {\it training aligned} (TA) initialization in which the initial weights are chosen so that the TA has the same singular vectors as the training data ${\bf \Sigma}^{31}$, but has all singular values equal to $\epsilon$.  As shown in \citep{Saxe2013}, as the TA learns according to \eqref{wb_avg}, the singular vectors of its composite map $\bf W$ remain unchanged, while the singular values evolve as $s^\alpha(t) = s(t,\hat s^\alpha)$, where the learning curve function $s(t,\hat s)$ as well as its functional inverse $t(s,\hat s)$ is given by 
+\begin{equation}
+s(t,\hat s)=\frac{\hat s e^{2\hat st/\tau}}{e^{2\hat st/\tau}-1+\hat s/\epsilon}, \qquad
+t(s,\hat s) = \frac{\tau}{2\hat s} 
+   \ln{\frac{{\hat s}/\epsilon -1}{{\hat s}/s -1}}.
+\label{s_soln}
+\end{equation}
+Which describe how each TA mode learns the corresponding data mode. Each mode undergoes a sigmoidal learning curve with a sharp transition around time $t/\tau = \frac{1}{2\hat s}  \ln{({\hat s}/\epsilon -1)}$. \par 
+\citet{Saxe2013} showed that that TA networks provide a good approximation to the train-error dynamics of randomly initialized networks, below we show that they also provide a good description of the \emph{generalization} dynamics. The results in this section assume a single hidden layer, but there are also solutions for deeper networks, see the paper.
+\end{block}
+%% Col 2 block 2
+\begin{block}{\large How the signal is buried in the training data}
+\begin{figure}
+\vspace{-0.5em}
+\centering
+\begin{subfigure}[t]{0.44\textwidth}
+\includegraphics[height=2.6in]{../../plots/paper/fig_2a.png}
+\label{fig2b}
+\end{subfigure}%
+\begin{subfigure}[t]{0.30\textwidth}
+\includegraphics[height=2.6in]{../../plots/paper/fig_2c.png}
+\label{fig2c}
+\end{subfigure}%
+\begin{subfigure}[t]{0.21\textwidth}
+\includegraphics[height=2.6in]{../../plots/paper/fig_2d.png}
+\label{fig2d}
+\end{subfigure}
+\vspace{-1em}
+\caption{The signal through the noise. Theoretical vs. empirical (a) histogram of singular values of noisy teacher \(\hat{s}\). (b) \(\hat{s}\) as a function of \(\overline{s}\). (c) alignment of noisy teacher and noiseless teacher singular vectors as a function of \(\overline{s}\). ($\overline{N_1}= \overline{N_3} = 100$.)}
+\label{fig2}
+\vspace{-0.5em}
+\end{figure}
+How do the true singular dimensions get distorted by the noisy teacher? The top $\overline{N}_2$ singular values and vectors of $\bf{\Sigma}^{31}$ converge to ${\hat s}(\overline{s}_\alpha)$, where:
+\begin{equation}
+\hat{s}(\overline{s}) = \begin{cases}
+{(\overline{s})^{-1}}{\sqrt{(1+\overline{s}^2)(\mathcal{A}+\overline{s}^2)}}\ & \text{if } \overline{s} > \mathcal{A}^{1/4} \\
+1+\sqrt{\mathcal{A}} & \text{otherwise}.
+\end{cases}
+\label{eq:shatsbar}
+\end{equation}
+The associated singular vectors of the teacher can also acquire a nontrivial overlap with the $\overline{N}_2$ modes of the teacher through the relation 
+$\left\lvert {\bh u}^{\alpha} \cdot \bb{u}^{\beta} \right\rvert   \left\lvert{\bh v}^{\alpha} \cdot \bb{v}^{\beta} \right\rvert = \mathcal{O}(\overline{s}_\alpha)$, where 
+\begin{equation}
+\mathcal{O}(\overline{s}) = 
+\begin{cases}
+\left[1-
+        \frac{\mathcal{A}(1+\overline{s}^2)}          
+            {\overline{s}^2(\mathcal{A}+\overline{s}^2)}
+\right]^{1/2} 
+\left[1-
+        \frac{(\mathcal{A}+\overline{s}^2)}          
+            {\overline{s}^2(1+\overline{s}^2)}
+\right]^{1/2}
+
+& \text{if } \overline{s} > \mathcal{A}^{1/4} \\
+0 & \text{otherwise}
+\end{cases}
+\label{eq:ovlap}
+\end{equation}
+The remaining of the $N_3 - \overline{N_2}$ modes are orthogonal to the top ones, and their singular values obey the Marchenko-Pastur (MP) distribution: 
+\begin{equation}
+P(\hat{s}) = \begin{cases}
+\frac{\sqrt{4\mathcal{A}-(\hat{s}^2 - (1+\mathcal{A}))^2}}{\pi \mathcal{A}\hat{s}} & \hat{s} \in [1-\sqrt{\mathcal{A}}, 1+\sqrt{\mathcal{A}}] \\
+0 & \text{otherwise}.
+\end{cases}
+\label{eq:mp}
+\end{equation}
+
+Overall, these equations describe a singular vector {\it phase transition} in the training data, where weak modes are lost in the noise, but strong modes ($\overline{s} > \mathcal{A}^{1/4}$) are imprinted on the noisy signal, but with \emph{inflated} singular values, and an overlap with the true singular dimensions that approaches unity as $\overline{s}$ increases.
+\end{block}
+\end{column}
+\begin{column}{0.25\textwidth}
+\end{column}
+\begin{column}{0.25\textwidth}
+\begin{block}{References}
+{
+\tiny
+\bibliographystyle{plainnat}
+\bibliography{generalization}
+}
+\end{block}
+\end{column}
+\end{columns}
+
+%
+%\subsection{Putting it all together: an analytic theory of generalization dynamics}
+%
+%
+%Based on an analytic understanding of how the singular mode structure $\{\overline{s}^\alpha, \bb{u}^\alpha, \bb{v}^{\alpha}\}$ of the teacher $\bb{W}$ is imprinted in the modes $\{{\hat{s}^\alpha}, \bh{u}^\alpha, \bh{v}^{\alpha}\}$ of the training data covariance ${\bf{\Sigma}}^{31}$ through \eqref{eq:shatsbar}, \eqref{eq:ovlap} and \eqref{eq:mp}, and in turn how this training data singular structure drives the time evolving singular modes of a TA network $\{{s}^\alpha(t), \bh{u}^\alpha, \bh{v}^{\alpha}\}$ of through \eqref{s_soln}, we can now derive analytic expressions for $\trainerr$ and $\generr$ in \eqref{eq:trainerr} and \eqref{eq:generr}, for a TA network. We will also show that these TA learning curves closely approximate the learning curves of a random student in which its singular vectors $\{{\bf{u}}^\alpha(t), {\bf{v}}^{\alpha}(t)\}$ also evolve with time, and match on several important aspects. 
+%
+%In particular, inserting the TA dynamics in \eqref{eq:TAassump} into $\trainerr$ in \eqref{eq:trainerr}, we obtain 
+%\begin{equation}
+%\trainerr(t) = 
+%\left[\sum_{\alpha=1}^{\overline{N}_3} \hat{s}_{\alpha}^2\right]^{\!-1}\!\!
+%\left[
+%(N_3 - N_2) \langle \hat s^2 \rangle_{\mathcal{R}_{out}} \!+ \! (N_2 - \overline{N}_2) \langle (s(\hat{s},t) -\hat{s})^2 \rangle_{\mathcal{R}_{in}} +  
+%\sum_{\alpha=1}^{\overline{N}_2} 
+%    \left[
+%       s_\alpha(t) -  
+%       \hat{s}_{\alpha} \right]^2
+%\right]
+%\label{eq:trainerrth}
+%\end{equation}
+%Here, $s_\alpha(t) = s(\hat{s}_{\alpha},t)$ as defined in \eqref{s_soln} are the TA singular values, and $\hat{s}_{\alpha} = \hat{s}(\overline{s}_\alpha)$ as defined in \eqref{eq:shatsbar} are the training data singular values associated with the teacher singular values $\overline{s}_\alpha$.  
+%Also $\langle \cdot \rangle_{\mathcal{R}}$ denotes an average with respect to the MP distribution in \eqref{eq:mp} over a region $\mathcal{R}$. In particular, two distinct regions contribute to training error. 
+%First $\mathcal{R}_{in}$ contains those top $N2-\overline{N}_2$ training data singular values that do not correspond to the $\overline{N}_2$ singular values of the teacher but can nevertheless be learned by the rank $N_2$ student. 
+%And $\mathcal{R}_{out}$ corresponds to the remaining $N_3-N_2$ lowest training data singular values that cannot be learned by a rank $N_2$ student. In terms of the MP distribution, $\mathcal{R}_{out} = [1-\sqrt{\mathcal{A}},f]$ and $\mathcal{R}_{in} = [f,  1+\sqrt{\mathcal{A}}]$, where $f$ is the point at which the MP density has $1-N_2/N_3$ of its mass to the left and $N_2/N_3$ of its mass to the right. 
+%In the simple case of a full rank student, $f = 1-\sqrt{\mathcal{A}}$, and one need only integrate over $\mathcal{R}_{in}$ which is the entire range. The expression \eqref{eq:trainerrth} for $\trainerr$ makes it manifest that it will go to zero for a full rank student as its singular values approach those of the training data.
+%
+%Of course the test error can behave very differently.  Inserting the TA training  dynamics in \eqref{eq:TAassump} into $\generr$ in \eqref{eq:generr}, and using \eqref{eq:shatsbar}, \eqref{eq:ovlap} and \eqref{eq:mp} to relate training data to the teacher, we find  
+%
+%\begin{equation}
+%\generr(t) = 
+%\left[\sum_{\alpha=1}^{\overline{N}_2} \overline{s}_{\alpha}^2\right]^{-1}
+%\left[
+%(N_2 - \overline{N}_2) \langle s(\hat{s},t)^2 \rangle_{\mathcal{R}_{in}} + 
+%\sum_{\alpha=1}^{\overline{N}_2} 
+%    \left[
+%       (s_\alpha(t) - \overline{s}_{\alpha})^2  
+%       + 2 s_\alpha(t) \overline{s}_{\alpha}(1-\mathcal{O}(\overline{s}_\alpha))
+%       \right]      
+%\right]
+%\label{eq:generrth}
+%\end{equation}
+%Together \eqref{eq:trainerrth} and \eqref{eq:generrth} constitute a complete theory of generalization dynamics in terms of the structure of the data distribution (i.e. the teacher rank $\overline{N}_2$, teacher SNRs $\overline{s}_1,\dots, \overline{s}_{\overline{N}_2}$, and the teacher aspect ratio $\mathcal{A}=\overline{N}_3/\overline{N}_1$), the architectural complexity of the student (i.e. its rank $N_2$, its number of layers $N_l$, and the norm $\epsilon$ of its initialization), and the training time $t$. They yield considerable insight into the dynamics good generalization early in learning and overfitting late in learning, as we show in the next section.
+%
+%%%\begin{figure}
+%%%\centering
+%%%\begin{subfigure}[t]{0.27\textwidth}
+%%%\includegraphics[height=1.45in]{../../plots/paper/fig_3a.png}
+%%%\label{fig_3a}
+%%%\end{subfigure}%
+%%%\begin{subfigure}[t]{0.36\textwidth}
+%%%\includegraphics[height=1.45in]{../../plots/paper/fig_3b.png}
+%%%\label{fig_3b}
+%%%\end{subfigure}\\
+%%%\begin{subfigure}[t]{0.27\textwidth}
+%%%\includegraphics[height=1.45in]{../../plots/paper/fig_3c.png}
+%%%\label{fig_3c}
+%%%\end{subfigure}%
+%%%\begin{subfigure}[t]{0.36\textwidth}
+%%%\includegraphics[height=1.45in]{../../plots/paper/fig_3d.png}
+%%%\label{fig_3d}
+%%%\end{subfigure}%
+%%%\begin{subfigure}[t]{0.36\textwidth}
+%%%\includegraphics[height=1.45in]{../../plots/paper/fig_3e.png}
+%%%\label{fig_3e}
+%%%\end{subfigure}%
+%%%\caption{Match between theory and simulation: (a,b) log train and test error, respectively, showing very close match between theory and experiment for TA, and close match for the random student. (c) comparing TA and randomly initialized students minimum generalization errors, showing almost perfect match. (d)  comparing TA and randomly initialized students optimal stopping times, showing small deviation due to alignment time. (e) Non-neural optimum testing error plotted and neural optimum testing error, showing the close match with a rank-1 teacher.}
+%%%\label{gen_results_fig}
+%%%\end{figure}
+%
+%\begin{figure}
+%\centering
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/fig3_redux_A.png}
+%\label{fig_3a}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/fig3_redux_B.png}
+%\label{fig_3b}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/fig3_redux_C.png}
+%\label{fig_3c}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.33\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/fig3_redux_D.png}
+%\label{fig_3d}
+%\end{subfigure}\\
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/fig3_redux_E.png}
+%\label{fig_3e}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/fig3_redux_F.png}
+%\label{fig_3f}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/fig3_redux_G.png}
+%\label{fig_3g}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.33\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/fig3_redux_H.png}
+%\label{fig_3h}
+%\end{subfigure}
+%\caption{Match between theory and simulation for rank 1 (row 1, A-D) and rank 3 (row 2, E-H) teachers with single-hidden-layer students: (a-b, e-f) log train and test error, respectively, showing very close match between theory and experiment for TA, and close match for the random student. (c,g) comparing TA and randomly initialized students minimum generalization errors, showing almost perfect match. (d,h)  comparing TA and randomly initialized students optimal stopping times, showing small lag due to alignment. ($N_1 = 100$, $N_2=50$, $N_3 = 50$.)}
+%\label{gen_results_fig}
+%\end{figure}
+%\begin{figure}
+%\centering
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/deep_fig_redux_A.png}
+%\label{deep_fig_a}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/deep_fig_redux_B.png}
+%\label{deep_fig_b}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/deep_fig_redux_C.png}
+%\label{deep_fig_c}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.33\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/deep_fig_redux_D.png}
+%\label{deep_fig_d}
+%\end{subfigure}\\
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/deep_fig_redux_E.png}
+%\label{deep_fig_e}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/deep_fig_redux_F.png}
+%\label{deep_fig_f}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/deep_fig_redux_G.png}
+%\label{deep_fig_g}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.33\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/deep_fig_redux_H.png}
+%\label{deep_fig_h}
+%\end{subfigure}
+%\caption{Our theory applies to deeper networks: match between theory and simulation for rank 1 (row 1, A-D) and rank 3 (row 2, E-H) teachers with $N_l=5$ students: (A-B, E-F) log train and test error, respectively, showing very close match between theory and experiment for TA. (C,G) comparing TA and randomly initialized students minimum generalization errors, showing almost perfect match. (D,H)  comparing TA and randomly initialized students optimal stopping times, showing large lag due to slower alignment in deeper networks. ($N_1 = 100$, $N_2=50$, $N_3 = 50$.)}
+%\label{deeper_results_fig}
+%\end{figure}
+%
+%\subsection{Numerical tests of the theory of neural network generalization dynamics}
+%
+%Fig. \ref{gen_results_fig} demonstrates an excellent match between the TA theory and TA simulations, and a close match between TA theory and random student simulations for students with a single hidden layer, and for various teacher ranks $\overline{N}_2$. Intuitively, as time $t$ proceeds, learning corresponds singular mode detection wave sweeping from large to small training data singular values (i.e. the wave in Fig. 1B sweeps across the training data spectrum in Fig 2A). Initially, strong singular values associated with large SNR teacher modes are learned and both $\trainerr$ and $\generr$ drop. Fig. \ref{gen_results_fig}A-D are for a rank $1$ teacher, and so in Fig \ref{gen_results_fig}AB we see a single sharp drop at an early time when the teacher SNR is high enough. By contrast, with a rank $3$ teacher in Fig. \ref{gen_results_fig}E-H, there are several early drops as the three modes are picked up. However, as time progresses, the singular mode detection wave penetrates the MP sea, and the student picks up noise structure in the data unrelated to the teacher, so $\trainerr$ drops but $\generr$ rises, indicating the onset of overfitting.
+%
+%The main difference between the random student and TA learning curves is that the random student learning is slightly delayed relative to the TA, especially late in training. This is understandable because the TA already knows the singular vectors of the training data, while the random student must learn them.  Nevertheless, two of the most important aspects of learning, namely the optimal early stopping time $\toptn \equiv \text{argmin}_t \generr(t)$ and the minimal test error achieved at this time $\eoptn \equiv \text{min}_t \generr(t)$, match well between TA and random student, as shown in Fig. 3CD. At low teacher SNRs, the student takes a little longer to learn than the TA, but their optimal test errors match.
+%
+%Of course, most deep learning practitioners do not use networks with a single hidden layer. Thus it is necessary to also test our theory with deeper networks. As noted above, \citet{Saxe2013} derived $t(s, \hat s)$ for networks of arbitrary depth, so we only need to adjust this factor in our formulas, see Appendix\ref{app_deeper_theory} for details. In Fig. \ref{deeper_results_fig} we show that again there is an excellent match between TA networks and theory for student networks with $N_l= 5$ layers (i.e. 3 hidden layers). Randomly-initialized networks show a much longer alignment lag for deeper networks (see Appendix \ref{app_align_lag} for details), but the qualitative shape of the curves is similar.
+%
+%\subsection{Qualitative comparison to nonlinear networks}
+%In this section we show that many of the phenomena we observe in our linear networks are qualitatively replicated in nonlinear networks, suggesting that our theory may help guide understanding of the nonlinear case. In particular, features such as stage-like initial learning, followed by a plateau if SNR is sufficiently high, and finally followed by overfitting are replicated. However, there are some discrepancies, in particular nonlinear networks (especially deeper ones) begin overfitting earlier than linear networks. This is not entirely surprising, because a mode in a non-linear network can be co-opted by an orthogonal mode, while in a linear network it cannot. Thus in a non-linear network the noise dimensions are able to ``stow away'' on the strong signal dimensions as soon as the network has learned them.
+%
+%\begin{figure}[h]
+%\centering
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/nl_fig_redux_A.png}
+%\label{nl_fig_a}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/nl_fig_redux_B.png}
+%\label{nl_fig_b}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/nl_fig_redux_C.png}
+%\label{nl_fig_c}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.33\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/nl_fig_redux_D.png}
+%\label{nl_fig_d}
+%\end{subfigure}\\
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/nl_fig_redux_E.png}
+%\caption*{$\overline{N}_2 = 1$, $N_l=3$}
+%\label{nl_fig_e}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/nl_fig_redux_F.png}
+%\caption*{$\overline{N}_2 = 3$, $N_l=3$}
+%\label{nl_fig_f}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.22\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/nl_fig_redux_G.png}
+%\caption*{$\overline{N}_2 = 1$, $N_l=5$}
+%\label{nl_fig_g}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.33\textwidth}
+%\includegraphics[height=1.15in]{../../plots/paper/nl_fig_redux_H.png}
+%\caption*{$\overline{N}_2 = 3$, $N_l=5$ \phantom{fillfillfillfi}}
+%\label{nl_fig_h}
+%\end{subfigure}
+%\caption{Train (first row, A-D) and test (second row, E-H) error for nonlinear networks (leaky relu at all hidden layers) with one hidden layer (first two columns) or three hidden layers (last two columns) trained on the tasks above, with a rank 1 teacher (first and third columns) or a rank 3 teacher (second and fourth columns). Note that many of the qualitative phenomena observed in linear networks, such as stage-like improvement in the generalization error, followed by a plateau under some conditions, followed by overfitting, also appear in nonlinear networks. Compare the first column to Fig. \ref{gen_results_fig}AB, the second column to Fig. \ref{gen_results_fig}EF, the third to Fig. \ref{deeper_results_fig}AB, and the fourth to Fig. \ref{deeper_results_fig}EF. ($N_1 = 100$, $N_2=50$, $N_3 = 50$.)}
+%\label{nonlinear_results_fig}
+%\end{figure}
+%
+%\subsection{Randomized data vs. real data: a learning time puzzle}
+%
+%\begin{figure}[h]
+%\centering
+%\begin{subfigure}[t]{0.5\textwidth}
+%\includegraphics[height=1.6in]{../../plots/paper/randomized_fig_A.png}
+%\label{rand_fig_a}
+%\end{subfigure}~
+%\begin{subfigure}[t]{0.4\textwidth}
+%\includegraphics[height=1.6in]{../../plots/paper/randomized_fig_B.png}
+%\label{rand_fig_b}
+%\end{subfigure}
+%\caption{Learning randomized data: Comparing (a) singular value distributions and (b) learning curves for data with a signal vs. random data that preserves basic statistics (mean, variance). Randomizing the data dilutes the signal singular values, spreading their variance out over many modes, hence randomly labelled data is learned more slowly. ($N_1 = 100$, $N_2=50$, $N_3 = 50$.)}
+%\label{randomizing_fig}
+%\end{figure}
+%\citet{Zhang2016} observed that deep networks can memorize data with the labels permuted. However, as \citet{Arpit2017} pointed out, networks learn structure within data faster than they memorize random labels. Our theory explains this. Under our assumptions, randomizing the labels on the data has approximately the same distribution as choosing the data IID from a gaussian distribution which preserves the mean and variance of the data, i.e. with mean 0 and variance 
+%$$\sigma_r^2 = \frac{1}{N_3} \left[\sum_{i=1}^{\overline{N}_2} \bar{s}^2_i\right] + \sigma_z^2,$$
+%where $\sigma_z$ is the noise variance, as before. This will distribute the signal variance as well as the noise variance in the original data over the randomized data modes, which will stretch the MP distribution so that its support is $[(\sigma_r (1-\sqrt{A}), \sigma_r (1+\sqrt{A})]$. However, even on this stretched MP distribution, the upper bound will be much lower than the signal singular values, since the signal variance will be diluted by spreading it out over many more modes in the randomized data.  Thus the randomized data will be slower to learn initially. In Fig. \ref{randomizing_fig}A we show the match between these predicted singular value distributions and empirical ones, showing how the data contains much larger singular value modes. In Fig. \ref{randomizing_fig}B we compare the learning curves, showing that these larger singular values result in faster learning for the original data than the data with randomized labels. 
+%%In fact we can exactly quantify the difference using the learning time formulas from above. Specifically, the slowdown in the time of first learning will approximately be:
+%%$$\frac{1}{2 \sigma_r (1+\sqrt{A})} \ln \left( \frac{ \sigma_r (1+\sqrt{A})}{\epsilon} - 1 \right) - \frac{1}{2\hat{s}_1} \ln \left( \frac{\hat{s_1}}{\epsilon} - 1 \right)$$
+%%(for a single hidden-layer network, see the supplemental material for the learning time formulas for deeper networks).
+%\subsection{Out-performing optimal early stopping through a non-gradient training algorithm}
+%
+%For the case of a rank $1$ teacher, it is straightforward to derive a good analytic approximation to the important quantities $\eoptn$ and $\toptn$. We assume the teacher SNR is beyond the phase transition point so its unique singular value $\overline{s}_1 > \mathcal{A^{1/4}}$, yielding a separation between the training data singular value $\hat{s_1}$ in \eqref{eq:shatsbar} and the edge of the MP sea.  In this scenario, optimal early stopping will occur at a time {\it before} the detection wave in Fig. 1B penetrates the MP sea, so to minimize test error, we can neglect the first term in \eqref{eq:generrth}. Then optimizing the second term yields the optimal student singular value $s_1 = \overline{s}_1 \mathcal{O}(\overline{s}_1)$.  Inserting this value into \eqref{eq:generrth} yields $\eoptn = 1-\mathcal{O}(\overline{s}_1)^2$, and inserting it into \eqref{s_soln} yields $\toptn$. Thus the optimal generalization error with a rank $1$ teacher is very: simply related to the alignment of the top training data singular vectors with the teacher singular vectors, and it decreases as this alignment increases. In Appendix \ref{app_nongradient}, we show the match between the error achieved by gradient descent on the network and this estimated optimal stopping error for a rank 1 teacher.
+%
+%With higher rank teachers, $\eoptn$ and $\toptn$ must negotiate a more complex trade-off between teacher modes with different SNRs. For example, as the singular mode detection wave passes the top training data singular value, $s_1(t) \rightarrow \hat{s}_1$ which is greater than the optimal $s_1 = \overline{s}_1 \mathcal{O}(\overline{s}_1)$ for mode $1$.  Thus as learning progresses, the student overfits on the first mode but learns lower modes.  However, this neural generalization dynamics suggests a {\it superior non-gradient} training algorithm that simply optimally sets each $s_\alpha$ to $\overline{s}_{\alpha} \mathcal{O}(\overline{s}_\alpha)$ in \eqref{eq:generrth}, yielding an optimal non-neural generalization error:
+%\begin{equation}
+% \eoptnn = \left[\sum_{\alpha=1}^{\overline{N}_2} \overline{s}_{\alpha}^2\right]^{-1}
+%\left[
+%\sum_{\alpha=1}^{\overline{N}_2} 
+%       \overline{s}_{\alpha}^2 (1-\mathcal{O}(\overline{s}_\alpha)^2)      
+%\right].
+%\end{equation}
+%Standard gradient descent learning cannot achieve this low generalization error because it cannot independently adjust all student singular values.  A simple algorithm that achieves $\eoptnn$ is as follows. From the training data covariance ${\bf{\Sigma}}^{31}$, extract the top singular values $\hat{s}_\alpha$ that pop-out of the MP sea, use the functional inverse of \eqref{eq:shatsbar} to compute $\overline{s}_a(\hat{s}_\alpha)$, use \eqref{eq:ovlap} to compute the optimal $s_\alpha$, and then construct a matrix $\bf{W}$ with the same top singular vectors as ${\bf{\Sigma}}^{31}$, but with the outlier singular values shrunk from $\hat{s}_{\alpha}$ to $s_\alpha$ and the rest set to zero. This non-neural singular value shrinkage algorithm provably outperforms optimal neural network training with $\eoptnn \leq \eoptn$.  
+%
+%
+%
+%\begin{figure}
+%\centering
+%\begin{tikzpicture}[auto, scale=0.4, every node/.style={scale=0.4}]
+%%%%% teacher 1
+%\begin{scope}[shift={(-16, 0)}] 
+%% input layer
+%
+%\node [netnode] at (-2,0) (i1) {};
+%\node [netnode] at (-1,0) (i2) {};
+%\node at (0, 0) (id) {\LARGE $\cdots$};
+%\node [netnode] at (1,0) (i3) {};
+%\node [netnode] at (2,0) (i4) {};
+%\draw[decoration={brace,mirror, raise=3pt},decorate, thick] (i1.south) -- node[below = 0.2] {\Large $N_1$ inputs} (i4.south);
+%
+%
+%% hidden layer
+%\node [netnode] at (-1,2) (h1) {};
+%
+%% output layer
+%\node [netnode] at (-3,4) (o0) {};
+%\node at (-2,4) (o1) {\LARGE $\cdots$};
+%\node [netnode] at (-1,4) (o2) {};
+%\draw[decoration={brace,raise=3pt},decorate, thick] (o0.north) -- node[above = 0.25, text width=2.5cm, align=center] (t1out) {\Large Task 1 outputs} (o2.north);
+%
+%\node at (0, -2) (teach) {\Large \textbf{Task 1 teacher}};
+%
+%% input -> hidden
+%\path [draw, thick] (i1) to (h1);
+%\path [draw, thick] (i2) to (h1);
+%\path [draw, thick] (i3) to (h1);
+%\path [draw, thick] (i4) to  node [xshift=2em, yshift=-0.1em] (W1) {} (h1);
+%
+%% hidden -> output
+%\path [draw, thick] (h1) to (o0);
+%\path [draw, thick] (h1) to (o2);
+%
+%\end{scope}
+%%%%% teacher 2
+%\begin{scope}[shift={(-9, 0)}] 
+%% input layer
+%
+%\node [netnode] at (-2,0) (i1) {};
+%\node [netnode] at (-1,0) (i2) {};
+%\node at (0, 0) (id) {\LARGE $\cdots$};
+%\node [netnode] at (1,0) (i3) {};
+%\node [netnode] at (2,0) (i4) {};
+%\draw[decoration={brace,mirror, raise=3pt},decorate, thick] (i1.south) -- node[below = 0.2] {\Large $N_1$ inputs} (i4.south);
+%
+%
+%% hidden layer
+%\node [netnode] at (1,2) (h1) {};
+%
+%% output layer
+%\node [netnode] at (1,4) (o0) {};
+%\node at (2,4) (o1) {\LARGE $\cdots$};
+%\node [netnode] at (3,4) (o2) {};
+%\draw[decoration={brace,raise=3pt},decorate, thick] (o0.north) -- node[above = 0.25, text width=2.5cm, align=center] (t2out) {\Large Task 2 outputs} (o2.north);
+%
+%\node at (0, -2) (teach) {\Large \textbf{Task 2 teacher}};
+%
+%% input -> hidden
+%\path [draw, thick] (i1) to node (W2) {} (h1);
+%\path [draw, thick] (i2) to (h1);
+%\path [draw, thick] (i3) to (h1);
+%\path [draw, thick] (i4) to (h1);
+%
+%% hidden -> output
+%\path [draw, thick] (h1) to (o0);
+%\path [draw, thick] (h1) to (o2);
+%
+%\end{scope}
+%
+%%%%% teacher equation
+%\node at (-12.5, 2) (plus) {\Huge $\displaystyle\boldsymbol{+}$};
+%\node at (-4.5, 2) (equals) {\Huge $\displaystyle\boldsymbol{=}$};
+%
+%%%%%% alignment
+%\path [draw, dashed, thick, <->, black!50!white] (W1) to node [yshift=-2.2em] {\Large Aligned?} ([xshift=-1.5em,yshift=-0.75em]W2);
+%\path [draw, dashed, thick, <->, black!50!white] (t1out.east) to node [text width=3cm] {\Large Relative signal strength?} (t2out.west);
+%
+%%%%% multi-teacher
+%% input layer
+%
+%\node [netnode] at (-2,0) (i1) {};
+%\node [netnode] at (-1,0) (i2) {};
+%\node at (0, 0) (id) {\LARGE $\cdots$};
+%\node [netnode] at (1,0) (i3) {};
+%\node [netnode] at (2,0) (i4) {};
+%\draw[decoration={brace,mirror, raise=3pt},decorate, thick] (i1.south) -- node[below = 0.2] {\Large $N_1$ inputs} (i4.south);
+%
+%
+%% hidden layer
+%\node [netnode] at (-1,2) (h1) {};
+%\node [netnode] at (1,2) (h2) {};
+%
+%% output layer
+%\node [netnode] at (-3,4) (o0) {};
+%\node at (-2,4) (o1) {\LARGE $\cdots$};
+%\node [netnode] at (-1,4) (o2) {};
+%\node [netnode] at (1,4) (o3) {};
+%\node at (2,4) (o4) {\LARGE $\cdots$};
+%\node [netnode] at (3,4) (o5) {};
+%\draw[decoration={brace,raise=3pt},decorate, thick] (o0.north) -- node[above = 0.2] {\Large Multi-task outputs} (o5.north);
+%
+%\node at (0, -2) (teach) {\Large \textbf{Multi-task teacher}};
+%
+%% input -> hidden
+%\path [draw, thick] (i1) to (h1);
+%\path [draw, thick] (i1) to (h2);
+%\path [draw, thick] (i2) to (h1);
+%\path [draw, thick] (i2) to (h2);
+%\path [draw, thick] (i3) to (h1);
+%\path [draw, thick] (i3) to (h2);
+%\path [draw, thick] (i4) to (h1);
+%\path [draw, thick] (i4) to (h2);
+%
+%% hidden -> output
+%\path [draw, thick] (h1) to (o0);
+%\path [draw, thick] (h1) to (o2);
+%
+%\path [draw, thick] (h2) to (o3);
+%\path [draw, thick] (h2) to (o5);
+%
+%%%%%% student
+%\node at (10, -2) (stud) {\Large \textbf{Student}};
+%% input layer
+%
+%\node [netnode] at (8,0) (si1) {};
+%\node [netnode] at (9,0) (si2) {};
+%\node at (10, 0) (sid) {\LARGE $\cdots$};
+%\node [netnode] at (11,0) (si3) {};
+%\node [netnode] at (12,0) (si4) {};
+%
+%% hidden layer
+%\node [netnode] at (8,2) (sh1) {};
+%\node [netnode] at (9,2) (sh2) {};
+%\node at (10,2) (shd) {\LARGE $\cdots$};
+%\node [netnode] at (11,2) (sh3) {};
+%\node [netnode] at (12,2) (sh4) {};
+%
+%% output layer
+%\node [netnode] at (7,4) (so0) {};
+%\node  at (8,4) (so1) {\LARGE $\cdots$};
+%\node [netnode] at (9,4) (so2) {};
+%\node [netnode] at (11,4) (so3) {};
+%\node  at (12,4) (so4) {\LARGE $\cdots$};
+%\node [netnode] at (13,4) (so5) {};
+%
+%% input -> hidden
+%\path [draw, thick] (si1) to (sh1);
+%\path [draw, thick] (si1) to (sh2);
+%\path [draw, thick] (si1) to (sh3);
+%\path [draw, thick] (si1) to (sh4);
+%\path [draw, thick] (si2) to (sh1);
+%\path [draw, thick] (si2) to (sh2);
+%\path [draw, thick] (si2) to (sh3);
+%\path [draw, thick] (si2) to (sh4);
+%\path [draw, thick] (si3) to (sh1);
+%\path [draw, thick] (si3) to (sh2);
+%\path [draw, thick] (si3) to (sh3);
+%\path [draw, thick] (si3) to (sh4);
+%\path [draw, thick] (si4) to (sh1);
+%\path [draw, thick] (si4) to (sh2);
+%\path [draw, thick] (si4) to (sh3);
+%\path [draw, thick] (si4) to (sh4);
+%
+%% hidden -> output
+%\path [draw, thick] (sh1) to (so2);
+%\path [draw, thick] (sh1) to (so3);
+%\path [draw, thick] (sh2) to (so2);
+%\path [draw, thick] (sh2) to (so3);
+%\path [draw, thick] (sh3) to (so2);
+%\path [draw, thick] (sh3) to (so3);
+%\path [draw, thick] (sh4) to (so2);
+%\path [draw, thick] (sh4) to (so3);
+%
+%\path [draw, thick] (sh1) to (so0);
+%\path [draw, thick] (sh2) to (so0);
+%\path [draw, thick] (sh3) to (so0);
+%\path [draw, thick] (sh4) to (so0);
+%\path [draw, thick] (sh1) to (so5);
+%\path [draw, thick] (sh2) to (so5);
+%\path [draw, thick] (sh3) to (so5);
+%\path [draw, thick] (sh4) to (so5);
+%
+%
+%%%%%% connections
+%\node at (5, -2) (learn) {\Large \textbf{Training}};
+%
+%\path [draw, thick, ->, bend right] ([xshift=0.5em,yshift=-0.5em]i4.315) to node {\Large inputs}([xshift=-0.5em,yshift=-0.5em]si1.225);
+%\node [scale=1.5] at (5, 5) (sum) {\(\bigoplus\)};
+%\path [draw, thick, ->, bend left] ([xshift=0.5em,yshift=0.5em]o5.45) to node [rotate=30, xshift=2.5em, yshift=0.25em] {\Large outputs} ([xshift=0.25em]sum.180);
+%\path [draw, thick, ->, bend left] ([xshift=-0.25em]sum.0) to node [rotate=-30, xshift=-1.75em] {\Large targets} ([xshift=-0.5em,yshift=0.5em]so0.135);
+%\node [text width=3.5 cm, align=center] at (5, 6.75) (noise) {\Large IID Gaussian noise (fixed across training)};
+%\path [draw, thick, ->] (noise.270) to ([yshift=-0.25em]sum.90);
+%\end{tikzpicture}
+%\caption{Transfer setting-- If two different tasks are combined, how well students of the combined teacher perform on each task depends on the alignment and SNRs of the teachers.}
+%\label{transfer_conceptual_fig}
+%\vspace{-1em}
+%\end{figure}
+%\begin{figure}
+%\centering
+%\begin{subfigure}[t]{0.3\textwidth}
+%\includegraphics[height=1.55in]{../../plots/paper/fig_5a.png}
+%\label{fig2b}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.3\textwidth}
+%\includegraphics[height=1.55in]{../../plots/paper/fig_5b.png}
+%\label{fig2c}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.4\textwidth}
+%\includegraphics[height=1.55in]{../../plots/paper/fig_5c.png}
+%\label{fig2d}
+%\end{subfigure}%
+%\caption{Transfer benefit $\mathcal{T}^{A\leftarrow B}(\overline{s}_A, \overline{s}_B, q)$ plotted at different values of $\overline{s}_A$. (a) $\overline{s}_A = 0.84 = \sqrt[4]{\mathcal{A}}$. Although this task is impossible to learn on its own, with support from another aligned task, especially one with high SNR, learning can occur. (b) $\overline{s}_A = 3$. Tasks with modest signals will face interference from poorly aligned tasks, but benefits from well aligned tasks. These effects are amplified by SNR. (c) $\overline{s}_A = 100$. Tasks with very strong signals will show little effect from other tasks (note y-axis scales), but any impact will be negative unless the tasks are very well aligned. ($N_1 = 100$ $\overline{N}^A_2=\overline{N}^B_2=1$, $N_2=50$, $N_3 = 50$.)}
+%\label{fig5}
+%\vspace{-1em}
+%\end{figure}
+%\section{A theory for the transfer of knowledge across multiple tasks}
+%Now consider two tasks $A$ and $B$, described by $\ovn_3$ by $\ovn_1$ teacher maps $\bb{W}^A$ and $\bb{W}^B$, of ranks $\ovn^A_2$ and $\ovn^B_2$, respectively. Now two student networks can learn from the two teacher networks separately, each achieving optimal early stopping test errors $\eopt{A}$ and $\eopt{B}$.  Alternatively, one could construct a composite teacher and student that concatenates the hidden and output units, but shares the same input units (Fig. 4). The composite student and teacher networks have two heads consisting of $\ovn_3$ neurons each, dedicated to each of the two tasks.  Each head of the composite student, with optimal early stopping (on that head) yields a test error $\eopt{A \leftarrow B}$ and $\eopt{B \leftarrow A}$. We define the {\it transfer benefit} that task B confers on task A to be $\mathcal{T}^{A\leftarrow B} \equiv \eopt{A} - \eopt{A \leftarrow B}$. A postive (negative) transfer benefit implies learning tasks A and B simultaneously yields a lower (higher) optimal test error on task A compared to just learning task A alone.  
+%
+%A foundational question is how the transfer benefit $\mathcal{T}^{A\leftarrow B}$ depends on the two tasks defined by the teachers $\bb{W}^A$ and $\bb{W}^B$.  
+%To answer this, consider the SVDs of each teacher alone: $\bb{W}^A = \bb{U}^A\bb{S}^AP\bb{V}^{A}}^T$ and $\bb{W}^B = \bb{U}^B\bb{S}^B{\bb{V}^{B}}^T$. 
+%From the above, we know that 
+%$\eopt{A}$ depends on $\bb{W}^A$ only through $\bb{S}^A$.  
+%In Appendix \ref{app_transf_theory} we show that the transfer benefit depends on both $\bb{W}^A$ and $\bb{W}^B$ {\it only} through $\bb{S}^A$, $\bb{S}^B$, and the $\ovn^A_2$ by $\ovn^B_2$ similarity matrix $\bb{Q} = {\bb{V}^{A}}^T \bb{V}^{B}$. If we think of the columns of each $\bb{V}$ as spanning a low dimensional feature space in $\ovn_1$ dimensional input space that is important for each task, then $\bb{Q}$ reflects the input feature subspace similarity matrix. Interestingly, the transfer benefit is independent of output singular vectors $\bb{U}^{A}$ and $\bb{U}^{B}$.  What matters for knowledge transfer in this setting are the relevant input features, not how you respond to them.
+%
+%We describe the transfer benefit for the simple case of two rank one teachers. Then $\bb{S}^A$, $\bb{S}^B$, and $\bb{Q}$ are simply scalars $s_A$, $s_B$ and $q$, and we explore the function $\mathcal{T}^{A\leftarrow B}(\overline{s}_A, \overline{s}_B, q)$ in Fig. 5ABC, which reveals several interesting features. First, knowledge can be transferred from a high SNR task to a low SNR task (Fig. 5A) and the degree of transfer increases with task alignment $q$. This can make it possible to capture signals from task $A$ which would otherwise sink into the MP sea by learning jointly with a related task, even if the tasks are only weakly aligned (Fig. 5A). However, if task $A$ already has a high SNR, task $B$ must be very well aligned to it for transfer to be beneficial -- otherwise there will be interference. The degree of alignment required increases as the task $A$ SNR increases, but the quantity of benefit or interference decreases correspondingly (Fig. 5BC). In Appendices \ref{app_transf_theory} and \ref{app_trans_nl} we both explain why our theory predicts interference between tasks that are not well aligned, and we demonstrate these phenomena are qualitatively recapitulated in nonlinear nets.
+%
+%
+%\section{Discussion}
+%In summary, we hope that our analytic theory of generalization dynamics will motivate and enable: (1) the search for upper bounds on generalization error that take into account task structure; (2) the design of non-neural training algorithms that out-perform neural ones; and (3) the theory driven design of auxiliary tasks that maximize knowledge transfer.  
+%
+%In summary we hope that our analytic theory of generalization dynamics in deep networks yields several lessons that could guide research in more general settings. First, the fact that the optimal test error at the early stopping time depends primarily on task structure and not network sides, motivates the search for upper bounds on generalization error that take into account the structure of the task. 
+
+%%\subsubsection{Acknowledgments}
+%%This material is based upon work supported by the NSF GRF under Grant No. DGE-114747.
+
+%\bibliographystyle{iclr2019_conference}
+%\bibliography{generalization}
+
+%\appendix
+%
+%
+%\section{Learning dynamics for deeper networks} \label{app_deeper_theory}
+%In the main text, we described the dynamics of how a single-hidden-layer network converges toward the training data singular modes $\{{\hat{s}^\alpha}, \bh{u}^\alpha, \bh{v}^{\alpha}\}$, which were originally derived in Saxe et al. (2013a). Saxe and colleagues also proved that for a network with \(N_l\) layers (i.e. \(N_l-2\) hidden layers), the strength of the mode obeys the differential equation:
+%$$\tau \frac{d}{dt} u = (N_l -1) u^{2-2/(N_l-1)} (s-u)$$
+%This equation is separable and can be integrated for any integer number of layers. In particular, we consider the case of 5 layers (3 hidden), in which case:
+%$$t(s, \hat{s}) = \frac{\tau}{2} \left[\frac{\tanh^{-1} \left(\sqrt{\frac{u}{\hat{s}}}\right)}{\hat{s}^{3/2}} - \frac{1}{\hat{s}\sqrt{u}} \right]_\epsilon^s$$
+%Unfortunately this expression cannot be analytically inverted to find $s(t, \hat{s})$, so we numerically invert it where necessary.
+%
+%\section{Alignment lag in randomly initialized networks} \label{app_align_lag}
+%As noted in the main text, the randomly-initialized networks behave quite similarly to the TA networks, except that the randomly-initialized networks show a lag due to the time it takes for the network's modes to align with the data modes. In fig. \ref{alignment_fig} we explore this lag by plotting the alignment of the modes and the increase in the singular value for several randomly initialized networks. \par
+%Notice that stronger modes align more quickly. Furthermore, the mode alignment is relatively independent -- whether the teacher is rank 1 or rank 3, the alignment of the modes is similar for the mode of singular value 2. Most importantly, note how the deeper networks show substantially slower mode alignment, with alignment not completed until around when the singular value increases. This explains why deeper networks show a larger lag between randomly-initialized and TA networks -- the alignment process is much slower for deeper networks.
+%\begin{figure}
+%\centering
+%\hfill
+%\begin{subfigure}[t]{0.4\textwidth}
+%\includegraphics[height=1.7in]{../../plots/paper/supp_alignment_time_A.png}
+%\end{subfigure}\\
+%\begin{subfigure}[t]{0.3\textwidth}
+%\includegraphics[height=1.7in]{../../plots/paper/supp_alignment_time_B.png}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.3\textwidth}
+%\includegraphics[height=1.7in]{../../plots/paper/supp_alignment_time_C.png}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.4\textwidth}
+%\includegraphics[height=1.7in]{../../plots/paper/supp_alignment_time_D.png}
+%\end{subfigure}\\
+%\hfill
+%\begin{subfigure}[t]{0.4\textwidth}
+%\includegraphics[height=1.7in]{../../plots/paper/supp_alignment_time_E.png}
+%\end{subfigure}\\
+%\begin{subfigure}[t]{0.3\textwidth}
+%\includegraphics[height=1.7in]{../../plots/paper/supp_alignment_time_F.png}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.3\textwidth}
+%\includegraphics[height=1.7in]{../../plots/paper/supp_alignment_time_G.png}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.4\textwidth}
+%\includegraphics[height=1.7in]{../../plots/paper/supp_alignment_time_H.png}
+%\end{subfigure}\\
+%\caption{Alignment of randomly-initialized network modes to data modes and growth of singular values, plotted for 1 hidden layer (first two rows, a-d) and 3 hidden layers (last two rows, e-h), and for a rank 1 teacher (first and third rows, a \& e), or a rank 3 teacher (second and fourth rows, b-d \& f-h). The columns are the different modes, with respective singular values of 6, 4, and 2. $\sigma_z$ was set to 1. The deeper networks show substantially slower mode alignment, with alignment not completed until around when the singular value increases.}
+%\label{alignment_fig}
+%\end{figure}
+%\section{Train and test errors after a projection} \label{app_proj_theory}
+%In the case of transfer learning, or more generally when we want to evaluate a network's loss on a subset of its outputs, we need to use a slight generalization of the train and test error formulas given in the main text. Suppose we are interested in the train and test errors after applying a projection operator $\bf P$:
+%\begin{equation}
+%\trainerr \equiv \frac{\sum_{\mu=1}^{\overline{N_1}} \vert\vert{\bf P W \bh{x}}^\mu - {\bf P} \bh{y}^\mu\vert\vert^2_2}{\sum_{\mu=1}^{\overline{N_1}} \vert\vert {\bf P}\bh{y}^\mu \vert\vert^2_2 }, \qquad \qquad
+%\generr \equiv \frac{\sum_{\mu=1}^{\overline{N_1}} \vert\vert{\bf P W}\bb{x}^\mu - {\bf P} \bb{y}^\mu\vert\vert^2_2}{\sum_{\mu=1}^{\overline{N_1}} \vert\vert {\bf P}\bb{y}^\mu \vert\vert^2_2 },
+%\end{equation}
+%respectively. As in the main text, we can rexpress these as: 
+%\begin{equation}
+%\trainerr = \frac{\text{Tr} \, {\bf{W}}^T{\bf P}^T {\bf P} {\bf{W}} 
+%- 2 \text{Tr} \, {\bf{W}}^T {\bf P}^T {\bf P}{\bf{\Sigma}}^{31}
+%+ \text{Tr} \,  {{\bf{\Sigma}}^{31}}^T {\bf P}^T {\bf P} {\bf{\Sigma}}^{31}}
+%{\text{Tr} \,  {{\bf{\Sigma}}^{31}}^T {\bf P}^T {\bf P}{\bf{\Sigma}}^{31}} ,
+%\end{equation}
+%\begin{equation}
+%\generr = \frac{\text{Tr} \, {\bf{W}}^T {\bf P}^T {\bf P}{\bf{W}} 
+%- 2 \text{Tr} \, {\bf{W}}^T {\bf P}^T {\bf P}{\bb{W}}
+%+ \text{Tr} \,  {\bb{W}^T}{\bf P}^T {\bf P}{\bb{W}}}
+%{\text{Tr} \,  {\bb{W}^T}{\bf P}^T {\bf P}{\bb{W}}}.
+%\end{equation}
+%Using the cyclic property of the trace, we can modify these to get:
+%\begin{equation}
+%\trainerr = \frac{\text{Tr} \, {\bf P} {\bf{W}}{\bf{W}}^T{\bf P}^T  
+%- 2 \text{Tr} \,  {\bf P}{\bf{\Sigma}}^{31}{\bf{W}}^T {\bf P}^T
+%+ \text{Tr} \,  {\bf P} {\bf{\Sigma}}^{31}{{\bf{\Sigma}}^{31}}^T {\bf P}^T } 
+%{\text{Tr} \,   {\bf P}{\bf{\Sigma}}^{31}{{\bf{\Sigma}}^{31}}^T {\bf P}^T },
+%\end{equation}
+%\begin{equation}
+%\generr = \frac{\text{Tr} \, {\bf P}{\bf{W}}{\bf{W}}^T {\bf P}^T  
+%- 2 \text{Tr} \, {\bf P}{\bb{W}}{\bf{W}}^T {\bf P}^T 
+%+ \text{Tr} \,  {\bf P}{\bb{W}}{\bb{W}^T}{\bf P}^T }
+%{\text{Tr} \,  {\bf P}{\bb{W}}{\bb{W}^T}{\bf P}^T }.
+%\end{equation}
+%As before, we express these in terms of the student, training data and teacher SVDs, 
+%\({\bf W} = {\bf U}{\bf S}{\bf V}^T \),  
+%\({\bf \Sigma}^{31} = {\bh U}{\bh S}{\bh V}^T \), and 
+%\(\bb{W} = \bb{U}\, \bb{S}\,\bb{V}^T\) respectively. Specifically,
+%\begin{align}
+%
+%\trainerr &= {\scriptstyle \left[\sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2 \vert \vert {\bf P} \bh {u}^\alpha \vert \vert_2^2\right]^{-1} 
+%\left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2\vert \vert {\bf P} {\bf u}^\alpha \vert \vert_2^2 +  \sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2\vert \vert {\bf P} \bh {u}^\alpha \vert \vert_2^2
+%- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_3}  s_{\alpha} \hat{s}_{\beta} \left({\bf Pu}^{\alpha} \cdot \bf{P \hat u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bf{\hat v}^{\beta} \right)\right]}, \label{eq:trainerrproj}\\
+%\generr &= {\scriptstyle \left[\sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2\vert \vert {\bf P} \bb {u}^\alpha \vert \vert_2^2\right]^{-1} 
+%\left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2 \vert \vert {\bf P} {\bf u}^\alpha \vert \vert_2^2 +  \sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2\vert \vert {\bf P} \bb{ u}^\alpha \vert \vert_2^2 
+%- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_2}  s_{\alpha} \overline{s}_{\beta} \left({\bf P u}^{\alpha} \cdot {\bf P} \bb{u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bb{v}^{\beta} \right)\right]}. \label{eq:generrproj}
+%\end{align}
+%\section{Transfer learning derivations \& details} \label{app_transf_theory}
+%\begin{theorem}[Transfer theorem]
+%The transfer benefit  $\mathcal{T}^{A\leftarrow B}$:
+%\begin{itemize}
+%\item Is unaffected by the $\bb{U}^A$  and $\bb{U}^B$.
+%\item Is completely determined by {\it only} $\sigma_z^2$, $\bb{S}^A$, $\bb{S}^B$, and the $\ovn^A_2$ by $\ovn^B_2$ similarity matrix $\bb{Q} = \bb{V}^{AT} \bb{V}^{B}$.
+%\end{itemize}
+%\end{theorem}
+%\textbf{Proof:} 
+%We define
+%\begin{align*}
+%\setlength\aboverulesep{0pt}\setlength\belowrulesep{0pt} \setlength\cmidrulewidth{0.5pt}
+%\bb{U}^{AB} &= \begin{blockarray}{ccc}
+% & \overline{N}^A_2 & \overline{N}^B_2 \\
+% \begin{block}{c[c|c]}
+% \overline{N}_3 & \bb{U}^A & {\bf 0} \\ \cmidrule(lr){2-3}
+% \overline{N}_3 & {\bf 0} & \bb{U}^B\\
+% \end{block}
+%\end{blockarray} \qquad \qquad
+%\bb{S}^{AB} = \begin{blockarray}{ccc}
+% & \overline{N}^A_2 & \overline{N}^B_2 \\
+% \begin{block}{c[c|c]}
+% \overline{N}^A_2 & \bb{S}^A & {\bf 0} \\ \cmidrule(lr){2-3}
+% \overline{N}^B_2 & {\bf 0} & \bb{S}^B\\
+% \end{block} \end{blockarray} \\
+%\bb{V}^{AB} &= \begin{blockarray}{ccc}
+% & \overline{N}^A_2 & \overline{N}^B_2 \\
+% \begin{block}{c[c|c]}
+% \overline{N}_1 & \bb{V}^A & \bb{V}^B\\
+% \end{block}
+%\end{blockarray}
+%\end{align*}
+%\begin{equation}
+%\bb{W}^{A+B} = \left[\begin{array}{c|c} 
+%\bb{U}^A & {\bf 0} \\
+%\hline
+% {\bf 0} & \bb{U}^B\\
+%\end{array}\right]
+%\left[\begin{array}{c|c} 
+%\bb{S}^A & {\bf 0} \\
+%\hline
+% {\bf 0} & \bb{S}^B\\
+%\end{array}\right]
+%\left[\begin{array}{c} 
+%{\bb{V}^{A}}^T \\
+%\hline
+%{\bb{V}^{B}}^T\\
+%\end{array}\right]
+%\end{equation}
+%Because of the 0 blocks in $\bb{U}^{AB}$, the vectors in blocks corresponding to task $A$ and task $B$ are completely orthogonal, so $\bb{U}^{AB}$ remains orthonormal. Thus the relationship between the $\bb{U}^A$ and $\bb{U}^A$ is \textbf{irrelevant} to the transfer. (In our simulations we use arbitrary orthonormal matrices for $\bb{U}^A$ and $\bb{U}^B$.) Therefore the transfer effects will be entirely driven by the relationship between the matrices $\bb{V}^A$ and $\bb{V}^B$ and the singular values. \par
+%We define $\ovn^A_2$ by $\ovn^B_2$ similarity matrix $\bb{Q} = {\bb{V}^{A}}^T \bb{V}^{B}$. If we think of the columns of each $\bb{V}$ as spanning a low dimensional feature space in $\ovn_1$ dimensional input space that is important for each task, then $\bb{Q}$ reflects the input feature subspace similarity matrix.  We can now calculate the singular values of $\bb{W}^{A+B}$. First, note that the input singular modes of $\bb{W}^{A+B}$ are eigenvectors of ${\bb{W}^{A+B}}^T\bb{W}^{A+B}$, and the associated singular values are square roots of the eigenvalues of $\bb{W}^{A+B}$. Now
+%$${\bb{W}^{A+B}}^T\bb{W}^{A+B} = \bb{V}^{AB} \bb{S}^{AB} {\bb{U}^{AB}}^T \bb{U}^{AB}\bb{S}^{AB} {\bb{V}^{AB}}^T = \bb{V}^{AB} {\bb{S}^{AB}}^2 {\bb{V}^{AB}}^T $$ 
+%Now if $\vec{c}$ is an eigenvector of this matrix:
+%$$ \bb{V}^{AB} {\bb{S}^{AB}}^2 {\bb{V}^{AB}}^T \vec{c} = \lambda \vec{c} $$
+%This implies that
+%$$ {\bb{V}^{AB}}^T \bb{V}^{AB} {\bb{S}^{AB}}^2 {\bb{V}^{AB}}^T \vec{c} = \lambda {\bb{V}^{AB}}^T\vec{c} $$
+%Hence eigenvalues of  $\bb{V}^{AB} {\bb{S}^{AB}}^2{\bb{V}^{AB}}^T $ are also eigenvalues of ${\bb{V}^{AB}}^T \bb{V}^{AB} {\bb{S}^{AB}}^2$, with the mapping between the eigenvectors given by $\bb{V}^{AB}$. Furthermore, this mapping must be a bijection for eigenvectors with non-zero eigenvalues, since the matrices have the same rank (the rank of ${\bb{V}^{AB}}$). To see this, note that ${\bb{S}^{AB}}^2$ is full rank. From this, it is clear that $$\rank {\bb{V}^{AB}}^T \bb{V}^{AB} {\bb{S}^{AB}}^2  =  \rank {\bb{V}^{AB}}^T \bb{V}^{AB} = \rank \bb{V}^{AB.$$
+%Furthermore, ${\bb{S}^{AB}}^2$ is positive definite, so
+%$$\rank \bb{V}^{AB} {\bb{S}^{AB}}^2 {\bb{V}^{AB}}^T = \rank {\bb{V}^{AB}}.$$
+%
+%Now that we know the eigenvectors of these matrices are in bijection, note that:
+%$${\bb{V}^{AB}}^T \bb{V}^{AB} {\bb{S}^{AB}}^2 = \left[\begin{array}{c} 
+%{\bb{V}^{A}}^T \\
+%\hline
+%{\bb{V}^{B}}^T\\
+%\end{array}\right]\left[\begin{array}{c|c} 
+%{\bb{V}^{A}} & {\bb{V}^{B}}\\
+%\end{array}\right] 
+%\left[\begin{array}{c|c} 
+%{\bb{S}^A}^2 & {\bf 0} \\
+%\hline
+% {\bf 0} & {\bb{S}^B}^2\\
+%\end{array}\right] =\left[\begin{array}{cc} 
+%{\bf I} & {\bf Q} \\
+% {\bf Q^T} & {\bf I}\\
+%\end{array}\right] \left[\begin{array}{c|c} 
+%{\bb{S}^A}^2 & {\bf 0} \\
+%\hline
+% {\bf 0} & {\bb{S}^B}^2\\
+%\end{array}\right]
+%$$
+%
+%Because the output modes don't matter (as noted above), the alignment between the eigenvectors of $\bb{V}^{AB} {\bb{S}^{AB}}^2{\bb{V}^{AB}}^T $ and $\bb{V}^{A}$, weighted by their respective eigenvalues, gives the transfer benefit. In other words:
+%
+%For any given tasks, the transfer benefit can be calculated using our theory. However, in certain special cases, we can give exact answers. 
+%%%For example, in the special case where each task has all its singular values equal (but they are not necessarily equal between tasks) ${\bb{S}^A} = s^A I$, ${\bb{S}^B} = s^B I$, the eigenvectors of ${\bb{V}^{AB}}^T %%\bb{V}^{AB} {\bb{S}^{AB}}^2$ are simply 
+%%%$\left[\bb{V}^A, \pm\bb{V}^B\right ]^T$, with respective eigenvalues ${s^A}^2 \pm {s^B}^2.
+%For example, in the rank one case with equal singular values between the tasks ($\overline{s}_A = \overline{s}_B = \overline{s}$), the matrix
+%$$
+%\left[\begin{array}{cc} 
+%{\bf I} & {\bf Q} \\
+% {\bf Q^T} & {\bf I}\\
+%\end{array}\right] \left[\begin{array}{c|c} 
+%{\bb{S}^A}^2 & {\bf 0} \\
+%\hline
+% {\bf 0} & {\bb{S}^B}^2\\
+%\end{array}\right]
+%$$
+%reduces to 
+%$$
+%\left[\begin{array}{cc} 
+%{1} & {q} \\
+% {q} & {1}\\
+%\end{array}\right] \overline{s}^2
+%$$
+%with eigenvalues $s \sqrt{1 \pm q}$ and eigenvectors
+%$$\left[\begin{array}{cc} 
+%{1} & {1} \\
+% {1} & {-1}\\
+%\end{array}\right]$$
+%Corresponding to the shared structure between the tasks and the differences between them. We note that the sign of the alignment $q$ is irrelevant as a special case of the fact (noted above) that any orthogonal transformation on the output modes does not affect transfer.\par
+%\subsection{Misalignment and interference} 
+%Why is there interference between tasks which are not well aligned? In the rank one case, we are effectively changing the (input) singular dimensions of $\bb{Y}_A$ from $\bb{V}^A$ to $\bb{V}^{AB}$. The two singular modes of $\bb{V}^{AB}$ correspond to the shared structure between the tasks (weighted by the relative signal strengths), and the differences between them, respectively. Although we may be improving our estimates of the shared mode if $q > 0$ (by increasing its singular value relative to $\overline{s}_A$), we are actually decreasing its alignment with $\bb{V}^A$ unless $q=1$. This misalignment is captured by the second mode of $\bb{V}^{AB}$, but the \emph{increase} in the singular value of the first mode must come at the cost of a \emph{decrease} in the singular value of the second mode. See Fig. \ref{transfer_cartoon_fig} for a conceptual illustration of this. This means that the multi-task setting allows the distinctions between the tasks to sink towards the sea of noise, while pulling out the common structure. In other words, transferring knowledge from one task always comes at the cost of ignoring differences between the tasks. Furthermore, incorporating a task $B$ allows its noise to seep into the task $A$ signal. Together, these two effects help to explain why transfer can be sometimes beneficial but sometimes detrimental. 
+%\begin{figure}[H]
+%\centering
+%\includegraphics[width=0.4\textwidth]{../../plots/paper/transfer_pros_cons.png}
+%\caption{Conceptual cartoon of how $\mathcal{T}^{A\leftarrow B}$, the transfer benefit (or cost) arises from alignment between the task's input modes.}
+%\label{transfer_cartoon_fig}
+%\end{figure}
+%
+%
+%\section{Non-gradient training algorithm} \label{app_nongradient}
+%In Fig. \ref{non_gradient_fig} we show the match between the error achieved by training the student by gradient descent and the optimal stopping error predicted by the non-gradient shrinkage algorithm in the case of a rank-1 teacher.
+%\begin{figure}[H]
+%\centering
+%\includegraphics[width=0.4\textwidth]{../../plots/paper/fig_3e.png}
+%\caption{Match between optimal stopping error prediction from non-gradient training algorithm and empirical optimal stopping error for a rank-1 teacher.}
+%\label{non_gradient_fig}
+%\end{figure}
+%
+%
+%\section{Transfer results generalize to non-linear networks} \label{app_trans_nl}
+%Since most deep learning practitioners do not train linear networks, it is important that our theoretical insights generalize beyond this simple case. In this section we show that the transfer patterns qualitatively generalize to non-linear networks.
+%%%\subsection{Train \& test errors on a single task}
+%%%Here, we show results from teacher networks with $\ovn_1 = 100$ $\ovn_3 = 50$, $\ovn_2=3$. However, we train a nonlinear student with three relu hidden layers and a linear output (to allow for negative outputs in the data) and $N_2 = N_3$ to solve this task. In other words, this is the situation as Fig. \ref{deeper_linear_fig} above, except the student has nonlinearities at all layers except the output layer. Results qualitatively look quite similar to those in Fig \ref{deeper_linear_fig} above, including stage-like learning followed by overfitting which depends on the SNR. Thus our insights in this simple setting may yield insights into generalization in more complicated architectures. 
+%%%\begin{figure}[H]
+%%%\centering
+%%%\begin{subfigure}[t]{0.3\textwidth}
+%%%\includegraphics[height=1.7in]{../../plots/paper/deep_nonlinear_A.png}
+%%%\end{subfigure}%
+%%%\begin{subfigure}[t]{0.4\textwidth}
+%%%\includegraphics[height=1.7in]{../../plots/paper/deep_nonlinear_B.png}
+%%%\end{subfigure}%
+%%%\caption{Training and testing errors for deep nonlinear networks obey qualitatively similar dynamics, including stage-like learning followed by overfitting which depends on the SNR.}
+%%%\label{nltt}
+%%%\end{figure}
+%
+%Here, we show results from teacher networks with $\ovn_1 = 100$ $\ovn_3 = 50$, $\ovn_2=4$ (thus the task is higher rank) and leaky relu non-linearities at the hidden and output layers. We train a student with leaky relu units and $N_2 = N_3$ to solve this task. Results qualitatively look quite similar to those in Fig 5. of the main text for rank one linear teachers, see below. Thus our insights into transfer may help to understand multi-task benefits in more complicated architectures.
+%\begin{figure}[H]
+%\centering
+%\begin{subfigure}[t]{0.3\textwidth}
+%\includegraphics[height=1.4in]{../../plots/paper/fig_7a.png}
+%\label{fig7b}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.3\textwidth}
+%\includegraphics[height=1.4in]{../../plots/paper/fig_7b.png}
+%\label{fig7c}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.4\textwidth}
+%\includegraphics[height=1.4in]{../../plots/paper/fig_7c.png}
+%\label{fig7d}
+%\end{subfigure}%
+%\caption{Transfer benefit $\mathcal{T}^{A\leftarrow B}(\overline{s}_A, \overline{s}_B, q)$ for non-linear teachers and students, plotted at different values of $\overline{s}_A$. (a) $\overline{s}_A = 0.84 = \sqrt[4]{\mathcal{A}}$.  With support from another aligned task, especially one with moderately higher SNR, performance on a low SNR task will improve. (b) $\overline{s}_A = 3$. Tasks with modest signals will face interference from poorly aligned tasks, but benefits from well aligned tasks. These effects are amplified by SNR. (c) $\overline{s}_A = 100$. Tasks with very strong signals will show little effect from other tasks (note y-axis scale), but any impact will be negative unless the tasks are very well aligned.}
+%\label{fig7}
+%\end{figure}
+%
+%\section{Varying the number of training examples} \label{app_num_examples}
+%\begin{figure}[H]
+%\centering
+%\begin{subfigure}[t]{0.27\textwidth}
+%\includegraphics[height=1.4in]{../../plots/paper/changing_p_A.png}
+%\label{supp_P_fig_A}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.36\textwidth}
+%\includegraphics[height=1.4in]{../../plots/paper/changing_p_B.png}
+%\label{supp_P_fig_B}
+%\end{subfigure}%
+%\begin{subfigure}[t]{0.36\textwidth}
+%\includegraphics[height=1.4in]{../../plots/paper/changing_p_C.png}
+%\label{supp_P_fig_C}
+%\end{subfigure}%
+%\caption{The effects of varying the number of training examples. (a,b) Train and test error (respectively), for a student learning from a rank-1 teacher with an SNR of 3, with different numbers of inputs. (c) Minimum generalization error plotted against $\text{SNR}\sqrt{P/N_1}$ at different SNRs. When $P \geq N_1$, the minimum generalization error is simply determined by $\text{SNR}\sqrt{P/N_1}$, so all curves converge to a single asymptotic line as $P$ increases. When $P < N_1$, however, the curves for different SNRs separate because the projection and noise effects depend on initial SNR. (For all panels $N_1=N_2=N_3=100$, $\overline{N}_2 = 1$.)} \label{supp_P_fig}
+%\end{figure}
+%
+%In the main text we always assumed the number of examples was equal to the number of inputs, but of course it is important to consider the undersampled and oversampled regimes. For simplicity, we assume that $N_1 = N_2 = N_3$. We assume the teacher generates noisy outputs from a set of $P$ inputs:
+%\begin{equation}
+%\bh{y}^{\mu} = \bb{W}\bh{x}^\mu + \bf{z} ^ \mu \qquad \text{for} \quad \mu = 1, \dots, P.
+%\label{eq:traindatas}
+%\end{equation}
+%This training set yields important second-order training statistics that will guide student learning:
+%\begin{equation}
+%{\bf\Sigma}^{11} \equiv {\bh X} {\bh X}^T
+%\qquad
+%{\bf \Sigma}^{31} \equiv \bh{Y}{\bh X}^T = \bb{W} {\bh X} {\bh X}^T + {\bf Z}{\bh X}^T.
+%\label{eq:secondorders}
+%\end{equation}
+%Here ${\bh X}$, ${\bh Y}$, and ${\bf Z}$ are each ${\overline{N}_1}$ by $P$, ${\overline{N}_3}$ by $P$, and ${\overline{N}_3}$ by $P$ matrices respectively, whose $\mu$'th columns are ${\bh x}^\mu$, ${\bh y}^\mu$, and ${\bh z}^\mu$, respectively. \({\bf\Sigma}^{11}\) is an ${\overline{N}_1}$ by ${\overline{N}_1}$ input correlation matrix, and \({\bf\Sigma}^{31}\) is an ${\overline{N}_3}$ by ${\overline{N}_1}$ the input-output correlation matrix. We choose the matrix elements \(z^\mu_i\) of the noise matrix ${\bf Z}$ to be drawn iid. from a Gaussian with zero mean and variance \(\sigma_z^2 / {\overline{N}_1}\).  
+%The noise scaling is chosen so the singular values of the teacher \(\bb{W}\) and the noise \(\bf{Z}\) are both $O(1)$, leading to non-trivial generalization effects.  Furthermore, we chose training inputs to be close to unit-norm, and make the input covariance matrix ${\bf\Sigma}^{11}$ as white as possible (whitening is a common pre-processing step for inputs).  
+%When $P>\overline{N}_1$, this can be done by choosing the {\it rows} of ${\bh X}$ to be orthonormal and then scaling up by $\sqrt{P/\overline{N}_1}$, so the columns are approximately unit norm.  
+%Then ${\bf \Sigma}^{11} = P/\overline{N}_1 {\bf I}$ is proportional to the identity. 
+%On the otherhand, if $P<\overline{N}_1$, we choose the columns of ${\bh X}$ to be orthonormal, so that ${\bf \Sigma}^{11} = {\boldsymbol{\mathcal{P}}}^{||}$, where ${\boldsymbol{\mathcal{P}}}^{||}$ is a projection operator onto the $P$ dimensional column space of ${\bh X}$ spanned by the input examples. Both these choices are intended to approximate the situation in which the columns of ${\bh X}$ are chosen to be iid unit-norm vectors.  Finally, as generalization performance will depend on the {\it ratio} of teacher singular values to the noise variance parameter $\sigma^2_z$, we simply set $\sigma_z=1$ as in the main text. Thus, given the unit-norm inputs, we can think of teacher singular values as signal to noise ratios (SNRs). We now examine how the training and testing dynamics evolve as we vary the number of training examples $P$.
+%
+%The theoretical alterations for the oversampled ($P > N_1$) regime are relatively simple: Because our theory assumes that $\sigma_{11}$ is white, we simply choose a $P \times N_1$ input matrix whose columns are orthogonal. The individual training examples are thus no longer orthogonal to each other, but this does not violate the assumptions of the theory. In this case, the only effects on the generalization error are an effective \emph{increase} of the SNR by a factor of $\sqrt{D}$, because the IID noise is averaged out over more inputs, and a speedup in the learning time (measured in epochs) by a factor of $D$, because there are more training examples per epoch. There is another effect on the training error (because the network cannot fit all the noise in the training data):
+%%% TODO
+%%\begin{equation}
+%%\trainerr &= \left[\sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2\right]^{-1} 
+%%\left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2 +  \sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2
+%%- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_3}  s_{\alpha} \hat{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bf{\hat u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bf{\hat v}^{\beta} \right)\right]. 
+%%\end{equation}
+%
+%For the undersampled $P < N_1$ regime, there is also an effect of the projection by ${\boldsymbol{\mathcal{P}}}^{||}$
+%%%TODO
+%
+%In Fig. \ref{supp_P_fig}, we show an excellent match between our theory and empirical simulations for varying values of $P$. There are a number of interesting features to note. First, although the minimum generalization error improves monotonically with $P$, the asymptotic ($t\rightarrow \infty$) generalization error does not, because of a \emph{frozen subspace} \citep{Advani2017} of the modes that are not overfit when $P < N_1$, because the training data rank is $\leq P$. Second, when $P \geq N_1$, the minimum generalization error is simply determined by $\text{SNR}\sqrt{P/N_1}$, so all curves converge to a single asymptotic line as $P$ increases. When $P < N_1$, however, the curves for different SNRs separate because the projection and noise effects depend on initial SNR.
+%
+%\section{Less than full rank students} \label{app_student_rank}
+%Although we generally assumed students were full rank in the main text to simplify the calculations, our theory remains exact for TA networks of any rank. Furthermore, as shown in Fig. \ref{assumptions_valid}, the TA and random networks again show very similar optimal stopping generalization error, but with the optimal stopping time of the random networks lagging behind that of the TA networks. Furthermore, this lag increases as the rank of the random network decreases (because a low rank network will have less initial projection onto the random modes, there is is more alignment to be done). However, reducing the student rank does not change the optimal stopping error (as long as it is still greater than the teacher rank).
+%\begin{figure}[H]
+%\begin{subfigure}[c]{0.42\textwidth}
+%\includegraphics[height=2.3in]{../../plots/paper/min_Eg_aligned_vs_random.png}
+%\caption{Best generalization error is quite similar between aligned and random initializations}
+%\label{min_eg_aligned_vs_random}
+%\end{subfigure}~
+%\begin{subfigure}[c]{0.42\textwidth}
+%\includegraphics[height=2.3in]{../../plots/paper/min_t_aligned_vs_random.png}
+%\caption{Optimal stopping time is quite similar between aligned and random initializations}
+%\label{min_t_aligned_vs_random}
+%\end{subfigure}\\
+%\begin{subfigure}[c]{0.42\textwidth}
+%\includegraphics[height=2.3in]{../../plots/paper/random_min_Eg_vs_min_t.png}
+%\caption{Optimal generalization error vs. optimal stopping time for randomly initialized networks}
+%\label{min_eg_min_t_random}
+%\end{subfigure}~
+%\begin{subfigure}[c]{0.42\textwidth}
+%\includegraphics[height=2.3in]{../../plots/paper/aligned_min_Eg_vs_min_t.png}
+%\caption{Optimal generalization error vs. optimal stopping time for initially aligned networks}
+%\label{min_eg_min_t_aligned}
+%\end{subfigure}
+%\caption{Empirical verification that the simplifying assumptions of our theory are approximately valid in the regime we are considering at different student ranks. Initializations with random initial weights (random init.) and initializations with initial weight aligned to the noisy data SVD (aligned init.) are compared across varying student ranks. (a) The minimum generalization errors are almost identical between the different initializations and different student ranks. (b) The optimal stopping time in the randomly initialized networks consistently lags behind the aligned networks, because it takes time for the alignment to occur. This lag increases as the students rank decreases. (c) Randomly initialized networks of varying ranks obey qualitatively similar trends of increase in optimal stopping error and optimal stopping time as SNR decreases. (d) The theory predicts the aligned networks trends of increase in optimal stopping error and optimal stopping time with decreasing SNR almost perfectly. (All plots are made with a rank 1 teacher and \(N_1=N_3=100\))} 
+%\label{assumptions_valid}
+%\end{figure}
+
+\end{frame}
+\end{document}
