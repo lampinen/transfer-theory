@@ -13,14 +13,14 @@ sigma_zs = [1]
 num_runs = 10
 base_learning_rate = 0.001
 num_epochs = 10000
-filename_prefix = "changing_p_results/"
-input_types = ["orthogonal"]
+filename_prefix = "changing_p_results_gaussian/"
+input_types = ["gaussian"]
 track_SVD = False
 save_every = 5
 epsilon = 1e-5
 singular_value_multiplier = 10 
 N_2_bar = 1 # rank of teacher
-singular_value_multipliers = [3., 2., 4.]
+singular_value_multipliers = [2., 3., 4.]
 num_hidden = 100#num_examples
 
 ###
@@ -57,9 +57,6 @@ for run_i in xrange(num_runs):
 
                             y_data_frob_squared = np.sum(y_data**2)
                             noisy_y_data_frob_squared = np.sum(noisy_y_data**2)
-                            print(noisy_y_data_frob_squared)
-                            print(y_data_orth_frob_squared)
-                            exit()
                   
 #		    if track_SVD:
 #			U_bar, S_bar, V_bar = np.linalg.svd(y_data, full_matrices=False)

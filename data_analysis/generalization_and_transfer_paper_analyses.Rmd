@@ -2665,27 +2665,35 @@ make_randomizing_fig_plots(avg_d,
 # changing P redux
 ```{r}
 nruns = 10
-ps = c(20, 100, 160, 200)#, 40, 60, 80, 120, 140, 160, 180)
+ps = c(20, 100, 200, 40, 60, 80, 120, 140, 160, 180)
 noise_vars = c(1.)
 output_sizes= c(100)
-svms = c(2., 3.)
+svms = c(2., 3., 4.)
 alignments = c("True")
+input_types = c("orthogonal", "gaussian")
 d = data.frame()
 for (p in ps) {
     for (noise_var in noise_vars) {
       for (output_size in output_sizes) {
         for (svm in svms) {
           for (aligned in alignments) {
-            for (run in 0:(nruns-1)) { 
-              filename = sprintf("../changing_p_results/noise_var_%.2f_output_size_%i_input_size_100_num_examples_%i_input_type_orthogonal_svm_%f_aligned_%s_run_%i.csv", noise_var, output_size, p, svm, aligned, run)
-              if (!file.exists(filename)) {
-                next
+            for (input_type in input_types) {
+              if (input_type == "orthogonal") {
+                this_dir = "changing_p_results"
+              } else {
+                this_d = "changing_p_results_gaussian"
               }
-              this_d = read.csv(filename, header=T)
-        
-              this_d = this_d %>% 
-                mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", run=run, p=p, depth=1, teacher_rank=1, student_rank="Full rank", type="Empirical")
-              d = bind_rows(d, this_d)
+              for (run in 0:(nruns-1)) { 
+                filename = sprintf("../%s/noise_var_%.2f_output_size_%i_input_size_100_num_examples_%i_input_type_%s_svm_%f_aligned_%s_run_%i.csv", this_dir, noise_var, output_size, p, input_type, svm, aligned, run)
+                if (!file.exists(filename)) {
+                  next
+                }
+                this_d = read.csv(filename, header=T)
+          
+                this_d = this_d %>% 
+                  mutate(noise_var=noise_var, output_size=output_size, svm=svm, aligned=aligned=="True", input_type=input_type, run=run, p=p, depth=1, teacher_rank=1, student_rank="Full rank", type="Empirical")
+                d = bind_rows(d, this_d)
+              }
             }
           }
           theory_filename = sprintf("../changing_p_results/n2b_1_noise_var_%.2f_p_%i_svm_%f_theory_track.csv", noise_var,  p, svm)
@@ -2694,7 +2702,7 @@ for (p in ps) {
           
             this_d = this_d %>% 
               rename(loss=generalization_error) %>%
-              mutate(noise_var=noise_var, output_size=NA,  svm=svm, aligned=aligned=="True", p=p, depth=1, teacher_rank=1, run=NA, student_rank="Full rank", type="Theory")
+              mutate(noise_var=noise_var, output_size=NA,  svm=svm, aligned=aligned=="True", p=p, depth=1, teacher_rank=1, input_type=NA, run=NA, student_rank="Full rank", type="Theory")
             d = bind_rows(d, this_d)
           }
         }
@@ -2734,10 +2742,10 @@ avg_d = d %>%
 
 ```{r}
 min_d = d %>%
-  group_by(svm, rt_D_x_snr, p, depth, aligned, noise_var, type, teacher_rank, student_rank, run) %>%
+  group_by(svm, rt_D_x_snr, p, depth, aligned, noise_var, type, teacher_rank, input_type, student_rank, run) %>%
   summarize(min_Eg = min(log_loss), min_t = which.min(log_loss)) %>%
   ungroup() %>%
-  group_by(svm, p, rt_D_x_snr, depth, aligned, noise_var, teacher_rank, student_rank, type) %>%
+  group_by(svm, p, rt_D_x_snr, depth, aligned, noise_var, teacher_rank, input_type, student_rank, type) %>%
   summarize(avg_min_Eg = mean(min_Eg), sd_min_Eg = sd(min_Eg),
             avg_min_t = mean(min_t), sd_min_t = sd(min_t),
             se_min_Eg = sd_min_Eg/sqrt(n()), ci_Eg_up= avg_min_Eg + 1.96*se_min_Eg, ci_Eg_lo= avg_min_Eg - 1.96*se_min_Eg,
@@ -2746,9 +2754,17 @@ min_d = d %>%
   
 ```
 
+```{r}
+wide_min_d = min_d %>% 
+  filter(type == "Empirical") %>%
+  select(-type, -se_min_Eg, -se_min_t) %>%
+  gather(metric, measurement, avg_min_Eg, sd_min_Eg, avg_min_t, sd_min_t, ci_t_up, ci_t_lo, ci_Eg_up, ci_Eg_lo) %>%
+  unite(itm, input_type, metric) %>%
+  spread(itm, measurement) 
+```
 
 ```{r}
-make_changing_p_plots = function(avg_d, min_d, file_prefix, lets, x_breaks=c(0., 5., 10.)) {
+make_changing_p_plots = function(avg_d, min_d, wide_min_d, file_prefix, lets, x_breaks=c(0., 5., 10.)) {
   # train 
   p = ggplot(avg_d %>% filter(type=="Theory", svm==3.), aes(x=epoch/(1000), y=log_tr_loss, color=as.numeric(levels(p)[p])/100, group=interaction(new_type, svm, p, student_rank))) +
    geom_line(aes(linetype=factor("Theory")), size=1.5) +
@@ -2786,11 +2802,11 @@ make_changing_p_plots = function(avg_d, min_d, file_prefix, lets, x_breaks=c(0.,
   grid.draw(gt)
   ggsave(paste(file_prefix, lets[2], ".png", sep=""), plot=gt, width=4, height=3)
   
-  p = ggplot(data=min_d %>% filter(type=="Empirical"), aes(x=rt_D_x_snr, y=min_Eg, color=as.numeric(levels(svm)[svm]))) +
-    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 10), labels=c( parse(text="sqrt(1/2, 4)"), "10      ")) +
-    labs(x=TeX("\\sqrt{P/N_1}\cdot \\text{SNR}"),
+  p = ggplot(data=min_d %>% filter(type=="Empirical"), aes(x=rt_D_x_snr, y=avg_min_Eg, color=as.numeric(levels(svm)[svm]))) +
+    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(2, 4), breaks=c(2, 3, 4)) +
+    labs(x=TeX("SNR\\sqrt{P/N_1} "),
          y=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (TA)")) +
-    geom_line(data=min_d %>% filter(type=="Theory"), size=1.5) +
+    geom_line(data=min_d %>% filter(type=="Theory"), aes(group=svm), size=1.5) +
     geom_errorbar(aes(ymin=ci_Eg_lo, ymax=ci_Eg_up), width=0.05) +
     geom_point(size=3) +
     guides(color=guide_colorbar(title="SNR"), shape=F)  +
@@ -2803,13 +2819,30 @@ make_changing_p_plots = function(avg_d, min_d, file_prefix, lets, x_breaks=c(0.,
   grid.draw(gt)
   ggsave(paste(file_prefix, lets[3], ".png", sep=""), plot=gt, width=4, height=3)
   
+  p = ggplot(data=wide_min_d, aes(x=orthogonal_avg_min_Eg, y=gaussian_avg_min_Eg, color=as.numeric(levels(p)[p])/100, shape=svm)) +
+    geom_abline(intercept=0, slope=1, alpha=0.5, linetype=3) +
+    scale_color_gradient(low="#008800", high="#FFD700", limits=c(0, 2), breaks=c(0.2, 1., 2.)) +
+    labs(x=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (Orth.)"),
+         y=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (Gauss.)   ")) +
+    geom_errorbar(aes(ymin=gaussian_ci_Eg_lo, ymax=gaussian_ci_Eg_up), width=0.05) +
+    geom_errorbarh(aes(xmin=orthogonal_ci_Eg_lo, xmax=orthogonal_ci_Eg_up), height=0.05) +
+    geom_point(size=2) +
+    guides(color=guide_colorbar(title=TeX("$P/N_1$")), shape=guide_legend(title="SNR"))  +
+    annotation_custom(textGrob(label = lets[4], hjust = 2.5, gp = gpar(cex = 2),
+        x=unit(0, "npc"), y=unit(0.97, "npc"))) +
+    theme(legend.margin = margin(-0.2,0,-0.2,0, unit="cm"))
+  
+  gt <- ggplot_gtable(ggplot_build(p))
+  gt$layout$clip[gt$layout$name == "panel"] <- "off"
+  grid.draw(gt)
+  ggsave(paste(file_prefix, lets[4], ".png", sep=""), plot=gt, width=4, height=3)
   
 }
 
 ```
 
 ```{r}
-make_changing_p_plots(avg_d, min_d,
+make_changing_p_plots(avg_d, min_d, wide_min_d,
                       file_prefix="../plots/paper/changing_p_",
                       lets=c("A", "B", "C", "D"))
 ```
