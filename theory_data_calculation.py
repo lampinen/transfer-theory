@@ -8,7 +8,7 @@ from theory_functions import *
 num_examples = 100
 output_sizes = [100] 
 sigma_zs = [1] 
-ps = [160]#, 100, 20]#, 200, 40, 60, 80, 120, 140, 160, 180]
+ps = [100, 20, 200, 40, 60, 80, 120, 140, 160, 180]
 #num_runs = 10 
 learning_rate = 0.001
 num_epochs = 10000
@@ -25,7 +25,7 @@ N_2_bars = [1]
 num_hidden = 100
 num_hidden_layers = 1# 3 # deeper is only supported for num_hidden_layers = 3, p=N_1 and sigma z = 1 right now, not because of theoretical limitations, just to save me time
 inverse_theory_num_points = 2000
-singular_value_multipliers = [3.] #0.84, 4. ,8.] # [1.33] #2., 3.] #[10., 0.84, 2., 4., 6., 8.] #[1., 2., 4., 8.] #np.arange(0., 10., 0.05) #
+singular_value_multipliers = [2., 3., 4.] #0.84, 4. ,8.] # [1.33] #2., 3.] #[10., 0.84, 2., 4., 6., 8.] #[1., 2., 4., 8.] #np.arange(0., 10., 0.05) #
 
 min_gen_approx = False # if true, only approximate min gen by assuming 1 or 0 learning of modes
 ### 
