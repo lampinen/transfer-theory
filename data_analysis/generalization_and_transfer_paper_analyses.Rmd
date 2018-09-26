@@ -2802,6 +2802,23 @@ make_changing_p_plots = function(avg_d, min_d, wide_min_d, file_prefix, lets, x_
   grid.draw(gt)
   ggsave(paste(file_prefix, lets[2], ".png", sep=""), plot=gt, width=4, height=3)
   
+  p = ggplot(data=min_d %>% filter(type=="Empirical", input_type=="orthogonal"), aes(x=sqrt(as.numeric(levels(p)[p])/100), y=avg_min_Eg, color=as.numeric(levels(svm)[svm]))) +
+    scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(2, 4), breaks=c(2, 3, 4)) +
+    labs(x=TeX("\\sqrt{P/N_1} "),
+         y=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (TA)")) +
+    geom_line(data=min_d %>% filter(type=="Theory"), aes(group=svm), size=1.5) +
+    geom_errorbar(aes(ymin=ci_Eg_lo, ymax=ci_Eg_up), width=0.05) +
+    geom_point(size=3) +
+    guides(color=F, shape=F)  +
+    annotation_custom(textGrob(label = lets[3], hjust = 2.5, gp = gpar(cex = 2),
+        x=unit(0, "npc"), y=unit(0.97, "npc")),
+        ) 
+  
+  gt <- ggplot_gtable(ggplot_build(p))
+  gt$layout$clip[gt$layout$name == "panel"] <- "off"
+  grid.draw(gt)
+  ggsave(paste(file_prefix, lets[3], ".png", sep=""), plot=gt, width=3, height=3)
+  
   p = ggplot(data=min_d %>% filter(type=="Empirical", input_type=="orthogonal"), aes(x=rt_D_x_snr, y=avg_min_Eg, color=as.numeric(levels(svm)[svm]))) +
     scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(2, 4), breaks=c(2, 3, 4)) +
     labs(x=TeX("SNR\\sqrt{P/N_1} "),
@@ -2810,14 +2827,14 @@ make_changing_p_plots = function(avg_d, min_d, wide_min_d, file_prefix, lets, x_
     geom_errorbar(aes(ymin=ci_Eg_lo, ymax=ci_Eg_up), width=0.05) +
     geom_point(size=3) +
     guides(color=guide_colorbar(title="SNR"), shape=F)  +
-    annotation_custom(textGrob(label = lets[3], hjust = 2.5, gp = gpar(cex = 2),
+    annotation_custom(textGrob(label = lets[4], hjust = 2.5, gp = gpar(cex = 2),
         x=unit(0, "npc"), y=unit(0.97, "npc")),
         ) 
   
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"
   grid.draw(gt)
-  ggsave(paste(file_prefix, lets[3], ".png", sep=""), plot=gt, width=4, height=3)
+  ggsave(paste(file_prefix, lets[4], ".png", sep=""), plot=gt, width=4, height=3)
   
   p = ggplot(data=wide_min_d, aes(x=orthogonal_avg_min_Eg, y=gaussian_avg_min_Eg, color=as.numeric(levels(p)[p])/100, shape=svm)) +
     geom_abline(intercept=0, slope=1, alpha=0.5, linetype=3) +
@@ -2831,14 +2848,14 @@ make_changing_p_plots = function(avg_d, min_d, wide_min_d, file_prefix, lets, x_
     geom_point(size=2) +
     guides(color=guide_colorbar(title=TeX("$P/N_1$"), barheight=unit(2.5, "cm"), order=1),
            shape=guide_legend(title="SNR"))  +
-    annotation_custom(textGrob(label = lets[4], hjust = 2.5, gp = gpar(cex = 2),
+    annotation_custom(textGrob(label = lets[5], hjust = 2.5, gp = gpar(cex = 2),
         x=unit(0, "npc"), y=unit(0.97, "npc"))) +
     theme(legend.margin = margin(0,0,-0.2,0, unit="cm"))
   
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"
   grid.draw(gt)
-  ggsave(paste(file_prefix, lets[4], ".png", sep=""), plot=gt, width=4, height=3)
+  ggsave(paste(file_prefix, lets[5], ".png", sep=""), plot=gt, width=4, height=3)
   
 }
 
@@ -2847,5 +2864,5 @@ make_changing_p_plots = function(avg_d, min_d, wide_min_d, file_prefix, lets, x_
 ```{r}
 make_changing_p_plots(avg_d, min_d, wide_min_d,
                       file_prefix="../plots/paper/changing_p_",
-                      lets=c("A", "B", "C", "D"))
+                      lets=c("A", "B", "C", "D", "E"))
 ```
