@@ -2116,18 +2116,19 @@ make_fig3_plots = function(avg_d, wide_min_d, file_prefix, lets, x_breaks=c(0., 
     scale_x_continuous(breaks=x_breaks) +
     labs(x=TeX("$t/\\tau$"),
          y=TeX("$\\ln \\, \\epsilon_{test}$")) +
-    guides(color=F, linetype=F, shape=F)+
+    guides(color=guide_colorbar(title="SNR", order=1, barheight=unit(2.5, "cm")),
+           linetype=guide_legend(title="", order=2, override.aes=list(alpha=c(1), linetype=c("solid"))),
+           shape=guide_legend(title="Empirical", order=3)) +
 #    guides(color=guide_colorbar(title="SNR", order=3), linetype=guide_legend(title="", order=1), shape=guide_legend(title="Empirical", order=2))+
     annotation_custom(textGrob(label = lets[2], hjust = 2.5, gp = gpar(cex = 2),
         x=unit(0, "npc"), y=unit(0.95, "npc")),
-        )  +
-    theme(legend.margin = margin(-0.1,0,-0.1,0, unit="cm"))
-  
+        ) + 
+    theme(legend.margin = margin(0.1,0,-0.5,0, unit="cm"))
   
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"
   grid.draw(gt)
-  ggsave(paste(file_prefix, lets[2], ".png", sep=""), plot=gt, width=3, height=3)
+  ggsave(paste(file_prefix, lets[2], ".png", sep=""), plot=gt, width=4.25, height=3)
   
   p = ggplot(data=wide_min_d, aes(x=Aligned_avg_min_Eg, y=Random_avg_min_Eg, color=as.numeric(svm))) +
     scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(0, 10), breaks=c(0.84, 10), labels=c( parse(text="sqrt(1/2, 4)"), "10      ")) +
@@ -2136,7 +2137,7 @@ make_fig3_plots = function(avg_d, wide_min_d, file_prefix, lets, x_breaks=c(0., 
          y=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (Rand.)   ")) +
     geom_errorbar(aes(ymin=Random_ci_Eg_lo, ymax=Random_ci_Eg_up), width=0.05) +
     geom_errorbarh(aes(xmin=Aligned_ci_Eg_lo, xmax=Aligned_ci_Eg_up), height=0.05) +
-    geom_point(size=2) +
+    geom_point(size=3) +
     guides(color=F, shape=F)  +
     annotation_custom(textGrob(label = lets[3], hjust = 2.5, gp = gpar(cex = 2),
         x=unit(0, "npc"), y=unit(0.97, "npc")),
@@ -2154,22 +2155,20 @@ make_fig3_plots = function(avg_d, wide_min_d, file_prefix, lets, x_breaks=c(0., 
     geom_abline(aes(intercept=0, slope=1), alpha=0.5, linetype=3) +
     labs(x=TeX("$t_{opt}/\\tau$ (TA)"),
          y=TeX("$t_{opt}/\\tau$ (Rand.)")) +
-    geom_point(aes(shape=factor("Empirical")), size=2) +
+    geom_point(aes(shape=factor("Empirical")), size=3) +
     geom_errorbar(aes(ymin=Random_ci_t_lo/1000, ymax=Random_ci_t_up/1000), width=0.01) +
     geom_errorbarh(aes(xmin=Aligned_ci_t_lo/1000, xmax=Aligned_ci_t_up/1000), height=0.01) +
-    guides(color=guide_colorbar(title="SNR", order=1),
-           linetype=guide_legend(title="", order=2, override.aes=list(alpha=c(1), linetype=c("solid"))),
-           shape=guide_legend(title="", order=3)) +
+    guides(color=F, linetype=F, shape=F)+
     annotation_custom(textGrob(label = lets[4], hjust = 3, gp = gpar(cex = 2),
         x=unit(0, "npc"), y=unit(0.95, "npc")),
         ) + 
-    theme(legend.margin = margin(0.,0,-0.6,0, unit="cm"))
+    theme(legend.margin = margin(-0.05,0,-0.5,0, unit="cm"))
   
   
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"
   grid.draw(gt)
-  ggsave(paste(file_prefix, lets[4], ".png", sep=""), plot=gt, width=4.25, height=3)
+  ggsave(paste(file_prefix, lets[4], ".png", sep=""), plot=gt, width=3, height=3)
 }
 ```
 
@@ -2681,11 +2680,12 @@ for (p in ps) {
               if (input_type == "orthogonal") {
                 this_dir = "changing_p_results"
               } else {
-                this_d = "changing_p_results_gaussian"
+                this_dir = "changing_p_results_gaussian"
               }
               for (run in 0:(nruns-1)) { 
                 filename = sprintf("../%s/noise_var_%.2f_output_size_%i_input_size_100_num_examples_%i_input_type_%s_svm_%f_aligned_%s_run_%i.csv", this_dir, noise_var, output_size, p, input_type, svm, aligned, run)
                 if (!file.exists(filename)) {
+                  
                   next
                 }
                 this_d = read.csv(filename, header=T)
@@ -2728,7 +2728,7 @@ d = d %>%
 
 ```{r}
 avg_d = d %>%
-  filter(svm == 3., p %in% c(20, 100, 200)) %>%
+  filter(svm == 3., p %in% c(20, 100, 200), input_type=="orthogonal" | type == "Theory") %>%
   group_by(depth, p, noise_var, output_size, svm, aligned, epoch, teacher_rank,student_rank, type) %>%
   summarize(loss=mean(loss), log_tr_loss_sd=sd(log_train_loss), log_tr_loss=mean(log_train_loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
   mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n()),
@@ -2765,8 +2765,8 @@ wide_min_d = min_d %>%
 
 ```{r}
 make_changing_p_plots = function(avg_d, min_d, wide_min_d, file_prefix, lets, x_breaks=c(0., 5., 10.)) {
-  # train 
-  p = ggplot(avg_d %>% filter(type=="Theory", svm==3.), aes(x=epoch/(1000), y=log_tr_loss, color=as.numeric(levels(p)[p])/100, group=interaction(new_type, svm, p, student_rank))) +
+  # train
+  p = ggplot(avg_d %>% filter(type=="Theory", svm==3.), aes(x=epoch/(1000), y=log_tr_loss, color=as.numeric(levels(p)[p])/100, group=interaction(svm, p))) +
    geom_line(aes(linetype=factor("Theory")), size=1.5) +
     geom_point(data=avg_d %>% filter(grepl("Empirical", type), svm==3., epoch %% 500 == 0), aes(shape=aligned), size=3) +
     scale_x_continuous(breaks=x_breaks) +
@@ -2775,16 +2775,16 @@ make_changing_p_plots = function(avg_d, min_d, wide_min_d, file_prefix, lets, x_
          y=TeX("$\\ln \\, \\epsilon_{train}$")) +
     guides(color=F, linetype=F, shape=F)+
     annotation_custom(textGrob(label = lets[1], hjust = 2.5, gp = gpar(cex = 2),
-        x=unit(0, "npc"), y=unit(0.95, "npc"))) 
-  
-  
+        x=unit(0, "npc"), y=unit(0.95, "npc")))
+
+
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"
   grid.draw(gt)
   ggsave(paste(file_prefix, lets[1], ".png", sep=""), plot=gt, width=3, height=3)
-  
+
   # test
-  p = ggplot(avg_d %>% filter(type=="Theory"), aes(x=epoch/(1000), y=log_loss, color=as.numeric(levels(p)[p])/100, group=interaction(new_type, svm, p, student_rank))) +
+  p = ggplot(avg_d %>% filter(type=="Theory"), aes(x=epoch/(1000), y=log_loss, color=as.numeric(levels(p)[p])/100, group=interaction(svm, p))) +
    geom_line(aes(linetype=factor("Theory")), size=1.5) +
     geom_point(data=avg_d %>% filter(grepl("Empirical", type), epoch %% 500 == 0), aes(shape=aligned), size=3) +
     scale_color_gradient(low="#008800", high="#FFD700", limits=c(0, 2), breaks=c(0.2, 1., 2.)) +
@@ -2795,14 +2795,14 @@ make_changing_p_plots = function(avg_d, min_d, wide_min_d, file_prefix, lets, x_
     annotation_custom(textGrob(label = lets[2], hjust = 2.5, gp = gpar(cex = 2),
         x=unit(0, "npc"), y=unit(0.95, "npc")))  +
     theme(legend.margin = margin(-0.1,0,-0.1,0, unit="cm"))
-  
-  
+
+
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"
   grid.draw(gt)
   ggsave(paste(file_prefix, lets[2], ".png", sep=""), plot=gt, width=4, height=3)
   
-  p = ggplot(data=min_d %>% filter(type=="Empirical"), aes(x=rt_D_x_snr, y=avg_min_Eg, color=as.numeric(levels(svm)[svm]))) +
+  p = ggplot(data=min_d %>% filter(type=="Empirical", input_type=="orthogonal"), aes(x=rt_D_x_snr, y=avg_min_Eg, color=as.numeric(levels(svm)[svm]))) +
     scale_color_gradient(low="#0000FF", high="#FF0000", limits=c(2, 4), breaks=c(2, 3, 4)) +
     labs(x=TeX("SNR\\sqrt{P/N_1} "),
          y=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (TA)")) +
@@ -2823,14 +2823,17 @@ make_changing_p_plots = function(avg_d, min_d, wide_min_d, file_prefix, lets, x_
     geom_abline(intercept=0, slope=1, alpha=0.5, linetype=3) +
     scale_color_gradient(low="#008800", high="#FFD700", limits=c(0, 2), breaks=c(0.2, 1., 2.)) +
     labs(x=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (Orth.)"),
-         y=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (Gauss.)   ")) +
+         y=TeX("$\\min \\, \\ln \\,\\epsilon_{test}$ (Gauss.)    ")) +
     geom_errorbar(aes(ymin=gaussian_ci_Eg_lo, ymax=gaussian_ci_Eg_up), width=0.05) +
     geom_errorbarh(aes(xmin=orthogonal_ci_Eg_lo, xmax=orthogonal_ci_Eg_up), height=0.05) +
+    scale_x_continuous(limits=c(-3., 0.)) +
+    scale_y_continuous(limits=c(-3., 0.)) +
     geom_point(size=2) +
-    guides(color=guide_colorbar(title=TeX("$P/N_1$")), shape=guide_legend(title="SNR"))  +
+    guides(color=guide_colorbar(title=TeX("$P/N_1$"), barheight=unit(2.5, "cm"), order=1),
+           shape=guide_legend(title="SNR"))  +
     annotation_custom(textGrob(label = lets[4], hjust = 2.5, gp = gpar(cex = 2),
         x=unit(0, "npc"), y=unit(0.97, "npc"))) +
-    theme(legend.margin = margin(-0.2,0,-0.2,0, unit="cm"))
+    theme(legend.margin = margin(0,0,-0.2,0, unit="cm"))
   
   gt <- ggplot_gtable(ggplot_build(p))
   gt$layout$clip[gt$layout$name == "panel"] <- "off"
