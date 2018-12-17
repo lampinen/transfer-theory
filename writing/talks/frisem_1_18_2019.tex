@@ -1,0 +1,91 @@
+\documentclass{beamer}
+\usepackage{pgfpages}
+%\setbeameroption{show notes on second screen=left} %enable for notes
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+%\usepackage{transparent}
+\usepackage{hyperref}
+\lstset{language=python,frame=single}
+\usepackage{verbatim}
+%\usepackage{apacite}
+\usepackage[longnamesfirst]{natbib}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{relsize}
+\usepackage{appendixnumberbeamer}
+\usepackage{xparse}
+\usepackage{multimedia}
+\usepackage{xcolor}
+\usepackage[normalem]{ulem}
+\usepackage{tikz}
+\usetikzlibrary{matrix,backgrounds}
+\usetikzlibrary{positioning}
+\usetikzlibrary{shapes,arrows}
+\usetikzlibrary{positioning}
+
+\tikzset{onslide/.code args={<#1>#2}{%
+  \only<#1>{\pgfkeysalso{#2}} 
+}}
+
+\tikzstyle{block} = [rectangle, draw, fill=red!20!blue!10, 
+    text width=5em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{netnode} = [circle, draw, very thick, inner sep=0pt, minimum size=0.5cm] 
+\tikzstyle{relunode} = [rectangle, draw, very thick, inner sep=0pt, minimum size=0.5cm] 
+    
+\tikzstyle{line} = [draw, line width=1.5pt, -latex']
+
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+\pgfdeclarelayer{myback}
+\pgfsetlayers{myback,background,main}
+
+\usetheme[numbering=fraction]{metropolis}
+\newcommand{\semitransp}[2][35]{\color{fg!#1}#2}
+
+\newcommand\blfootnote[1]{%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{-1}%
+  \endgroup
+}
+\renewcommand*\footnoterule{}
+%%\AtBeginSection[]
+%%{
+%%  \begin{frame}
+%%    \frametitle{Table of Contents}
+%%    \tableofcontents[currentsection]
+%%  \end{frame}
+%%}
+
+\begin{document}
+
+\title{Understanding generalization and transfer in deep linear neural networks}
+\author{Andrew Lampinen}
+\date{FriSem, 1/18/2019}
+\frame{\titlepage}
+
+\begin{frame}{Generalization in deep networks: AlphaGo's ``creativity''}
+\begin{figure}
+\includegraphics[width=0.5\textwidth]{figures/alphago_move_37.png}
+\end{figure}
+\note{Commentators called this move ``probably a mistake'' during the game, but later decided it was ``beautiful'' and unlike what humans had played before.}
+\end{frame}
+
+\begin{frame}{Generalization in humans: Past tense over-regularization}
+\begin{figure}
+\includegraphics[width=0.8\textwidth]{figures/past_tense.png}
+\end{figure}
+\note{There are many interesting phenomena like this, but there's a general pattern of learning broad features followed by progressive differentiation of lower level structure.}
+\end{frame}
+
+\begin{frame}[standout]
+How, why, and \emph{when} do neural networks (and humans) generalize?
+\end{frame}
+
+
+
+\end{document}
+
+
