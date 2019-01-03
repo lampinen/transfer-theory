@@ -59,6 +59,20 @@
 %%  \end{frame}
 %%}
 
+
+\newcommand{\trainerr}{\mathcal{\varepsilon}_\text{train}}
+\newcommand{\generr}{\mathcal{\varepsilon}_\text{test}}
+
+\newcommand{\toptn}{{t}^\text{opt}_\text{gradient}}
+\newcommand{\eoptn}{\mathcal{\varepsilon}^\text{opt}_\text{gradient}}
+\newcommand{\eoptnn}{\mathcal{\varepsilon}^\text{opt}_\text{non-gradient}}
+
+\newcommand{\wa}{{\bf{W}^{21}}}
+\newcommand{\wb}{{\bf{W}^{32}}}
+\newcommand{\ddt}{\frac{d}{dt}}
+\newcommand{\ovn}{\overline{N}}
+\newcommand{\rank}{\text{rank}}
+
 \begin{document}
 
 \title{Understanding generalization and transfer in deep linear neural networks}
@@ -92,7 +106,64 @@ How, why, and when do neural networks (and humans) generalize?
 \section{The theory}
 
 \subsection{Setup: Deep linear networks}
-\begin{frame}{A simple setup}
+\begin{frame}{Deep linear networks}
+\begin{figure}
+\centering
+\begin{tikzpicture}[auto]
+
+\node [netnode] at (-1.5,-2) (i1) {};
+\node [netnode] at (-0.5,-2) (i2) {};
+\node [netnode] at (0.5,-2) (i3) {};
+\node [netnode] at (1.5,-2) (i4) {};
+
+\node [netnode] at (-1,0) (h111) {};
+\node [netnode] at (0,0) (h112) {};
+\node [netnode] at (1,0) (h113) {};
+
+\path [draw, very thick] (i1) to (h111);
+\path [draw, very thick] (i1) to (h112);
+\path [draw, very thick] (i1) to (h113);
+\path [draw, very thick] (i2) to (h111);
+\path [draw, very thick] (i2) to (h112);
+\path [draw, very thick] (i2) to (h113);
+\path [draw, very thick] (i3) to (h111);
+\path [draw, very thick] (i3) to (h112);
+\path [draw, very thick] (i3) to (h113);
+\path [draw, very thick] (i4) to (h111);
+\path [draw, very thick] (i4) to (h112);
+\path [draw, very thick] (i4) to (h113);
+
+\node [netnode] at (-2,2) (h120) {};
+\node [netnode] at (-1,2) (h121) {};
+\node [netnode] at (0,2) (h122) {};
+\node [netnode] at (1,2) (h123) {};
+\node [netnode] at (2,2) (h124) {};
+
+\path [draw, very thick] (h111) to (h120);
+\path [draw, very thick] (h111) to (h121);
+\path [draw, very thick] (h111) to (h122);
+\path [draw, very thick] (h111) to (h123);
+\path [draw, very thick] (h111) to (h124);
+\path [draw, very thick] (h112) to (h120);
+\path [draw, very thick] (h112) to (h121);
+\path [draw, very thick] (h112) to (h122);
+\path [draw, very thick] (h112) to (h123);
+\path [draw, very thick] (h112) to (h124);
+\path [draw, very thick] (h113) to (h120);
+\path [draw, very thick] (h113) to (h121);
+\path [draw, very thick] (h113) to (h122);
+\path [draw, very thick] (h113) to (h123);
+\path [draw, very thick] (h113) to (h124);
+
+
+%% annotations
+
+\node at (-2.75, -1) {\LARGE$\wa$};
+\node at (-2.75, 1) {\LARGE$\wb$};
+
+\end{tikzpicture}
+\end{figure}
+
 
 \end{frame}
 
