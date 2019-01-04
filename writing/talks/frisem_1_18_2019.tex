@@ -61,6 +61,9 @@
 %%  \end{frame}
 %%}
 
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\bb}[1]{{\bf\overline{#1}}}
+\newcommand{\bh}[1]{{\bf\hat{#1}}}
 
 \newcommand{\trainerr}{\mathcal{\varepsilon}_\text{train}}
 \newcommand{\generr}{\mathcal{\varepsilon}_\text{test}}
@@ -98,7 +101,7 @@
 \end{frame}
 
 \begin{frame}[standout]
-How, why, and when do neural networks (and humans) generalize?
+How, why, and when do neural networks (and humans) generalize what they have learned?
 \end{frame}
 
 \begin{frame}{Outline}
@@ -109,11 +112,14 @@ How, why, and when do neural networks (and humans) generalize?
 \section{The theory}
 
 \subsection{Deep linear networks}
-\begin{frame}{Deep linear networks}
+\begin{frame}{Setting: Deep linear networks}
 \begin{figure}
 \centering
 \begin{tikzpicture}[auto, overlay, remember picture]
 \begin{scope}[shift={(0, -0.5)}]
+\node at (0, -2.75) (input) {\only<3-5>{\LARGE \textbf{Go}}};
+\node at (0, 2.75) (output) {\only<5>{\LARGE \textbf{Goed}}};
+
 \node [netnode, onslide={<3-5>{fill=red!20}}] at (-1.5,-2) (i1) {};
 \node [netnode, onslide={<3-5>{fill=blue!80}}] at (-0.5,-2) (i2) {};
 \node [netnode, onslide={<3-5>{fill=red!75}}] at (0.5,-2) (i3) {};
@@ -213,19 +219,66 @@ How, why, and when do neural networks (and humans) generalize?
 \end{frame}
 
 \begin{frame}{Why linear?}
-Linear networks are much easier to understand mathematically. However, they exhibit many of the interesting \textbf{nonlinear} learning dynamics of nonlinear models.
+Linear networks are much easier to understand mathematically. They lack the full representational capacity of nonlinear networks, but exhibit similar (and nonlinear) learning dynamics.
 \begin{figure}
 \uncover<2->{
-\includegraphics[width=0.5\textwidth]{figures/progressive_differentiation.png}
+\only<-2>{
+\includegraphics[height=0.6\textheight]{figures/progressive_differentiation.png}
+}
+\only<3>{
+\includegraphics[height=0.6\textheight]{../../plots/paper/randomized_fig_B.png}
+}
 }
 \end{figure}
 \vspace{-1em}
-\uncover<2->{\footnotesize \citep{Saxe2013, Saxe2018}}
+\uncover<2->{\footnotesize \citep{Saxe2013, Saxe2018, Lampinen2019}}
 \end{frame}
 
 \subsection{Learning dynamics}
 \begin{frame}{Learning dynamics}
+\begin{columns}
+\begin{column}{0.55\textwidth}
+\begin{itemize}[<+->] \itemsep 1em
+\item Training data $\{(\bh{x}^\mu, \bh{y}^\mu)\}$, e.g.
+    $\{(\text{talk}, \text{talked}), (\text{go}, \text{went}), \cdots\}$
+\item Loss $\sum_{\mu}||\bh{y}^\mu - \wb\wa \bh{x}^\mu||^2$
+\item Batch gradient descent
+    \only<-3>{$\Delta \wa  =  \lambda \sum_{\mu} \wb^T \left( \bh{y}^\mu   - \wb \wa {\bh x}^\mu   \right){\bh x}^\mu{}^T$\\[0.5em]
+	      $\Delta \wb  =  \lambda \sum_{\mu} \left( \bh{y}^\mu  - \wb \wa  {\bh x}^\mu \right) {\bh x}^\mu{}^T \wa^T$}
+    \only<4->{$\tau \ddt \wa  =  \wb^T \left( {\bf \Sigma}^{31} - \wb \wa {\bf \Sigma}^{11} \right)$\\[0.5em]
+	      $\tau \ddt \wb = \left( {\bf \Sigma}^{31} - \wb \wa {\bf \Sigma}^{11} \right) \wa^T$}
 
+\end{itemize}
+\end{column}
+\begin{column}{0.45\textwidth}
+\centering
+$\bf{y}^\mu$
+\includegraphics[width=\textwidth]{figures/reference_network.png}
+$\bh{x}^\mu$
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Structure in the data}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+Input-Input Correlations:
+${\bf\Sigma}^{11} \equiv \sum_{\mu=1}^{\overline{N}_1} {\bh x}^\mu {\bh x}^\mu{}^T \uncover<2->{= {\bf I}}$
+\end{column}
+\begin{column}{0.5\textwidth}
+\uncover<3->{
+Input-Output Correlations:
+${\bf \Sigma}^{31} \equiv \sum_{\mu=1}^{\overline{N_1}} \bh{y}^\mu {\bh x}^\mu{}^T$% = \bb{W} + {\bf Z}{\bh X}^T$
+}
+\end{column}
+\end{columns}
+\begin{figure}
+\centering
+\uncover<4->{
+\includegraphics[width=\textwidth]{figures/SVD_from_saxe2018.png}
+}
+\end{figure}
+\uncover<4->{\footnotesize \citep{Saxe2013, Saxe2018}}
 \end{frame}
 
 \subsection{Distortion of data by noise}
@@ -239,7 +292,7 @@ Linear networks are much easier to understand mathematically. However, they exhi
 \end{frame}
 
 
-\section{What it helps us understand}
+\section{Applications of the theory}
 
 \subsection{The trouble with structure-agnostic generalization bounds}
 \begin{frame}{Why do standard generalization bounds suck?}
