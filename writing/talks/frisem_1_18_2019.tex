@@ -260,6 +260,7 @@ $\bh{x}^\mu$
 \end{frame}
 
 \begin{frame}{Structure in the data}
+\vspace{2em}
 \begin{columns}
 \begin{column}{0.5\textwidth}
 Input-Input Correlations:
@@ -278,7 +279,34 @@ ${\bf \Sigma}^{31} \equiv \sum_{\mu=1}^{\overline{N_1}} \bh{y}^\mu {\bh x}^\mu{}
 \includegraphics[width=\textwidth]{figures/SVD_from_saxe2018.png}
 }
 \end{figure}
-\uncover<4->{\footnotesize \citep{Saxe2013, Saxe2018}}
+\uncover<4->{\footnotesize \citep{Saxe2013}, figure from \citep{Saxe2018}}
+\end{frame}
+
+\begin{frame}{Learning dynamics are driven by ${\bf\Sigma}_{31}$}
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{figures/SVD_from_saxe2018.png}
+\end{figure}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\includegraphics[width=\textwidth]{figures/SVD_learn_from_saxe2018.png}
+\end{column}
+\begin{column}{0.5\textwidth}
+\centering
+\uncover<2->{
+$s(t,\hat s)=\frac{\hat s e^{2\hat st/\tau}}{e^{2\hat st/\tau}-1+\hat s/\epsilon}$\\[0.5em]
+}
+\uncover<3->{
+$t(s,\hat s) = \frac{\tau}{2\hat s} 
+   \ln{\frac{{\hat s}/\epsilon -1}{{\hat s}/s -1}}$
+}
+\end{column}
+\end{columns}
+{\footnotesize \citep{Saxe2013}, figure from \citep{Saxe2018}}
+\end{frame}
+
+\begin{frame}[standout]
+Principal components of the training data are learned independently in time inversely proportional to variance explained.
 \end{frame}
 
 \subsection{Distortion of data by noise}
