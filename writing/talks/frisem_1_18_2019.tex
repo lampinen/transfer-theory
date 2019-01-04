@@ -1,4 +1,5 @@
 \documentclass{beamer}
+\setbeamerfont{subsection in toc}{size=\footnotesize}
 \usepackage{pgfpages}
 %\setbeameroption{show notes on second screen=left} %enable for notes
 \usepackage{graphicx}
@@ -12,6 +13,7 @@
 \usepackage[longnamesfirst]{natbib}
 \usepackage{subcaption}
 \usepackage{amsmath}
+\usepackage{bm}
 \usepackage{relsize}
 \usepackage{appendixnumberbeamer}
 \usepackage{xparse}
@@ -69,6 +71,7 @@
 
 \newcommand{\wa}{{\bf{W}^{21}}}
 \newcommand{\wb}{{\bf{W}^{32}}}
+\newcommand{\wk}{{\bf{W}^{k(k-1)}}}
 \newcommand{\ddt}{\frac{d}{dt}}
 \newcommand{\ovn}{\overline{N}}
 \newcommand{\rank}{\text{rank}}
@@ -105,20 +108,20 @@ How, why, and when do neural networks (and humans) generalize?
 
 \section{The theory}
 
-\subsection{Setup: Deep linear networks}
+\subsection{Deep linear networks}
 \begin{frame}{Deep linear networks}
 \begin{figure}
 \centering
-\begin{tikzpicture}[auto]
+\begin{tikzpicture}[auto, overlay, remember picture]
+\begin{scope}[shift={(0, -0.5)}]
+\node [netnode, onslide={<3-5>{fill=red!20}}] at (-1.5,-2) (i1) {};
+\node [netnode, onslide={<3-5>{fill=blue!80}}] at (-0.5,-2) (i2) {};
+\node [netnode, onslide={<3-5>{fill=red!75}}] at (0.5,-2) (i3) {};
+\node [netnode, onslide={<3-5>{fill=blue!30}}] at (1.5,-2) (i4) {};
 
-\node [netnode] at (-1.5,-2) (i1) {};
-\node [netnode] at (-0.5,-2) (i2) {};
-\node [netnode] at (0.5,-2) (i3) {};
-\node [netnode] at (1.5,-2) (i4) {};
-
-\node [netnode] at (-1,0) (h111) {};
-\node [netnode] at (0,0) (h112) {};
-\node [netnode] at (1,0) (h113) {};
+\node [netnode, onslide={<4-5>{fill=blue!20}}] at (-1,0) (h111) {};
+\node [netnode, onslide={<4-5>{fill=red}}] at (0,0) (h112) {};
+\node [netnode, onslide={<4-5>{fill=red!30}}] at (1,0) (h113) {};
 
 \path [draw, very thick] (i1) to (h111);
 \path [draw, very thick] (i1) to (h112);
@@ -133,11 +136,12 @@ How, why, and when do neural networks (and humans) generalize?
 \path [draw, very thick] (i4) to (h112);
 \path [draw, very thick] (i4) to (h113);
 
-\node [netnode] at (-2,2) (h120) {};
-\node [netnode] at (-1,2) (h121) {};
-\node [netnode] at (0,2) (h122) {};
-\node [netnode] at (1,2) (h123) {};
-\node [netnode] at (2,2) (h124) {};
+\only<-5>{ 
+\node [netnode, onslide={<5>{fill=red!50}}] at (-2,2) (h120) {};
+\node [netnode, onslide={<5>{fill=red!10}}] at (-1,2) (h121) {};
+\node [netnode, onslide={<5>{fill=blue!75}}] at (0,2) (h122) {};
+\node [netnode, onslide={<5>{fill=blue!30}}] at (1,2) (h123) {};
+\node [netnode, onslide={<5>{fill=blue!10}}] at (2,2) (h124) {};
 
 \path [draw, very thick] (h111) to (h120);
 \path [draw, very thick] (h111) to (h121);
@@ -154,17 +158,69 @@ How, why, and when do neural networks (and humans) generalize?
 \path [draw, very thick] (h113) to (h122);
 \path [draw, very thick] (h113) to (h123);
 \path [draw, very thick] (h113) to (h124);
+}
+\only<6->{
+
+\node at (0, 0.85) (dots) {\LARGE$\bm{\vdots}$};
+
+\node [netnode] at (-1,1.5) (h211) {};
+\node [netnode] at (0,1.5) (h212) {};
+\node [netnode] at (1,1.5) (h213) {};
+
+\node [netnode] at (-2,3.5) (h120) {};
+\node [netnode] at (-1,3.5) (h121) {};
+\node [netnode] at (0,3.5) (h122) {};
+\node [netnode] at (1,3.5) (h123) {};
+\node [netnode] at (2,3.5) (h124) {};
+
+\path [draw, very thick] (h211) to (h120);
+\path [draw, very thick] (h211) to (h121);
+\path [draw, very thick] (h211) to (h122);
+\path [draw, very thick] (h211) to (h123);
+\path [draw, very thick] (h211) to (h124);
+\path [draw, very thick] (h212) to (h120);
+\path [draw, very thick] (h212) to (h121);
+\path [draw, very thick] (h212) to (h122);
+\path [draw, very thick] (h212) to (h123);
+\path [draw, very thick] (h212) to (h124);
+\path [draw, very thick] (h213) to (h120);
+\path [draw, very thick] (h213) to (h121);
+\path [draw, very thick] (h213) to (h122);
+\path [draw, very thick] (h213) to (h123);
+\path [draw, very thick] (h213) to (h124);
+
+
+}
 
 
 %% annotations
-
+\only<-5>{
 \node at (-2.75, -1) {\LARGE$\wa$};
 \node at (-2.75, 1) {\LARGE$\wb$};
-
+}
+\only<6->{
+\node at (-2.75, -1) {\LARGE$\wa$};
+\node at (-2.75, 2.25) {\LARGE$\wk$};
+}
+\only<2-5>{
+\node at (2.4, -2) {\LARGE$N_1$};
+\node at (2, 0) {\LARGE$N_2$};
+\node at (2.9, 2) {\LARGE$N_3$};
+}
+\end{scope}
 \end{tikzpicture}
 \end{figure}
+\end{frame}
 
-
+\begin{frame}{Why linear?}
+Linear networks are much easier to understand mathematically. However, they exhibit many of the interesting \textbf{nonlinear} learning dynamics of nonlinear models.
+\begin{figure}
+\uncover<2->{
+\includegraphics[width=0.5\textwidth]{figures/progressive_differentiation.png}
+}
+\end{figure}
+\vspace{-1em}
+\uncover<2->{\footnotesize \citep{Saxe2013, Saxe2018}}
 \end{frame}
 
 \subsection{Learning dynamics}
@@ -183,7 +239,7 @@ How, why, and when do neural networks (and humans) generalize?
 \end{frame}
 
 
-\section{Applications}
+\section{What it helps us understand}
 
 \subsection{The trouble with structure-agnostic generalization bounds}
 \begin{frame}{Why do standard generalization bounds suck?}
@@ -200,6 +256,12 @@ How, why, and when do neural networks (and humans) generalize?
 \subsection{Structure sensitive regularization}
 \begin{frame}{Is gradient descent optimal?}
 \end{frame}
+
+\begin{frame}[allowframebreaks]
+\bibliographystyle{plainnat}
+\blfootnote{\bibliography{generalization}}
+\end{frame}
+
 
 \end{document}
 
