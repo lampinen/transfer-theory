@@ -238,6 +238,7 @@ Linear networks are much easier to understand mathematically. They lack the full
 \begin{frame}{Learning dynamics}
 \begin{columns}
 \begin{column}{0.55\textwidth}
+\only<-3>{\vspace{0.9em}}
 \begin{itemize}[<+->] \itemsep 1em
 \item Training data $\{(\bh{x}^\mu, \bh{y}^\mu)\}$, e.g.
     $\{(\text{talk}, \text{talked}), (\text{go}, \text{went}), \cdots\}$
@@ -306,7 +307,7 @@ $t(s,\hat s) = \frac{\tau}{2\hat s}
 \end{frame}
 
 \begin{frame}[standout]
-Principal components of the training data are learned independently in time inversely proportional to variance explained.
+Principal components of the training data are learned independently; stronger components are learned earlier.
 \end{frame}
 
 \subsection{Distortion of data by noise}
