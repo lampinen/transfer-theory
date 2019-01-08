@@ -311,9 +311,89 @@ Principal components of the training data are learned independently; stronger co
 \end{frame}
 
 \subsection{Distortion of data by noise}
-\begin{frame}{How the signal emerges from the noise}
-
+\begin{frame}{A noisy teacher}
+Suppose we have some true labels for some ground-truth linear task:
+$$\bb{y}^{\mu} = \bb{W}\bh{x}^\mu$$
+To which IID gaussian noise is added to produce the training data:
+$$\bh{y}^{\mu} = \bb{W}\bh{x}^\mu + \bf{z} ^ \mu$$
+How well does the network learn the true task from this noisy teacher? 
 \end{frame}
+
+\begin{frame}{How the signal emerges in the noisy training data}
+\vspace{-0.5em}
+\begin{center}
+\only<-3>{
+\includegraphics[width=0.75\textwidth]{../../plots/paper/fig_2a_hidden.png}
+}
+\only<4->{
+\includegraphics[width=0.75\textwidth]{../../plots/paper/fig_2a.png}
+}
+\uncover<2->{
+\includegraphics[width=0.428\textwidth]{../../plots/paper/fig_2c.png}%
+}%
+\uncover<3->{%
+\includegraphics[width=0.322\textwidth]{../../plots/paper/fig_2d.png}
+}
+
+\end{center}
+\vspace{-1em}
+{\footnotesize Building on \citet{Benaych-Georges2012}}
+\end{frame}
+
+
+\begin{frame}{Scary math slide}
+Singular value inflation:
+$$
+\hat{s}(\overline{s}) = \begin{cases}
+{(\overline{s})^{-1}}{\sqrt{(1+\overline{s}^2)(\mathcal{A}+\overline{s}^2)}}\ & \text{if } \overline{s} > \mathcal{A}^{1/4} \\
+1+\sqrt{\mathcal{A}} & \text{otherwise}.
+\end{cases}
+$$
+Singular vector alignment:
+$$\mathcal{O}(\overline{s}) = 
+\begin{cases}
+\left[1-
+        \frac{\mathcal{A}(1+\overline{s}^2)}          
+            {\overline{s}^2(\mathcal{A}+\overline{s}^2)}
+\right]^{1/2} 
+\left[1-
+        \frac{(\mathcal{A}+\overline{s}^2)}          
+            {\overline{s}^2(1+\overline{s}^2)}
+\right]^{1/2}
+
+& \text{if } \overline{s} > \mathcal{A}^{1/4} \\
+0 & \text{otherwise}
+\end{cases}
+$$
+Noise singular value distribution:
+$$P(\hat{s}) = \begin{cases}
+\frac{\sqrt{4\mathcal{A}-(\hat{s}^2 - (1+\mathcal{A}))^2}}{\pi \mathcal{A}\hat{s}} & \hat{s} \in [1-\sqrt{\mathcal{A}}, 1+\sqrt{\mathcal{A}}] \\
+0 & \text{otherwise}.
+\end{cases}
+$$
+\end{frame}
+
+\begin{frame}[standout]
+Noise inflates and distorts signal dimensions; weaker dimensions are distorted more. \\[1em]
+The remaining dimensions are filled with noise.
+\end{frame}
+
+\subsection{Train \& test error}
+\begin{frame}{Explicit formulas for the train and test error}
+\footnotesize
+\begin{align*}
+\trainerr &\equiv \frac{\sum_{\mu=1}^{\overline{N_1}} \vert\vert{\bf W \bh{x}}^\mu - \bh{y}^\mu\vert\vert^2_2}{\sum_{\mu=1}^{\overline{N_1}} \vert\vert \bh{y}^\mu \vert\vert^2_2 }\\[1em]
+ &= \left[\sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2\right]^{-1} 
+\left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2 +  \sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2
+- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_3}  s_{\alpha} \hat{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bf{\hat u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bf{\hat v}^{\beta} \right)\right]\\[3em]
+\generr &\equiv   \frac{ \left\langle \vert\vert{\bf W}\bb{x} - \bb{y} \vert\vert^2_2 \right \rangle} 
+                      { \left\langle  \vert\vert \bb{y} \vert\vert^2_2  \right \rangle} \\[1em]
+ &= \left[\sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2\right]^{-1} 
+\left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2 +  \sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2
+- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_2}  s_{\alpha} \overline{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bb{u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bb{v}^{\beta} \right)\right]
+\end{align*}
+\end{frame}
+
 
 \subsection{Generalization dynamics}
 \begin{frame}{Putting it all together: generalization dynamics}
@@ -337,6 +417,15 @@ Principal components of the training data are learned independently; stronger co
 
 \subsection{Structure sensitive regularization}
 \begin{frame}{Is gradient descent optimal?}
+\end{frame}
+
+
+\begin{frame}{Summary}
+
+\end{frame}
+
+\begin{frame}{Open questions}
+
 \end{frame}
 
 \begin{frame}[allowframebreaks]
