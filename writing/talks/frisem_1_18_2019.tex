@@ -429,9 +429,59 @@ Important assumption: the student is initialized with Teacher Aligned (TA) modes
 \end{frame}
 
 \begin{frame}{Generalization dynamics (math)}
-
+\footnotesize
+\begin{align*}
+\trainerr(t) &=
+\frac{
+{\color{green} \overbrace{\color{mDarkTeal}(N_3\! - \!N_2) \langle \hat s^2 \rangle_{\mathcal{R}_{out}}}^{\text{\small Beyond capacity}}} \!+ \! (N_2 \!-\! \overline{N}_2) \langle (s(\hat{s},t) -\hat{s})^2 \rangle_{\mathcal{R}_{in}} +
+\sum_{\alpha=1}^{\overline{N}_2}
+    \left[
+       s_\alpha(t) -
+       \hat{s}_{\alpha} \right]^2
+} 
+{\color{red}\underbrace{\color{mDarkTeal}\sum_{\alpha=1}^{\overline{N}_3} \hat{s}_{\alpha}^2}_{\text{\small Normalization}}}\\[2em]
+\generr(t) &= 
+\frac{%
+(N_2 \!-\! \overline{N}_2) \langle s(\hat{s},t)^2 \rangle_{\mathcal{R}_{in}}\! + 
+\sum_{\alpha=1}^{\overline{N}_2} 
+    \left[
+       (s_\alpha(t) - \overline{s}_{\alpha})^2  
+       + 2 s_\alpha(t) \overline{s}_{\alpha}(1-\mathcal{O}(\overline{s}_\alpha))
+       \right]}{\sum_{\alpha=1}^{\overline{N}_2} \overline{s}_{\alpha}^2}
+\end{align*}
 \end{frame}
 
+\begin{frame}{Theory-experiment match}
+\begin{figure}
+\begin{subfigure}[t]{0.22\textwidth}
+\includegraphics[height=0.28\textheight]{../../plots/paper/fig3_redux_E.png}
+\end{subfigure}%
+\begin{subfigure}[t]{0.33\textwidth}
+\includegraphics[height=0.28\textheight]{../../plots/paper/fig3_redux_F.png}
+\end{subfigure}%
+\begin{subfigure}[t]{0.22\textwidth}
+\includegraphics[height=0.28\textheight]{../../plots/paper/fig3_redux_G.png}
+\end{subfigure}%
+\begin{subfigure}[t]{0.22\textwidth}
+\includegraphics[height=0.28\textheight]{../../plots/paper/fig3_redux_H.png}
+\end{subfigure}\\
+\uncover<2->{
+\begin{subfigure}[t]{0.22\textwidth}
+\includegraphics[height=0.28\textheight]{../../plots/paper/deep_fig_redux_E.png}
+\end{subfigure}%
+\begin{subfigure}[t]{0.33\textwidth}
+\includegraphics[height=0.28\textheight]{../../plots/paper/deep_fig_redux_F.png}
+\end{subfigure}%
+\begin{subfigure}[t]{0.22\textwidth}
+\includegraphics[height=0.28\textheight]{../../plots/paper/deep_fig_redux_G.png}
+\end{subfigure}%
+\begin{subfigure}[t]{0.22\textwidth}
+\includegraphics[height=0.28\textheight]{../../plots/paper/deep_fig_redux_H.png}
+\end{subfigure}
+}
+\end{figure}
+
+\end{frame}
 
 
 \section{Applications of the theory}
