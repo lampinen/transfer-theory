@@ -90,7 +90,7 @@
 \begin{figure}
 \includegraphics[width=0.5\textwidth]{figures/alphago_move_37.png}
 \end{figure}
-\note{This is a move that nobody has seen before, during the game commentators called it ``probably a mistake,'' but later decided it was ``beautiful.''}
+\note{This is a move that nobody has seen before in professional play, during the game commentators called it ``probably a mistake,'' but later decided it was ``beautiful.''}
 \end{frame}
 
 \begin{frame}{Generalization in humans: Past tense over-regularization}
@@ -98,6 +98,24 @@
 \includegraphics[width=0.8\textwidth]{figures/past_tense.png}
 \end{figure}
 \note{There are many interesting phenomena like this, but there's a general pattern of learning broad features followed by progressive differentiation of lower level structure.}
+\end{frame}
+
+\begin{frame}<1>[label=gen_dyn_int]
+\frametitle<1>{Generalization dynamics in deep networks}
+
+\frametitle<2->{Generalization dynamics (intuition)}
+\begin{figure}
+\includegraphics[width=0.6\textwidth]{figures/conceptual_train_test.png}
+\vspace{-1em}
+\end{figure}
+\only<2->{
+\begin{itemize}[<+(2)->]
+\item The strongest modes in the training data are learned first.
+\item The strongest modes are the least distorted.
+\item Any signal modes that contain usable signal will be stronger than the noise modes. 
+\end{itemize}
+}
+\note{First train and test error go down together, with a slight gap, then overfitting, in between is optimal stopping.}
 \end{frame}
 
 \begin{frame}[standout]
@@ -226,12 +244,16 @@ Linear networks are much easier to understand mathematically. They lack the full
 \includegraphics[height=0.6\textheight]{figures/progressive_differentiation.png}
 }
 \only<3>{
-\includegraphics[height=0.6\textheight]{../../plots/paper/randomized_fig_B.png}
+\includegraphics[height=0.6\textheight]{figures/conceptual_train_test.png}
 }
 }
 \end{figure}
 \vspace{-1em}
 \uncover<2->{\footnotesize \citep{Saxe2013, Saxe2018, Lampinen2019}}
+\end{frame}
+
+\begin{frame}[standout]
+Deep linear networks can be analyzed more easily, but still capture many interesting features of nonlinear networks' learning dynamics. 
 \end{frame}
 
 \subsection{Learning dynamics}
@@ -242,7 +264,8 @@ Linear networks are much easier to understand mathematically. They lack the full
 \begin{itemize}[<+->] \itemsep 1em
 \item Training data $\{(\bh{x}^\mu, \bh{y}^\mu)\}$, e.g.
     $\{(\text{talk}, \text{talked}), (\text{go}, \text{went}), \cdots\}$
-\item Loss $\sum_{\mu}||\bh{y}^\mu - \wb\wa \bh{x}^\mu||^2$
+\item Loss $\sum_{\mu}||\bh{y}^\mu - {\bf y}^\mu||^2$\\
+      $=\sum_{\mu}||\bh{y}^\mu - \wb\wa \bh{x}^\mu||^2$
 \item Batch gradient descent
     \only<-3>{$\Delta \wa  =  \lambda \sum_{\mu} \wb^T \left( \bh{y}^\mu   - \wb \wa {\bh x}^\mu   \right){\bh x}^\mu{}^T$\\[0.5em]
 	      $\Delta \wb  =  \lambda \sum_{\mu} \left( \bh{y}^\mu  - \wb \wa  {\bh x}^\mu \right) {\bh x}^\mu{}^T \wa^T$}
@@ -321,20 +344,19 @@ How well does the network learn the true task from this noisy teacher?
 
 \begin{frame}{How the signal emerges in the noisy training data}
 \vspace{-0.5em}
-\begin{center}
-\only<-3>{
-\includegraphics[width=0.75\textwidth]{../../plots/paper/fig_2a_hidden.png}
+\begin{center}%
+\only<-3>{%
+\includegraphics[width=0.75\textwidth]{../../plots/paper/fig_2a_hidden.png}%
+}%
+\only<4->{%
+\includegraphics[width=0.75\textwidth]{../../plots/paper/fig_2a.png}%
 }
-\only<4->{
-\includegraphics[width=0.75\textwidth]{../../plots/paper/fig_2a.png}
-}
-\uncover<2->{
+\uncover<2->{%
 \includegraphics[width=0.428\textwidth]{../../plots/paper/fig_2c.png}%
 }%
 \uncover<3->{%
-\includegraphics[width=0.322\textwidth]{../../plots/paper/fig_2d.png}
-}
-
+\includegraphics[width=0.322\textwidth]{../../plots/paper/fig_2d.png}%
+}%
 \end{center}
 \vspace{-1em}
 {\footnotesize Building on \citet{Benaych-Georges2012}}
@@ -378,7 +400,15 @@ Noise inflates and distorts signal dimensions; weaker dimensions are distorted m
 The remaining dimensions are filled with noise.
 \end{frame}
 
-\subsection{Train \& test error}
+
+\subsection{Generalization dynamics}
+\againframe<2->{gen_dyn_int}
+
+\begin{frame}[standout]
+The standard generalization pattern emerges naturally from the fact that stronger signals are less distorted AND learned earlier.
+\end{frame}
+
+
 \begin{frame}{Formulas for the train and test error}
 \footnotesize
 \begin{align*}
@@ -395,14 +425,13 @@ The remaining dimensions are filled with noise.
 \end{frame}
 
 \begin{frame}[standout]
-Caveat: This assumes the student is initialized with weak Teacher Aligned (TA) modes.\\[1em]
-We'll show it closely approximates the results for random initializations.
+Important assumption: the student is initialized with Teacher Aligned (TA) modes.
 \end{frame}
 
-\subsection{Generalization dynamics}
-\begin{frame}{Putting it all together: generalization dynamics}
+\begin{frame}{Generalization dynamics (math)}
 
 \end{frame}
+
 
 
 \section{Applications of the theory}
@@ -437,6 +466,31 @@ We'll show it closely approximates the results for random initializations.
 \blfootnote{\bibliography{generalization}}
 \end{frame}
 
+\appendix
+\begin{frame}{Alignment time}
+\begin{figure}
+\centering
+\begin{subfigure}[t]{0.3\textwidth}
+\includegraphics[height=0.38\textheight]{../../plots/paper/supp_alignment_time_B.png}
+\end{subfigure}%
+\begin{subfigure}[t]{0.3\textwidth}
+\includegraphics[height=0.38\textheight]{../../plots/paper/supp_alignment_time_C.png}
+\end{subfigure}%
+\begin{subfigure}[t]{0.4\textwidth}
+\includegraphics[height=0.38\textheight]{../../plots/paper/supp_alignment_time_D.png}
+\end{subfigure}\\
+\begin{subfigure}[t]{0.3\textwidth}
+\includegraphics[height=0.38\textheight]{../../plots/paper/supp_alignment_time_F.png}
+\end{subfigure}%
+\begin{subfigure}[t]{0.3\textwidth}
+\includegraphics[height=0.38\textheight]{../../plots/paper/supp_alignment_time_G.png}
+\end{subfigure}%
+\begin{subfigure}[t]{0.4\textwidth}
+\includegraphics[height=0.38\textheight]{../../plots/paper/supp_alignment_time_H.png}
+\end{subfigure}
+\end{figure}
+
+\end{frame}
 
 \end{document}
 
