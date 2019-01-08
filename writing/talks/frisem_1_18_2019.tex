@@ -379,21 +379,25 @@ The remaining dimensions are filled with noise.
 \end{frame}
 
 \subsection{Train \& test error}
-\begin{frame}{Explicit formulas for the train and test error}
+\begin{frame}{Formulas for the train and test error}
 \footnotesize
 \begin{align*}
 \trainerr &\equiv \frac{\sum_{\mu=1}^{\overline{N_1}} \vert\vert{\bf W \bh{x}}^\mu - \bh{y}^\mu\vert\vert^2_2}{\sum_{\mu=1}^{\overline{N_1}} \vert\vert \bh{y}^\mu \vert\vert^2_2 }\\[1em]
- &= \left[\sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2\right]^{-1} 
+\uncover<2->{ &= \left[\sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2\right]^{-1} 
 \left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2 +  \sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2
-- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_3}  s_{\alpha} \hat{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bf{\hat u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bf{\hat v}^{\beta} \right)\right]\\[3em]
-\generr &\equiv   \frac{ \left\langle \vert\vert{\bf W}\bb{x} - \bb{y} \vert\vert^2_2 \right \rangle} 
-                      { \left\langle  \vert\vert \bb{y} \vert\vert^2_2  \right \rangle} \\[1em]
- &= \left[\sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2\right]^{-1} 
+- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_3}  s_{\alpha} \hat{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bf{\hat u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bf{\hat v}^{\beta} \right)\right]\\[3em]}
+\uncover<3->{\generr &\equiv   \frac{ \left\langle \vert\vert{\bf W}\bb{x} - \bb{y} \vert\vert^2_2 \right \rangle} 
+                      { \left\langle  \vert\vert \bb{y} \vert\vert^2_2  \right \rangle} \\[1em]}
+\uncover<4->{ &= \left[\sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2\right]^{-1} 
 \left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2 +  \sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2
-- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_2}  s_{\alpha} \overline{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bb{u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bb{v}^{\beta} \right)\right]
+- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_2}  s_{\alpha} \overline{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bb{u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bb{v}^{\beta} \right)\right]}
 \end{align*}
 \end{frame}
 
+\begin{frame}[standout]
+Caveat: This assumes the student is initialized with weak Teacher Aligned (TA) modes.\\[1em]
+We'll show it closely approximates the results for random initializations.
+\end{frame}
 
 \subsection{Generalization dynamics}
 \begin{frame}{Putting it all together: generalization dynamics}
