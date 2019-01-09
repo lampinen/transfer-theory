@@ -79,6 +79,14 @@
 \newcommand{\ovn}{\overline{N}}
 \newcommand{\rank}{\text{rank}}
 
+%% brewer set2
+\definecolor{bred}{HTML}{e41a1c}
+\definecolor{bblue}{HTML}{377eb8}
+\definecolor{bgreen}{HTML}{4daf4a}
+\definecolor{bpurp}{HTML}{984ea3}
+\definecolor{borng}{HTML}{ff7f00}
+
+
 \begin{document}
 
 \title{Understanding generalization and transfer in deep linear neural networks}
@@ -335,7 +343,7 @@ Principal components of the training data are learned independently; stronger co
 
 \subsection{Distortion of data by noise}
 \begin{frame}{A noisy teacher}
-Suppose we have some true labels for some ground-truth linear task:
+Suppose we have some true labels for some ground-truth (and low-rank) linear task:
 $$\bb{y}^{\mu} = \bb{W}\bh{x}^\mu$$
 To which IID gaussian noise is added to produce the training data:
 $$\bh{y}^{\mu} = \bb{W}\bh{x}^\mu + \bf{z} ^ \mu$$
@@ -405,7 +413,7 @@ The remaining dimensions are filled with noise.
 \againframe<2->{gen_dyn_int}
 
 \begin{frame}[standout]
-The standard generalization pattern emerges naturally from the fact that stronger signals are less distorted AND learned earlier.
+Stronger signals are less distorted AND learned earlier than weaker signals or noise.
 \end{frame}
 
 
@@ -433,56 +441,89 @@ Important assumption: the student is initialized with Teacher Aligned (TA) modes
 \begin{align*}
 \trainerr(t) &=
 \frac{
-{\color{green} \overbrace{\color{mDarkTeal}(N_3\! - \!N_2) \langle \hat s^2 \rangle_{\mathcal{R}_{out}}}^{\text{\small Beyond capacity}}} \!+ \! (N_2 \!-\! \overline{N}_2) \langle (s(\hat{s},t) -\hat{s})^2 \rangle_{\mathcal{R}_{in}} +
+{\color{bred} \overbrace{\color{mDarkTeal}(N_3\! - \!N_2) \langle \hat s^2 \rangle_{\mathcal{R}_{out}}}^{\text{\small Beyond capacity}}} \!+ \! {\color{bblue} \overbrace{\color{mDarkTeal}(N_2 \!-\! \overline{N}_2) \langle (s(\hat{s},t) -\hat{s})^2 \rangle_{\mathcal{R}_{in}}}^{\text{\small Fitting noise}} } +
+{ \color{bpurp} \overbrace{\color{mDarkTeal}
 \sum_{\alpha=1}^{\overline{N}_2}
     \left[
        s_\alpha(t) -
        \hat{s}_{\alpha} \right]^2
-} 
-{\color{red}\underbrace{\color{mDarkTeal}\sum_{\alpha=1}^{\overline{N}_3} \hat{s}_{\alpha}^2}_{\text{\small Normalization}}}\\[2em]
+}^{\text{\small Fitting signal}}}} 
+{\color{bgreen}\underbrace{\color{mDarkTeal}\sum_{\alpha=1}^{\overline{N}_3} \hat{s}_{\alpha}^2}_{\text{\small Normalization}}}\\[1em]
+\uncover<2>{
 \generr(t) &= 
 \frac{%
-(N_2 \!-\! \overline{N}_2) \langle s(\hat{s},t)^2 \rangle_{\mathcal{R}_{in}}\! + 
-\sum_{\alpha=1}^{\overline{N}_2} 
+{\color{bblue} \overbrace{\color{mDarkTeal} (N_2 \!-\! \overline{N}_2) \langle s(\hat{s},t)^2 \rangle_{\mathcal{R}_{in}}}^{\text{\small Overfitting noise}}}\! + 
+{\color{bpurp}
+\overbrace{\color{mDarkTeal}\sum_{\alpha=1}^{\overline{N}_2} 
     \left[
        (s_\alpha(t) - \overline{s}_{\alpha})^2  
        + 2 s_\alpha(t) \overline{s}_{\alpha}(1-\mathcal{O}(\overline{s}_\alpha))
-       \right]}{\sum_{\alpha=1}^{\overline{N}_2} \overline{s}_{\alpha}^2}
+       \right]}^{\text{\small Fitting distorted signal}}}}
+{\color{bgreen}\underbrace{\color{mDarkTeal}\sum_{\alpha=1}^{\overline{N}_2} \overline{s}_{\alpha}^2}_{\text{\small Normalization}}}}
 \end{align*}
 \end{frame}
 
-\begin{frame}{Theory-experiment match}
+\begin{frame}
+\frametitle<-2>{Theory-experiment match}
+\frametitle<3->{Theory-experiment match (deeper)}
 \begin{figure}
-\begin{subfigure}[t]{0.22\textwidth}
-\includegraphics[height=0.28\textheight]{../../plots/paper/fig3_redux_E.png}
+\only<1>{
+\begin{subfigure}[t]{0.4\textwidth}
+\includegraphics[height=0.5\textheight]{../../plots/paper/fig3_redux_E.png}
 \end{subfigure}%
-\begin{subfigure}[t]{0.33\textwidth}
-\includegraphics[height=0.28\textheight]{../../plots/paper/fig3_redux_F.png}
+\begin{subfigure}[t]{0.6\textwidth}
+\includegraphics[height=0.5\textheight]{../../plots/paper/fig3_redux_F.png}
 \end{subfigure}%
-\begin{subfigure}[t]{0.22\textwidth}
-\includegraphics[height=0.28\textheight]{../../plots/paper/fig3_redux_G.png}
+}
+\only<2>{
+\begin{subfigure}[t]{0.44\textwidth}
+\includegraphics[height=0.55\textheight]{../../plots/paper/fig3_redux_G.png}
 \end{subfigure}%
-\begin{subfigure}[t]{0.22\textwidth}
-\includegraphics[height=0.28\textheight]{../../plots/paper/fig3_redux_H.png}
-\end{subfigure}\\
-\uncover<2->{
-\begin{subfigure}[t]{0.22\textwidth}
-\includegraphics[height=0.28\textheight]{../../plots/paper/deep_fig_redux_E.png}
+\begin{subfigure}[t]{0.44\textwidth}
+\includegraphics[height=0.55\textheight]{../../plots/paper/fig3_redux_H.png}
+\end{subfigure}
+}
+\only<3>{
+\begin{subfigure}[t]{0.4\textwidth}
+\includegraphics[height=0.5\textheight]{../../plots/paper/deep_fig_redux_E.png}
 \end{subfigure}%
-\begin{subfigure}[t]{0.33\textwidth}
-\includegraphics[height=0.28\textheight]{../../plots/paper/deep_fig_redux_F.png}
+\begin{subfigure}[t]{0.6\textwidth}
+\includegraphics[height=0.5\textheight]{../../plots/paper/deep_fig_redux_F.png}
 \end{subfigure}%
-\begin{subfigure}[t]{0.22\textwidth}
-\includegraphics[height=0.28\textheight]{../../plots/paper/deep_fig_redux_G.png}
+}
+\only<4>{
+\begin{subfigure}[t]{0.44\textwidth}
+\includegraphics[height=0.55\textheight]{../../plots/paper/deep_fig_redux_G.png}
 \end{subfigure}%
-\begin{subfigure}[t]{0.22\textwidth}
-\includegraphics[height=0.28\textheight]{../../plots/paper/deep_fig_redux_H.png}
+\begin{subfigure}[t]{0.44\textwidth}
+\includegraphics[height=0.55\textheight]{../../plots/paper/deep_fig_redux_H.png}
 \end{subfigure}
 }
 \end{figure}
-
 \end{frame}
 
+\begin{frame}[standout]
+The theory matches TA, and matches key features of randomly initialized networks, even in the deeper case.
+\end{frame}
+
+
+\begin{frame}{Interim summary}
+\begin{itemize}[<+->]
+\item When noise is added to a low-rank dataset: 
+    \begin{itemize}
+    \item The signal is inflated and distorted
+    \item Weaker signal modes are distorted more than strong ones.
+    \item The remaining modes are filled with noise that is weaker than any usable signal.  
+    \end{itemize}
+\item When a linear network learns from data, it learns the strongest modes first.
+\item Therefore the most important and most veridical structure is learned first, followed by less important structure and noise.
+\item This yields the classic generalization curves:
+    \begin{itemize}
+    \item Train and test error decrease together, but with a gap. 
+    \item Train error continues to decrease, but test error reverses and begins increasing. 
+    \end{itemize}
+\end{itemize}
+\end{frame}
 
 \section{Applications of the theory}
 
