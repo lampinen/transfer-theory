@@ -640,8 +640,99 @@ Randomized data is learned slower because the variance of strong signal modes is
 \end{figure}
 \end{frame}
 
+\begin{frame}{Multi-output networks}
+\begin{figure}
+\centering
+\begin{tikzpicture}[auto, remember picture]
+\begin{scope}
+\node at (0, -3) (input) {\includegraphics[width=1cm]{figures/alphago_move_37.png}};
+\node at (0, 3) (output) {\only<2->{\LARGE {Play at C11}}};
+
+\node [netnode] at (-1.5,-2) (i1) {};
+\node [netnode] at (-0.5,-2) (i2) {};
+\node [netnode] at (0.5,-2) (i3) {};
+\node [netnode] at (1.5,-2) (i4) {};
+
+\node [netnode] at (-1,0) (h111) {};
+\node [netnode] at (0,0) (h112) {};
+\node [netnode] at (1,0) (h113) {};
+
+\path [draw, very thick] (i1) to (h111);
+\path [draw, very thick] (i1) to (h112);
+\path [draw, very thick] (i1) to (h113);
+\path [draw, very thick] (i2) to (h111);
+\path [draw, very thick] (i2) to (h112);
+\path [draw, very thick] (i2) to (h113);
+\path [draw, very thick] (i3) to (h111);
+\path [draw, very thick] (i3) to (h112);
+\path [draw, very thick] (i3) to (h113);
+\path [draw, very thick] (i4) to (h111);
+\path [draw, very thick] (i4) to (h112);
+\path [draw, very thick] (i4) to (h113);
+
+\node [netnode] at (-2,2) (h120) {};
+\node [netnode] at (-1,2) (h121) {};
+\node [netnode] at (0,2) (h122) {};
+\node [netnode] at (1,2) (h123) {};
+\node [netnode] at (2,2) (h124) {};
+
+\path [draw, very thick] (h111) to (h120);
+\path [draw, very thick] (h111) to (h121);
+\path [draw, very thick] (h111) to (h122);
+\path [draw, very thick] (h111) to (h123);
+\path [draw, very thick] (h111) to (h124);
+\path [draw, very thick] (h112) to (h120);
+\path [draw, very thick] (h112) to (h121);
+\path [draw, very thick] (h112) to (h122);
+\path [draw, very thick] (h112) to (h123);
+\path [draw, very thick] (h112) to (h124);
+\path [draw, very thick] (h113) to (h120);
+\path [draw, very thick] (h113) to (h121);
+\path [draw, very thick] (h113) to (h122);
+\path [draw, very thick] (h113) to (h123);
+\path [draw, very thick] (h113) to (h124);
+
+\only<3->{
+\node [netnode, onslide={<4>{opacity=0.15}}] at (6,2) (oth122) {};
+\node [netnode, onslide={<4>{opacity=0.15}}] at (5,2) (oth123) {};
+\node [netnode, onslide={<4>{opacity=0.15}}] at (4,2) (oth124) {};
+
+\node [onslide={<4>{opacity=0.15}}] at (5, 3) (output) {\only<2->{\LARGE {This move is defensive}}};
+
+\path [draw, very thick, onslide={<4>{opacity=0.15}}] (h111) to (oth122);
+\path [draw, very thick, onslide={<4>{opacity=0.15}}] (h111) to (oth123);
+\path [draw, very thick, onslide={<4>{opacity=0.15}}] (h111) to (oth124);
+\path [draw, very thick, onslide={<4>{opacity=0.15}}] (h112) to (oth122);
+\path [draw, very thick, onslide={<4>{opacity=0.15}}] (h112) to (oth123);
+\path [draw, very thick, onslide={<4>{opacity=0.15}}] (h112) to (oth124);
+\path [draw, very thick, onslide={<4>{opacity=0.15}}] (h113) to (oth122);
+\path [draw, very thick, onslide={<4>{opacity=0.15}}] (h113) to (oth123);
+\path [draw, very thick, onslide={<4>{opacity=0.15}}] (h113) to (oth124);
+}
+
+\end{scope}
+\end{tikzpicture}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Multi-task effects on generalization}
+\begin{figure}
+\centering
+\only<1>{
+\includegraphics[width=0.9\textwidth]{../poster/transfer_pros_cons.png}
+}
+\end{figure}
+\end{frame}
+
+
 \subsection{Structure sensitive regularization}
-\begin{frame}{Is gradient descent (+ regularization) optimal?}
+\begin{frame}{Is optimally-stopping gradient descent optimal?}
+\only<1>{
+\begin{figure}
+\centering
+\includegraphics[width=0.6\textwidth]{figures/conceptual_train_test.png}
+\end{figure}
+}
 \end{frame}
 
 
