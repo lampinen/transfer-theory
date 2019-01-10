@@ -87,6 +87,9 @@
 \definecolor{borng}{HTML}{ff7f00}
 
 
+\tikzstyle{data0} = [circle, fill=borng]
+\tikzstyle{data1} = [circle, fill=bpurp]
+
 \begin{document}
 
 \title{Understanding generalization and transfer in deep linear neural networks}
@@ -101,7 +104,7 @@
 \note{This is a move that nobody has seen before in professional play, during the game commentators called it ``probably a mistake,'' but later decided it was ``beautiful.''}
 \end{frame}
 
-\begin{frame}{Generalization in humans: Past tense over-regularization}
+\begin{frame}{Generalization dynamics in humans: Over-regularization}
 \begin{figure}
 \includegraphics[width=0.8\textwidth]{figures/past_tense.png}
 \end{figure}
@@ -525,22 +528,120 @@ The theory matches TA, and matches key features of randomly initialized networks
 \end{itemize}
 \end{frame}
 
-\section{Applications of the theory}
+\section{Applications \& extensions}
 
 \subsection{The trouble with structure-agnostic generalization bounds}
-\begin{frame}{Why do standard generalization bounds suck?}
+\begin{frame}{Why do standard theoretical bounds on generalization suck?}
+\begin{figure}
+\centering
+\only<9>{
+\includegraphics[width=0.8\textwidth]{figures/other_peoples/semantic_segmentation.png}
+}
+\only<10>{
+\includegraphics[width=0.8\textwidth]{figures/other_peoples/DQN.png}
+}
+
+\begin{tikzpicture}[auto, overlay, remember picture]
+\only<1-8>{
+\node [data0] at (2, 1.8) {};
+\node [data0] at (0, 2) {};
+\node [data0] at (0.2, 0.7) {};
+\node [data0] at (0.1, -0.1) {};
+\node [data0] at (3, 2.1) {};
+\node [data0] at (4, -1) {};
+\node [data0] at (3, -0.2) {};
+\node [data0] at (3.3, 0.3) {};
+\node [data0] at (-1, 3) {};
+\node [data0] at (-0.7, 1.9) {};
+\node [data0] at (2, -3) {};
+
+\node [data1] at (-2, 2) {};
+\node [data1] at (0, -2) {};
+\node [data1] at (-0.6, -0.3) {};
+\node [data1] at (-0.1, -0.7) {};
+\node [data1] at (3, -1.7) {};
+\node [data1] at (-3, -2.7) {};
+\node [data1] at (4.1, -1.8) {};
+\node [data1] at (3, -2.2) {};
+\node [data1] at (-3, 0.8) {};
+\node [data1] at (-1, -1) {};
+\node [data1] at (2.5, -3.5) {};
+\node [data1] at (1.5, -1) {};
+}
+
+\only<2,5>{
+\draw [ultra thick] (-3, 3) -- (4.5, -2.5); 
+}
+\only<3,6>{
+\draw [ultra thick] (-1.9, 3.4) -- (-0.3, -0.3) -- (4.5, -1.5); 
+}
+\only<4,7-8>{
+\draw [ultra thick] (-1.9, 3.4) -- (-3, 3.3) -- (-1, 2.5) -- (-4, -3) -- (-0.7, 0.3) -- (-0.3, -0.3) -- (0.5, -0.5) -- (1, 1.5) -- (2, 0) -- (1.5, -4) -- (2.3, -4)  -- (2.5, -1) -- (4.5, -1.5); 
+}
+
+\only<8> {
+\draw [bred, line width=20pt] (-4, -4) -- (3.7, 3.7);
+\draw [bred, line width=20pt] (-4, 3.7) -- (3.7, -4);
+}
+\end{tikzpicture}
+
+\end{figure}
+\end{frame}
+
+\begin{frame}[standout]
+Generalization bounds are loose because they completely ignore structure in the data.\\[1em]
+This is partly because they're based on binary classification, and modern tasks are more interesting (especially for cognitive models).
 \end{frame}
 
 \subsection{Randomized data}
 \begin{frame}{Randomized data is learned slower}
+\begin{figure}
+\centering
+\only<1>{
+\includegraphics[height=0.8\textheight]{figures/other_peoples/zhang_2017_slowdown.png}
+}
+\only<2->{
+\begin{subfigure}[t]{0.5\textwidth}
+\only<2-3>{
+\includegraphics[width=\textwidth]{../../plots/paper/randomized_fig_A.png}
+}
+\only<4->{
+\includegraphics[width=0.8\textwidth]{figures/other_peoples/zhang_2017_slowdown.png}
+}
+\end{subfigure}%%
+\begin{subfigure}[t]{0.5\textwidth}
+\only<3->{%%
+\includegraphics[width=\textwidth]{../../plots/paper/randomized_fig_B.png}
+}
+\end{subfigure}
+}
+\end{figure}
+\end{frame}
+
+\begin{frame}[standout]
+Randomized data is learned slower because the variance of strong signal modes is spread out fairly uniformly, and the strongest modes are learned first. 
 \end{frame}
 
 \subsection{Multiple tasks \& transfer}
 \begin{frame}{Multi-task learning}
+\begin{figure}
+\centering
+\includegraphics[width=0.6\textwidth]{figures/other_peoples/DQN.png}
+\begin{tikzpicture}[auto, overlay, remember picture]
+\only<2-3>{
+\node at (0, 5) (tp) {Temporal prediction};
+\path [draw, very thick, ->] (-1.8, 3.4) to (tp);
+}
+\only<3>{
+\node [text width=3cm] at (0, -2) (speech) {"I'm getting the key for the door."};
+\path [draw, very thick, ->] (-1.8, 0) to (speech);
+}
+\end{tikzpicture}
+\end{figure}
 \end{frame}
 
 \subsection{Structure sensitive regularization}
-\begin{frame}{Is gradient descent optimal?}
+\begin{frame}{Is gradient descent (+ regularization) optimal?}
 \end{frame}
 
 
