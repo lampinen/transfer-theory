@@ -26,6 +26,8 @@
 \usetikzlibrary{shapes,arrows}
 \usetikzlibrary{positioning}
 
+\captionsetup[subfigure]{labelformat=empty}
+
 \tikzset{onslide/.code args={<#1>#2}{%
   \only<#1>{\pgfkeysalso{#2}} 
 }}
@@ -353,7 +355,8 @@ $$\bh{y}^{\mu} = \bb{W}\bh{x}^\mu + \bf{z} ^ \mu$$
 How well does the network learn the true task from this noisy teacher? 
 \end{frame}
 
-\begin{frame}{How the signal emerges in the noisy training data}
+\begin{frame}[label=signal_from_noise]
+\frametitle{How the signal emerges in the noisy training data}
 \vspace{-0.5em}
 \begin{center}%
 \only<-3>{%
@@ -590,11 +593,11 @@ The theory matches TA, and matches key features of randomly initialized networks
 
 \begin{frame}[standout]
 Generalization bounds are loose because they completely ignore structure in the data.\\[1em]
-This is partly because they're based on binary classification, and modern tasks are more interesting (especially for cognitive models).
+This is partly because they're based on binary classification, and modern tasks are much richer.
 \end{frame}
 
 \subsection{Randomized data}
-\begin{frame}{Randomized data is learned slower}
+\begin{frame}{Memorization is slower}
 \begin{figure}
 \centering
 \only<1>{
@@ -619,7 +622,7 @@ This is partly because they're based on binary classification, and modern tasks 
 \end{frame}
 
 \begin{frame}[standout]
-Randomized data is learned slower because the variance of strong signal modes is spread out fairly uniformly, and the strongest modes are learned first. 
+Memorization is slower because randomizing the labels spreads the variance of strong signal modes out fairly uniformly, and the strongest modes are learned first. 
 \end{frame}
 
 \subsection{Multiple tasks \& transfer}
@@ -716,12 +719,44 @@ Randomized data is learned slower because the variance of strong signal modes is
 \end{frame}
 
 \begin{frame}{Multi-task effects on generalization}
+\only<1>{
 \begin{figure}
 \centering
-\only<1>{
 \includegraphics[width=0.9\textwidth]{../poster/transfer_pros_cons.png}
-}
 \end{figure}
+}
+\only<2->{
+{\bf Target task is:}
+\begin{figure}
+\vspace{-2em}
+\centering
+\begin{subfigure}[t]{0.3\textwidth}
+\caption{\bf Very noisy}
+\includegraphics[width=\textwidth]{../../plots/paper/fig_5a.png}
+\end{subfigure}%
+\uncover<3->{%
+\begin{subfigure}[t]{0.3\textwidth}
+\caption{\bf Somewhat noisy}
+\includegraphics[width=\textwidth]{../../plots/paper/fig_5b.png}
+\end{subfigure}%
+}%
+\uncover<4->{%
+\begin{subfigure}[t]{0.4\textwidth}
+\caption{\bf Very clean}
+\includegraphics[width=\textwidth]{../../plots/paper/fig_5c.png}
+\end{subfigure}
+}%
+\end{figure}
+}
+\end{frame}
+
+\begin{frame}[standout]
+Multi-task learning has benefits \& costs.\\[1em]
+\uncover<2->{
+It's more beneficial when the target task is low SNR, and the auxiliary tasks are well aligned. \\[1em]}
+\uncover<3->{
+This is precisely the regime of data-efficient human learning.
+}
 \end{frame}
 
 
@@ -733,8 +768,25 @@ Randomized data is learned slower because the variance of strong signal modes is
 \includegraphics[width=0.6\textwidth]{figures/conceptual_train_test.png}
 \end{figure}
 }
+\only<2->{
+\begin{figure}
+\centering
+\includegraphics[width=0.428\textwidth]{../../plots/paper/fig_2c.png}%
+\includegraphics[width=0.322\textwidth]{../../plots/paper/fig_2d.png}
+\end{figure}
+\uncover<3->{
+\begin{itemize}
+\item The actual optimal singular value for a distorted mode is not $\hat{s}$, but the smaller value:
+$$\overline{s} \mathcal{O}(\overline{s})$$
+\item Gradient descent cannot obtain this for all modes, even with $\ell_p$ regularization.
+\end{itemize}
+}}
 \end{frame}
 
+\begin{frame}[standout]
+Even in the linear case, SGD (with $\ell_p$ regularization) is provably sub-optimal.\\[1em]
+Structure sensitive regularization is better!
+\end{frame}
 
 \begin{frame}{Summary}
 
