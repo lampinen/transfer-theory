@@ -789,6 +789,22 @@ Structure sensitive regularization is better!
 \end{frame}
 
 \begin{frame}{Summary}
+\begin{itemize}[<+->]
+\item Generalization dynamics:
+    \begin{itemize}
+    \item are driven by the data structure.
+    \item Noise in the data inflates and distorts signal modes, and adds pure noise modes.
+    \item But the strongest modes are least distorted and first to be learned.
+    \item And all modes that carry any signal are learned before any pure noise modes.
+    \item Thus optimal stopping is a powerful regularizer.
+    \end{itemize}
+\item Therefore:
+    \begin{itemize}
+    \item Generalization bounds based only on capacity for memorization are na\:{i}ve, memorization is slower.
+    \item Multi-task learning is beneficial, especially with small (or otherwise noisy) data and well-aligned tasks.
+    \item Regularization should not ignore the structure of the data.
+    \end{itemize}
+\end{itemize}
 
 \end{frame}
 
