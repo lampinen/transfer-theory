@@ -602,6 +602,8 @@ This is partly because they're based on binary classification, and modern tasks 
 \centering
 \only<1>{
 \includegraphics[height=0.8\textheight]{figures/other_peoples/zhang_2017_slowdown.png}
+
+{\footnotesize \citep{Zhang2016, Arpit2017}}
 }
 \only<2->{
 \begin{subfigure}[t]{0.5\textwidth}
@@ -755,7 +757,7 @@ Multi-task learning has benefits \& costs.\\[1em]
 \uncover<2->{
 It's more beneficial when the target task is low SNR, and the auxiliary tasks are well aligned. \\[1em]}
 \uncover<3->{
-This is precisely the regime of data-efficient human learning.
+I'd argue that this is precisely the regime of data-efficient human learning.
 }
 \end{frame}
 
@@ -794,9 +796,9 @@ Structure sensitive regularization is better!
     \begin{itemize}
     \item are driven by the data structure.
     \item Noise in the data inflates and distorts signal modes, and adds pure noise modes.
-    \item But the strongest modes are least distorted and first to be learned.
+    \item But the strongest modes are least distorted and learned first.
     \item And all modes that carry any signal are learned before any pure noise modes.
-    \item Thus optimal stopping is a powerful regularizer.
+    \item Thus optimal stopping is a powerful (though sub-optimal) regularizer.
     \end{itemize}
 \item Therefore:
     \begin{itemize}
@@ -805,16 +807,26 @@ Structure sensitive regularization is better!
     \item Regularization should not ignore the structure of the data.
     \end{itemize}
 \end{itemize}
-
 \end{frame}
 
 \begin{frame}{Open questions}
+Many, e.g.:
+\begin{itemize}
+\item The intuitions presented here qualitatively generalize to the nonlinear case. Is it possible to go beyond this and get nontrivial generalization bounds for the nonlinear case? 
+\item Similarly, what do the structural features that cause transfer benefits look like in the nonlinear case?
+\item Could insights about the sub-optimality of gradient descent generalize to the nonlinear case? (It's clear that gradient descent is non-optimal in non-linear cases as well, but could some other algorithm do better?)
+\end{itemize}
+\end{frame}
 
+\begin{frame}[standout]
+Thanks to Surya, my lab, and you all for listening!
 \end{frame}
 
 \begin{frame}[allowframebreaks]
+
 \bibliographystyle{plainnat}
-\blfootnote{\bibliography{generalization}}
+{\bibliography{generalization}}
+
 \end{frame}
 
 \appendix
@@ -842,6 +854,26 @@ Structure sensitive regularization is better!
 \end{figure}
 
 \end{frame}
+
+
+\begin{frame}{Varying the number of inputs}
+\begin{figure}[t]
+\centering
+\begin{subfigure}[t]{0.36\textwidth}
+\includegraphics[width=\textwidth]{../../plots/paper/changing_p_A.png}
+\label{supp_P_fig_A}
+\end{subfigure}%
+\begin{subfigure}[t]{0.27\textwidth}
+\includegraphics[width=\textwidth]{../../plots/paper/changing_p_B.png}
+\label{supp_P_fig_B}
+\end{subfigure}\\
+\begin{subfigure}[t]{0.36\textwidth}
+\includegraphics[width=\textwidth]{../../plots/paper/changing_p_C.png}
+\label{supp_P_fig_C}
+\end{subfigure}
+\end{figure}
+\end{frame}
+
 
 \end{document}
 
