@@ -99,6 +99,12 @@
 \date{FriSem, 1/18/2019}
 \frame{\titlepage}
 
+\begin{frame}{Generalization in deep networks: Image segmentation}
+\begin{figure}
+\includegraphics[width=0.8\textwidth]{figures/other_peoples/semantic_segmentation.png}
+\end{figure}
+\end{frame}
+
 \begin{frame}{Generalization in deep networks: ``Creativity'' from AlphaGo}
 \begin{figure}
 \includegraphics[width=0.5\textwidth]{figures/alphago_move_37.png}
@@ -106,11 +112,10 @@
 \note{This is a move that nobody has seen before in professional play, during the game commentators called it ``probably a mistake,'' but later decided it was ``beautiful.''}
 \end{frame}
 
-\begin{frame}{Generalization dynamics in humans: Over-regularization}
+\begin{frame}{These results are theoretically puzzling}
 \begin{figure}
-\includegraphics[width=0.8\textwidth]{figures/past_tense.png}
+\includegraphics[width=0.8\textwidth]{figures/VC.png}
 \end{figure}
-\note{There are many interesting phenomena like this, but there's a general pattern of learning broad features followed by progressive differentiation of lower level structure.}
 \end{frame}
 
 \begin{frame}<1>[label=gen_dyn_int]
@@ -139,8 +144,15 @@
 \note{First train and test error go down together, with a slight gap, then overfitting, in between is optimal stopping.}
 \end{frame}
 
+\begin{frame}{Generalization dynamics in humans: Over-regularization}
+\begin{figure}
+\includegraphics[width=0.8\textwidth]{figures/past_tense.png}
+\end{figure}
+\note{There are many interesting phenomena like this, but there's a general pattern of learning broad features followed by progressive differentiation of lower level structure.}
+\end{frame}
+
 \begin{frame}[standout]
-How, why, and when do neural networks (and humans) generalize what they have learned?
+How, when, and why do neural networks (and humans) generalize well?
 \end{frame}
 
 \begin{frame}{Outline}
@@ -285,7 +297,7 @@ Deep linear networks can be analyzed more easily, but still capture many interes
 \begin{itemize}[<+->] \itemsep 1em
 \item Training data $\{(\bh{x}^\mu, \bh{y}^\mu)\}$, e.g.
     $\{(\text{talk}, \text{talked}), (\text{go}, \text{went}), \cdots\}$
-\item Loss $\sum_{\mu}||\bh{y}^\mu - {\bf y}^\mu||^2$\\
+\item Squared error $\sum_{\mu}||\bh{y}^\mu - {\bf y}^\mu||^2$\\
       $=\sum_{\mu}||\bh{y}^\mu - \wb\wa \bh{x}^\mu||^2$
 \item Batch gradient descent
     \only<-3>{$\Delta \wa  =  \lambda \sum_{\mu} \wb^T \left( \bh{y}^\mu   - \wb \wa {\bh x}^\mu   \right){\bh x}^\mu{}^T$\\[0.5em]
@@ -450,29 +462,11 @@ Stronger signals are less distorted AND learned earlier than weaker signals or n
 \end{frame}
 
 
-\begin{frame}{Formulas for the train and test error}
+\begin{frame}<1>[label=gen_dyn_math]
+\frametitle{Generalization dynamics (math)}
 \footnotesize
 \begin{align*}
-\trainerr &\equiv \frac{\sum_{\mu=1}^{\overline{N_1}} \vert\vert{\bf W \bh{x}}^\mu - \bh{y}^\mu\vert\vert^2_2}{\sum_{\mu=1}^{\overline{N_1}} \vert\vert \bh{y}^\mu \vert\vert^2_2 }\\[1em]
-\uncover<2->{ &= \left[\sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2\right]^{-1} 
-\left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2 +  \sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2
-- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_3}  s_{\alpha} \hat{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bf{\hat u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bf{\hat v}^{\beta} \right)\right]\\[3em]}
-\uncover<3->{\generr &\equiv   \frac{ \left\langle \vert\vert{\bf W}\bb{x} - \bb{y} \vert\vert^2_2 \right \rangle} 
-                      { \left\langle  \vert\vert \bb{y} \vert\vert^2_2  \right \rangle} \\[1em]}
-\uncover<4->{ &= \left[\sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2\right]^{-1} 
-\left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2 +  \sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2
-- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_2}  s_{\alpha} \overline{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bb{u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bb{v}^{\beta} \right)\right]}
-\end{align*}
-\end{frame}
-
-\begin{frame}[standout]
-Important assumption: the student is initialized with Teacher Aligned (TA) modes. \\[1em]
-We'll show that random initializations are well-approximated by this assumption.
-\end{frame}
-
-\begin{frame}{Generalization dynamics (math)}
-\footnotesize
-\begin{align*}
+\uncover<2->{
 \trainerr(t) &=
 \frac{
 {\color{bred} \overbrace{\color{mDarkTeal}(N_3\! - \!N_2) \langle \hat s^2 \rangle_{\mathcal{R}_{out}}}^{\text{\small Beyond capacity}}} \!+ \! {\color{bblue} \overbrace{\color{mDarkTeal}(N_2 \!-\! \overline{N}_2) \langle (s(\hat{s},t) -\hat{s})^2 \rangle_{\mathcal{R}_{in}}}^{\text{\small Fitting noise}} } +
@@ -483,7 +477,8 @@ We'll show that random initializations are well-approximated by this assumption.
        \hat{s}_{\alpha} \right]^2
 }^{\text{\small Fitting signal}}}} 
 {\color{bgreen}\underbrace{\color{mDarkTeal}\sum_{\alpha=1}^{\overline{N}_3} \hat{s}_{\alpha}^2}_{\text{\small Normalization}}}\\[1em]
-\uncover<2>{
+}
+\uncover<3->{
 \generr(t) &= 
 \frac{%
 {\color{bblue} \overbrace{\color{mDarkTeal} (N_2 \!-\! \overline{N}_2) \langle s(\hat{s},t)^2 \rangle_{\mathcal{R}_{in}}}^{\text{\small Overfitting noise}}}\! + 
@@ -496,6 +491,13 @@ We'll show that random initializations are well-approximated by this assumption.
 {\color{bgreen}\underbrace{\color{mDarkTeal}\sum_{\alpha=1}^{\overline{N}_2} \overline{s}_{\alpha}^2}_{\text{\small Normalization}}}}
 \end{align*}
 \end{frame}
+
+\begin{frame}[standout]
+Important assumption: the student is initialized with Teacher Aligned (TA) modes. \\[1em]
+We'll show that random initializations are well-approximated by this assumption.
+\end{frame}
+
+\againframe<2->{gen_dyn_math}
 
 \begin{frame}
 \frametitle<-2>{Theory-experiment match}
@@ -565,15 +567,18 @@ The theory matches the TA, and matches key features of randomly initialized netw
 \begin{frame}{Why do standard theoretical bounds on generalization suck?}
 \begin{figure}
 \centering
-\only<9>{
-\includegraphics[width=0.8\textwidth]{figures/other_peoples/semantic_segmentation.png}
+\only<1>{
+\includegraphics[width=0.8\textwidth]{figures/VC.png}
 }
 \only<10>{
+\includegraphics[width=0.8\textwidth]{figures/other_peoples/semantic_segmentation.png}
+}
+\only<11>{
 \includegraphics[width=0.8\textwidth]{figures/other_peoples/DQN.png}
 }
 
 \begin{tikzpicture}[auto, overlay, remember picture]
-\only<1-8>{
+\only<2-9>{
 \node [data0] at (2, 1.8) {};
 \node [data0] at (0, 2) {};
 \node [data0] at (0.2, 0.7) {};
@@ -600,17 +605,17 @@ The theory matches the TA, and matches key features of randomly initialized netw
 \node [data1] at (1.5, -1) {};
 }
 
-\only<2,5>{
+\only<3,6>{
 \draw [ultra thick] (-3, 3) -- (4.5, -2.5); 
 }
-\only<3,6>{
+\only<4,7>{
 \draw [ultra thick] (-1.9, 3.4) -- (-0.3, -0.3) -- (4.5, -1.5); 
 }
-\only<4,7-8>{
+\only<5,8-9>{
 \draw [ultra thick] (-1.9, 3.4) -- (-3, 3.3) -- (-1, 2.5) -- (-4, -3) -- (-0.7, 0.3) -- (-0.3, -0.3) -- (0.5, -0.5) -- (1, 1.5) -- (2, 0) -- (1.5, -4) -- (2.3, -4)  -- (2.5, -1) -- (4.5, -1.5); 
 }
 
-\only<8> {
+\only<9> {
 \draw [bred, line width=20pt] (-4, -4) -- (3.7, 3.7);
 \draw [bred, line width=20pt] (-4, 3.7) -- (3.7, -4);
 }
@@ -633,15 +638,12 @@ This is partly because they're based on binary classification, and modern tasks 
 
 {\footnotesize \citep{Zhang2016, Arpit2017}}
 }
-\only<2->{
+\only<2>{
 \includegraphics[width=0.75\textwidth]{../../plots/paper/randomized_fig_A.png}
 }
 \only<3->{
 \begin{subfigure}[t]{0.5\textwidth}
 \includegraphics[width=\textwidth]{../../plots/paper/randomized_fig_A.png}
-\only<4->{
-\includegraphics[width=0.8\textwidth]{figures/other_peoples/zhang_2017_slowdown.png}
-}
 \end{subfigure}%%
 \begin{subfigure}[t]{0.5\textwidth}
 \only<3->{%%
@@ -656,6 +658,10 @@ This is partly because they're based on binary classification, and modern tasks 
 Memorization is slower because randomizing the labels spreads the variance of strong signal modes out fairly uniformly, and the strongest modes are learned first. 
 \end{frame}
 
+\begin{frame}[standout]
+It's the dataset, not the architecture, that drives good generalization.
+\end{frame}
+
 \subsection{Multiple tasks \& transfer}
 \begin{frame}{Multi-task learning}
 \begin{figure}
@@ -667,7 +673,7 @@ Memorization is slower because randomizing the labels spreads the variance of st
 \path [draw, very thick, ->] (-1.8, 3.4) to (tp);
 }
 \only<3>{
-\node [text width=3cm] at (0, -2) (speech) {"I'm getting the key for the door."};
+\node [text width=3cm] at (0, -2) (speech) {``I'm getting the key for the door.''};
 \path [draw, very thick, ->] (-1.8, 0) to (speech);
 }
 \end{tikzpicture}
@@ -680,7 +686,7 @@ Memorization is slower because randomizing the labels spreads the variance of st
 \begin{tikzpicture}[auto, remember picture]
 \begin{scope}
 \node at (0, -3) (input) {\includegraphics[width=1cm]{figures/alphago_move_37.png}};
-\node at (0, 3) (output) {\only<2->{\LARGE {Play at C11}}};
+\node at (0, 3) (output) {\only<1>{\LARGE \phantom{Play}}\only<2->{\LARGE {Play at C11}}};
 
 \node [netnode] at (-1.5,-2) (i1) {};
 \node [netnode] at (-0.5,-2) (i2) {};
@@ -751,6 +757,7 @@ Memorization is slower because randomizing the labels spreads the variance of st
 
 \begin{frame}{Multi-task effects on generalization}
 \only<1>{
+Transfer depends only on input feature alignment and SNRs!
 \begin{figure}
 \centering
 \includegraphics[width=0.9\textwidth]{../poster/transfer_pros_cons.png}
@@ -831,7 +838,8 @@ Structure sensitive regularization is better!
     \end{itemize}
 \item Therefore:
     \begin{itemize}
-    \item Generalization bounds based only on capacity for memorization are na\:{i}ve, memorization is slower.
+    \item It's the structure in the data that drives good generalization.
+    \item Generalization bounds based only on capacity for memorization are na{\"i}ve, memorization is slower than learning true structure.
     \item Multi-task learning is beneficial, especially with small (or otherwise noisy) data and well-aligned tasks.
     \item Regularization should not ignore the structure of the data.
     \end{itemize}
@@ -842,13 +850,18 @@ Structure sensitive regularization is better!
 Many, e.g.:
 \begin{itemize}
 \item The intuitions presented here qualitatively generalize to the nonlinear case. Is it possible to go beyond this and get nontrivial generalization bounds for the nonlinear case? 
-\item Similarly, what do the structural features that cause transfer benefits look like in the nonlinear case?
+\item What do the structural features that cause transfer benefits look like in the nonlinear case?
+\item What about signal-aligned noise?
 \item Could insights about the sub-optimality of gradient descent generalize to the nonlinear case? (It's clear that gradient descent is non-optimal in non-linear cases as well, but could some other algorithm do better?)
 \end{itemize}
 \end{frame}
 
 \begin{frame}[standout]
-Thanks to Surya, my lab, and you for listening!
+This paper will be presented at ICLR 2019, and can be found at \url{https://arxiv.org/abs/1809.10374} \\[1em]
+\end{frame}
+
+\begin{frame}[standout]
+Thanks to Surya, my lab, and you!
 \end{frame}
 
 \begin{frame}[allowframebreaks]
@@ -901,6 +914,21 @@ Thanks to Surya, my lab, and you for listening!
 \label{supp_P_fig_C}
 \end{subfigure}
 \end{figure}
+\end{frame}
+
+\begin{frame}{Formulas for the train and test error}
+\footnotesize
+\begin{align*}
+\trainerr &\equiv \frac{\sum_{\mu=1}^{\overline{N_1}} \vert\vert{\bf W \bh{x}}^\mu - \bh{y}^\mu\vert\vert^2_2}{\sum_{\mu=1}^{\overline{N_1}} \vert\vert \bh{y}^\mu \vert\vert^2_2 }\\[1em]
+\uncover<2->{ &= \left[\sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2\right]^{-1} 
+\left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2 +  \sum_{\beta=1}^{\overline{N}_3} \hat{s}_{\beta}^2
+- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_3}  s_{\alpha} \hat{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bf{\hat u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bf{\hat v}^{\beta} \right)\right]\\[3em]}
+\uncover<3->{\generr &\equiv   \frac{ \left\langle \vert\vert{\bf W}\bb{x} - \bb{y} \vert\vert^2_2 \right \rangle} 
+                      { \left\langle  \vert\vert \bb{y} \vert\vert^2_2  \right \rangle} \\[1em]}
+\uncover<4->{ &= \left[\sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2\right]^{-1} 
+\left[ \sum_{\alpha=1}^{N_2} s_{\alpha}^2 +  \sum_{\beta=1}^{\overline{N}_2} \overline{s}_{\beta}^2
+- 2 \sum_{\alpha=1}^{N_2} \sum_{\beta=1}^{\overline{N}_2}  s_{\alpha} \overline{s}_{\beta} \left({\bf u}^{\alpha} \cdot \bb{u}^{\beta} \right) \left({\bf v}^{\alpha} \cdot \bb{v}^{\beta} \right)\right]}
+\end{align*}
 \end{frame}
 
 
