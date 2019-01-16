@@ -118,11 +118,19 @@
 
 \frametitle<2->{Generalization dynamics (intuition)}
 \begin{figure}
+\only<1-2, 7->{
 \includegraphics[width=0.6\textwidth]{figures/conceptual_train_test.png}
 \vspace{-1em}
+}
+\only<3-6>{
+\vspace{1.4em}
+\includegraphics[width=0.6\textwidth]{../../plots/paper/fig_2a.png}%
+\includegraphics[width=0.4\textwidth]{../../plots/paper/fig_1b.png}
+\vspace{1.4em}
+}
 \end{figure}
 \only<2->{
-\begin{itemize}[<+(2)->]
+\begin{itemize}[<+(3)->]
 \item The strongest modes in the training data are learned first.
 \item The strongest modes are the least distorted.
 \item Any signal modes that contain usable signal will be stronger than the noise modes. 
@@ -329,17 +337,10 @@ ${\bf \Sigma}^{31} \equiv \sum_{\mu=1}^{\overline{N_1}} \bh{y}^\mu {\bh x}^\mu{}
 \includegraphics[width=\textwidth]{figures/SVD_learn_from_saxe2018.png}
 \end{column}
 \begin{column}{0.5\textwidth}
-\centering
-\uncover<2->{
-$s(t,\hat s)=\frac{\hat s e^{2\hat st/\tau}}{e^{2\hat st/\tau}-1+\hat s/\epsilon}$\\[0.5em]
-}
-\uncover<3->{
-$t(s,\hat s) = \frac{\tau}{2\hat s} 
-   \ln{\frac{{\hat s}/\epsilon -1}{{\hat s}/s -1}}$
-}
+\includegraphics[width=0.75\textwidth]{../../plots/paper/fig_1b.png}
 \end{column}
 \end{columns}
-{\footnotesize \citep{Saxe2013}, figure from \citep{Saxe2018}}
+{\footnotesize \citep{Saxe2013}, figures \citep{Saxe2018, Lampinen2019}}
 \end{frame}
 
 \begin{frame}[standout]
@@ -347,12 +348,38 @@ Principal components of the training data are learned independently; stronger co
 \end{frame}
 
 \subsection{Distortion of data by noise}
-\begin{frame}{A noisy teacher}
+\begin{frame}{How do the training data relate to the ground truth?}
+\only<-4>{
+\begin{figure}
+\centering
+\only<1-3>{
+\includegraphics[width=\textwidth]{figures/SVD_from_saxe2018.png}
+}
+\only<4>{
+\includegraphics[width=\textwidth]{figures/SVD_from_saxe2018_noisy.png}
+}
+\end{figure}
+\begin{columns}
+\centering
+\begin{column}{0.4\textwidth}
+\uncover<2-4> {
+\includegraphics[width=\textwidth]{figures/tree1.jpg}
+}
+\end{column}
+\begin{column}{0.4\textwidth}
+\uncover<3-4> {
+\includegraphics[width=\textwidth]{figures/tree2.jpg}
+}
+\end{column}
+\end{columns}
+}
+\only<5->{
 Suppose we have some true labels for some ground-truth (and low-rank) linear task:
 $$\bb{y}^{\mu} = \bb{W}\bh{x}^\mu$$
 To which IID gaussian noise is added to produce the training data:
 $$\bh{y}^{\mu} = \bb{W}\bh{x}^\mu + \bf{z} ^ \mu$$
 How well does the network learn the true task from this noisy teacher? 
+}
 \end{frame}
 
 \begin{frame}[label=signal_from_noise]
@@ -439,7 +466,8 @@ Stronger signals are less distorted AND learned earlier than weaker signals or n
 \end{frame}
 
 \begin{frame}[standout]
-Important assumption: the student is initialized with Teacher Aligned (TA) modes.
+Important assumption: the student is initialized with Teacher Aligned (TA) modes. \\[1em]
+We'll show that random initializations are well-approximated by this assumption.
 \end{frame}
 
 \begin{frame}{Generalization dynamics (math)}
@@ -509,7 +537,7 @@ Important assumption: the student is initialized with Teacher Aligned (TA) modes
 \end{frame}
 
 \begin{frame}[standout]
-The theory matches TA, and matches key features of randomly initialized networks, even in the deeper case.
+The theory matches the TA, and matches key features of randomly initialized networks, even in the deeper case.
 \end{frame}
 
 
@@ -531,7 +559,7 @@ The theory matches TA, and matches key features of randomly initialized networks
 \end{itemize}
 \end{frame}
 
-\section{Applications \& extensions}
+\section{Applications}
 
 \subsection{The trouble with structure-agnostic generalization bounds}
 \begin{frame}{Why do standard theoretical bounds on generalization suck?}
@@ -601,15 +629,16 @@ This is partly because they're based on binary classification, and modern tasks 
 \begin{figure}
 \centering
 \only<1>{
-\includegraphics[height=0.8\textheight]{figures/other_peoples/zhang_2017_slowdown.png}
+\includegraphics[height=0.7\textheight]{figures/other_peoples/zhang_2017_slowdown.png}
 
 {\footnotesize \citep{Zhang2016, Arpit2017}}
 }
 \only<2->{
-\begin{subfigure}[t]{0.5\textwidth}
-\only<2-3>{
-\includegraphics[width=\textwidth]{../../plots/paper/randomized_fig_A.png}
+\includegraphics[width=0.75\textwidth]{../../plots/paper/randomized_fig_A.png}
 }
+\only<3->{
+\begin{subfigure}[t]{0.5\textwidth}
+\includegraphics[width=\textwidth]{../../plots/paper/randomized_fig_A.png}
 \only<4->{
 \includegraphics[width=0.8\textwidth]{figures/other_peoples/zhang_2017_slowdown.png}
 }
@@ -819,7 +848,7 @@ Many, e.g.:
 \end{frame}
 
 \begin{frame}[standout]
-Thanks to Surya, my lab, and you all for listening!
+Thanks to Surya, my lab, and you for listening!
 \end{frame}
 
 \begin{frame}[allowframebreaks]
