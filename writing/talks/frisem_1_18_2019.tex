@@ -349,7 +349,9 @@ ${\bf \Sigma}^{31} \equiv \sum_{\mu=1}^{\overline{N_1}} \bh{y}^\mu {\bh x}^\mu{}
 \includegraphics[width=\textwidth]{figures/SVD_learn_from_saxe2018.png}
 \end{column}
 \begin{column}{0.5\textwidth}
+\uncover<2->{
 \includegraphics[width=0.75\textwidth]{../../plots/paper/fig_1b.png}
+}
 \end{column}
 \end{columns}
 {\footnotesize \citep{Saxe2013}, figures \citep{Saxe2018, Lampinen2019}}
@@ -680,7 +682,7 @@ It's the dataset, not the architecture, that drives good generalization.
 \end{figure}
 \end{frame}
 
-\begin{frame}{Multi-output networks}
+\begin{frame}{Linear networks with multiple heads}
 \begin{figure}
 \centering
 \begin{tikzpicture}[auto, remember picture]
@@ -872,6 +874,24 @@ Thanks to Surya, my lab, and you!
 \end{frame}
 
 \appendix
+\begin{frame}{Varying the number of inputs}
+\begin{figure}[t]
+\centering
+\begin{subfigure}[t]{0.36\textwidth}
+\includegraphics[width=\textwidth]{../../plots/paper/changing_p_A.png}
+\label{supp_P_fig_A}
+\end{subfigure}%
+\begin{subfigure}[t]{0.27\textwidth}
+\includegraphics[width=\textwidth]{../../plots/paper/changing_p_B.png}
+\label{supp_P_fig_B}
+\end{subfigure}\\
+\begin{subfigure}[t]{0.36\textwidth}
+\includegraphics[width=\textwidth]{../../plots/paper/changing_p_C.png}
+\label{supp_P_fig_C}
+\end{subfigure}
+\end{figure}
+\end{frame}
+
 \begin{frame}{Alignment time}
 \begin{figure}
 \centering
@@ -897,24 +917,6 @@ Thanks to Surya, my lab, and you!
 
 \end{frame}
 
-
-\begin{frame}{Varying the number of inputs}
-\begin{figure}[t]
-\centering
-\begin{subfigure}[t]{0.36\textwidth}
-\includegraphics[width=\textwidth]{../../plots/paper/changing_p_A.png}
-\label{supp_P_fig_A}
-\end{subfigure}%
-\begin{subfigure}[t]{0.27\textwidth}
-\includegraphics[width=\textwidth]{../../plots/paper/changing_p_B.png}
-\label{supp_P_fig_B}
-\end{subfigure}\\
-\begin{subfigure}[t]{0.36\textwidth}
-\includegraphics[width=\textwidth]{../../plots/paper/changing_p_C.png}
-\label{supp_P_fig_C}
-\end{subfigure}
-\end{figure}
-\end{frame}
 
 \begin{frame}{Formulas for the train and test error}
 \footnotesize
