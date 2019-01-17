@@ -521,15 +521,20 @@ We'll show that random initializations are well-approximated by this assumption.
 \includegraphics[height=0.55\textheight]{../../plots/paper/fig3_redux_H.png}
 \end{subfigure}
 }
-\only<3>{
+\only<3-4>{
 \begin{subfigure}[t]{0.4\textwidth}
+\only<3>{
 \includegraphics[height=0.5\textheight]{../../plots/paper/deep_fig_redux_E.png}
+}
+\only<4>{
+\includegraphics[height=0.5\textheight]{../../plots/paper/deep_fig_redux_F_unaligned.png}
+}
 \end{subfigure}%
 \begin{subfigure}[t]{0.6\textwidth}
 \includegraphics[height=0.5\textheight]{../../plots/paper/deep_fig_redux_F.png}
 \end{subfigure}%
 }
-\only<4>{
+\only<5>{
 \begin{subfigure}[t]{0.44\textwidth}
 \includegraphics[height=0.55\textheight]{../../plots/paper/deep_fig_redux_G.png}
 \end{subfigure}%
@@ -808,7 +813,7 @@ I'd argue that this is precisely the regime of data-efficient human learning.
 \includegraphics[width=0.6\textwidth]{figures/conceptual_train_test.png}
 \end{figure}
 }
-\only<2->{
+\only<2-3>{
 \begin{figure}
 \centering
 \includegraphics[width=0.428\textwidth]{../../plots/paper/fig_2c.png}%
@@ -821,6 +826,12 @@ $$\overline{s} \mathcal{O}(\overline{s})$$
 \item Gradient descent cannot obtain this for all modes, even with $\ell_p$ regularization.
 \end{itemize}
 }}
+\only<4>{
+\begin{figure}
+\centering
+\includegraphics[height=0.7\textheight]{../../plots/paper/theory_only_fig3_B.png}%
+\end{figure}
+}
 \end{frame}
 
 \begin{frame}[standout]
