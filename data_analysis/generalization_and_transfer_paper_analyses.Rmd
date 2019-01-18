@@ -389,7 +389,7 @@ p = ggplot(data=d, aes(x=sbar)) +
   scale_fill_identity(name="Empirical", guide="legend", labels=c("Empirical")) +
   scale_color_identity(name="Theoretical", guide="legend", breaks=c("#D95F02", "#7570B3"), labels=c("Signal", "Noise")) +
   scale_x_continuous(breaks=c(0., 8.)) +
-  labs(x=parse(text="bar(s)"), y="Count")+
+  labs(x=parse(text="hat(s)"), y="Count")+
   annotation_custom(textGrob(label = "A", hjust = 2.5, gp = gpar(cex = 2),
       x=unit(0, "npc"), y=unit(0.95, "npc")),
       )
