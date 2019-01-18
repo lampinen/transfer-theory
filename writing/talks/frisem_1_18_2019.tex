@@ -169,7 +169,7 @@ How, when, and why do neural networks (and humans) generalize well?
 \section{The theory}
 
 \subsection{Deep linear networks}
-\begin{frame}{Setting: Deep linear networks}
+\begin{frame}<2->{Setting: Deep linear networks}
 \begin{figure}
 \centering
 \begin{tikzpicture}[auto, overlay, remember picture]
@@ -326,7 +326,7 @@ $\bh{x}$
 \vspace{2em}
 \begin{columns}
 \begin{column}{0.5\textwidth}
-Input features correlations:
+Input feature correlations:
 ${\bf\Sigma}^{xx} \equiv \sum_{\mu=1}^{\overline{N}_1} {\bh x}^\mu {\bh x}^\mu{}^T \uncover<2->{= {\bf I}}$
 \end{column}
 \begin{column}{0.5\textwidth}
@@ -472,7 +472,8 @@ Non-signal dimensions are filled with noise.
 \againframe<2->{gen_dyn_int}
 
 \begin{frame}[standout]
-Stronger signals are less distorted AND learned earlier than weaker signals or noise.
+Stronger signals are less distorted AND learned earlier than weaker signals or noise. \\[1em]
+Thus optimal stopping is a powerful regularizer.
 \end{frame}
 
 
@@ -593,6 +594,7 @@ Alignment is slower in deep networks, but many key features of the trajectories 
     \item Train and test error decrease together, but with a gap. 
     \item Train error continues to decrease, but test error reverses and begins increasing. 
     \end{itemize}
+\item Thus optimal stopping is a powerful regularizer.
 \end{itemize}
 \end{frame}
 
@@ -640,10 +642,13 @@ Alignment is slower in deep networks, but many key features of the trajectories 
 \node [data1] at (1.5, -1) {};
 }
 
-\only<3,6>{
+\only<3, 6>{
 \draw [ultra thick] (-3, 3) -- (4.5, -2.5); 
 }
-\only<4,7>{
+\only<4>{
+\draw [ultra thick] (-4, 1) -- (-3, 3.1) -- (-1.5, 2.2) -- (-2, 1.3) -- (0.3, 1.6) -- (-1, 0.6) -- (-0.3, -0.3) -- (0.5, -0.7) -- (1.5, -4) -- (2.3, -4) -- (2.3, -2.5) -- (0.8, -0.4) -- (1.2, 1) -- (2.5, -0.8) -- (4.5, -1.5); 
+}
+\only<7>{
 \draw [ultra thick] (-1.9, 3.4) -- (-0.3, -0.3) -- (4.5, -1.5); 
 }
 \only<5,8-9>{
@@ -694,7 +699,7 @@ Memorization is slower because randomizing the labels spreads the variance of st
 \end{frame}
 
 \begin{frame}[standout]
-It's the dataset, not the architecture, that drives good generalization.
+It's the dataset \& dynamics, as well as the architecture, that drive good generalization.
 \end{frame}
 
 \subsection{Multiple tasks \& transfer}
@@ -808,11 +813,11 @@ Transfer depends only on input feature alignment and SNRs!
 \includegraphics[width=\textwidth]{../../plots/paper/fig_5a.png}
 \end{subfigure}%
 \begin{subfigure}[t]{0.3\textwidth}
-\caption{\bf Somewhat noisy}
+\caption{\bf \only<3->{Somewhat noisy}}
 \includegraphics[width=\textwidth]{../../plots/paper/fig_5b.png}
 \end{subfigure}%
 \begin{subfigure}[t]{0.4\textwidth}
-\caption{\bf Very clean}
+\caption{\bf \only<4->{Very clean\phantom{blah}}}
 \includegraphics[width=\textwidth]{../../plots/paper/fig_5c.png}
 \end{subfigure}
 \end{figure}
@@ -899,7 +904,7 @@ Our regularization that is sensitive to structure in the data is better.
 \item Therefore:
     \begin{itemize}
     \item It's the structure in the data that drives good generalization.
-    \item Generalization bounds based only on capacity for memorization are na{\"i}ve, memorization is slower than learning true structure.
+    \item Generalization bounds based only on capacity for memorization are na{\"i}ve; memorization is slower than learning true structure.
     \item Multi-task learning is beneficial, especially with small (or otherwise noisy) data and well-aligned tasks.
     \item Regularization should not ignore the structure of the data.
     \end{itemize}
