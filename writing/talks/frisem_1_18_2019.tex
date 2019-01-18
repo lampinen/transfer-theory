@@ -265,7 +265,7 @@ How, when, and why do neural networks (and humans) generalize well?
 \node at (-2.75, -1) {\LARGE$\wa$};
 \node at (-2.75, 2.25) {\LARGE$\wk$};
 }
-\only<2-5>{
+\only<-5>{
 \node at (2.4, -2) {\LARGE$N_1$};
 \node at (2, 0) {\LARGE$N_2$};
 \node at (2.9, 2) {\LARGE$N_3$};
@@ -273,6 +273,10 @@ How, when, and why do neural networks (and humans) generalize well?
 \end{scope}
 \end{tikzpicture}
 \end{figure}
+\end{frame}
+
+\begin{frame}[standout]
+Deep networks behave similarly to single-hidden-layer ones in most respects, I will show you when they don't.
 \end{frame}
 
 \begin{frame}{Why linear?}
@@ -292,32 +296,28 @@ Linear networks are much easier to understand mathematically. They lack the full
 \end{frame}
 
 \begin{frame}[standout]
-Deep linear networks can be analyzed more easily, but still capture many interesting features of nonlinear networks' learning dynamics. 
+Deep linear networks can be analyzed more easily, but still capture many interesting features of nonlinear networks' learning. \\[1em]
+Every empirical finding I'll present has been demonstrated in the nonlinear case.
 \end{frame}
 
 \subsection{Learning dynamics}
 \begin{frame}{Learning dynamics}
 \begin{columns}
 \begin{column}{0.55\textwidth}
-\only<-3>{\vspace{0.9em}}
-\begin{itemize}[<+->] \itemsep 1em
-\item Training data $\{(\bh{x}^\mu, \bh{y}^\mu)\}$, e.g.
+\begin{itemize}[<+->] \itemsep 1.5em
+\item Training data $\{(\bh{x}, \bh{y})\}$, e.g.
     $\{(\text{talk}, \text{talked}), (\text{go}, \text{went}), \cdots\}$
-\item Squared error $\sum_{\mu}||\bh{y}^\mu - {\bf y}^\mu||^2$\\
-      $=\sum_{\mu}||\bh{y}^\mu - \wb\wa \bh{x}^\mu||^2$
+\item Squared error $||\bh{y} - {\bf y}||^2$
 \item Batch gradient descent
-    \only<-3>{$\Delta \wa  =  \lambda \sum_{\mu} \wb^T \left( \bh{y}^\mu   - \wb \wa {\bh x}^\mu   \right){\bh x}^\mu{}^T$\\[0.5em]
-	      $\Delta \wb  =  \lambda \sum_{\mu} \left( \bh{y}^\mu  - \wb \wa  {\bh x}^\mu \right) {\bh x}^\mu{}^T \wa^T$}
-    \only<4->{$\tau \ddt \wa  =  \wb^T \left( {\bf \Sigma}^{31} - \wb \wa {\bf \Sigma}^{11} \right)$\\[0.5em]
-	      $\tau \ddt \wb = \left( {\bf \Sigma}^{31} - \wb \wa {\bf \Sigma}^{11} \right) \wa^T$}
-
+    \only<-3>{$\Delta \wa  =  \lambda \sum_{\mu} \wb^T \left( \bh{y}^\mu   - \wb \wa {\bh x}^\mu   \right){\bh x}^\mu{}^T$}
+    \only<4->{$\tau \ddt \wa  =  \wb^T \left( {\bf \Sigma}^{yx} - \wb \wa {\bf \Sigma}^{xx} \right)$}
 \end{itemize}
 \end{column}
 \begin{column}{0.45\textwidth}
 \centering
-$\bf{y}^\mu$
-\includegraphics[width=\textwidth]{figures/reference_network.png}
-$\bh{x}^\mu$
+$\bf{y}$
+\includegraphics[width=\textwidth]{figures/reference_network_2.png}
+$\bh{x}$
 \end{column}
 \end{columns}
 \end{frame}
@@ -326,26 +326,31 @@ $\bh{x}^\mu$
 \vspace{2em}
 \begin{columns}
 \begin{column}{0.5\textwidth}
-Input-Input Correlations:
-${\bf\Sigma}^{11} \equiv \sum_{\mu=1}^{\overline{N}_1} {\bh x}^\mu {\bh x}^\mu{}^T \uncover<2->{= {\bf I}}$
+Input features correlations:
+${\bf\Sigma}^{xx} \equiv \sum_{\mu=1}^{\overline{N}_1} {\bh x}^\mu {\bh x}^\mu{}^T \uncover<2->{= {\bf I}}$
 \end{column}
 \begin{column}{0.5\textwidth}
 \uncover<3->{
-Input-Output Correlations:
-${\bf \Sigma}^{31} \equiv \sum_{\mu=1}^{\overline{N_1}} \bh{y}^\mu {\bh x}^\mu{}^T$% = \bb{W} + {\bf Z}{\bh X}^T$
+Input-output correlations:
+${\bf \Sigma}^{yx} \equiv \sum_{\mu=1}^{\overline{N_1}} \bh{y}^\mu {\bh x}^\mu{}^T$% = \bb{W} + {\bf Z}{\bh X}^T$
 }
 \end{column}
 \end{columns}
 \begin{figure}
 \centering
 \uncover<4->{
+\only<-4>{
+\includegraphics[width=\textwidth]{figures/SVD_from_saxe2018_masked.png}
+}
+\only<5->{
 \includegraphics[width=\textwidth]{figures/SVD_from_saxe2018.png}
+}
 }
 \end{figure}
 \uncover<4->{\footnotesize \citep{Saxe2013}, figure from \citep{Saxe2018}}
 \end{frame}
 
-\begin{frame}{Learning dynamics are driven by ${\bf\Sigma}_{31}$}
+\begin{frame}{Learning dynamics of linear networks are driven by ${\bf\Sigma}_{yx}$}
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{figures/SVD_from_saxe2018.png}
@@ -406,21 +411,22 @@ How well does the network learn the true task from this noisy teacher?
 \frametitle{How the signal emerges in the noisy training data}
 \vspace{-0.5em}
 \begin{center}%
+\includegraphics[width=0.428\textwidth]{../../plots/paper/fig_2c.png}%
+\uncover<2->{%
+\includegraphics[width=0.322\textwidth]{../../plots/paper/fig_2d.png}%
+}\\
+\uncover<3->{
 \only<-3>{%
 \includegraphics[width=0.75\textwidth]{../../plots/paper/fig_2a_hidden.png}%
 }%
-\only<4->{%
+\only<4>{%
 \includegraphics[width=0.75\textwidth]{../../plots/paper/fig_2a.png}%
 }
-\uncover<2->{%
-\includegraphics[width=0.428\textwidth]{../../plots/paper/fig_2c.png}%
-}%
-\uncover<3->{%
-\includegraphics[width=0.322\textwidth]{../../plots/paper/fig_2d.png}%
-}%
+}
 \end{center}
 \vspace{-1em}
-{\footnotesize Building on \citet{Benaych-Georges2012}}
+{\footnotesize $\bar{s}$ is the $\text{SNR}$. This builds on \citet{Benaych-Georges2012}.}
+
 \end{frame}
 
 
@@ -458,7 +464,7 @@ $$
 
 \begin{frame}[standout]
 Noise inflates and distorts signal dimensions; weaker dimensions are distorted more. \\[1em]
-The remaining dimensions are filled with noise.
+Non-signal dimensions are filled with noise.
 \end{frame}
 
 
@@ -507,15 +513,17 @@ We'll show that random initializations are well-approximated by this assumption.
 
 \againframe<2->{gen_dyn_math}
 
-\begin{frame}
+\begin{frame}<-2>[label=theory_experiment]
 \frametitle<-2>{Theory-experiment match}
 \frametitle<3->{Theory-experiment match (deeper)}
 \begin{figure}
 \only<1>{
 \begin{subfigure}[t]{0.4\textwidth}
+\caption{\bf  \phantom{blah} Log train error}
 \includegraphics[height=0.5\textheight]{../../plots/paper/fig3_redux_E.png}
 \end{subfigure}%
 \begin{subfigure}[t]{0.6\textwidth}
+\caption{\bf Log test error \phantom{blahblah}}
 \includegraphics[height=0.5\textheight]{../../plots/paper/fig3_redux_F.png}
 \end{subfigure}%
 }
@@ -530,13 +538,21 @@ We'll show that random initializations are well-approximated by this assumption.
 \only<3-4>{
 \begin{subfigure}[t]{0.4\textwidth}
 \only<3>{
+\caption{\bf  \phantom{blah} Log train error}
 \includegraphics[height=0.5\textheight]{../../plots/paper/deep_fig_redux_E.png}
 }
 \only<4>{
+\caption{\bf \phantom{blah} Randomly initialized}
 \includegraphics[height=0.5\textheight]{../../plots/paper/deep_fig_redux_F_unaligned.png}
 }
 \end{subfigure}%
 \begin{subfigure}[t]{0.6\textwidth}
+\only<3>{
+\caption{\bf Log test error \phantom{blahblah}}
+}
+\only<4>{
+\caption{\bf Theory \& TA \phantom{blahblah}}
+}
 \includegraphics[height=0.5\textheight]{../../plots/paper/deep_fig_redux_F.png}
 \end{subfigure}%
 }
@@ -552,7 +568,13 @@ We'll show that random initializations are well-approximated by this assumption.
 \end{frame}
 
 \begin{frame}[standout]
-The theory matches the TA, and matches key features of randomly initialized networks, even in the deeper case.
+The theory matches the TA, and randomly initialized networks are similar but lag.
+\end{frame}
+
+\againframe<3->{theory_experiment}
+
+\begin{frame}[standout]
+Alignment is slower in deep networks, but many key features of the trajectories still match between random and TA/theory.
 \end{frame}
 
 
@@ -638,8 +660,8 @@ The theory matches the TA, and matches key features of randomly initialized netw
 \end{frame}
 
 \begin{frame}[standout]
-Generalization bounds are loose because they completely ignore structure in the data.\\[1em]
-This is partly because they're based on binary classification, and modern tasks are much richer.
+Generalization bounds suck because they completely ignore structure in the data.\\[1em]
+This is partly because modern tasks are much richer than binary classification.
 \end{frame}
 
 \subsection{Randomized data}
@@ -776,7 +798,7 @@ Transfer depends only on input feature alignment and SNRs!
 \includegraphics[width=0.9\textwidth]{../poster/transfer_pros_cons.png}
 \end{figure}
 }
-\only<2->{
+\only<2-4>{
 {\bf Target task is:}
 \begin{figure}
 \vspace{-2em}
@@ -785,29 +807,48 @@ Transfer depends only on input feature alignment and SNRs!
 \caption{\bf Very noisy}
 \includegraphics[width=\textwidth]{../../plots/paper/fig_5a.png}
 \end{subfigure}%
-\uncover<3->{%
 \begin{subfigure}[t]{0.3\textwidth}
 \caption{\bf Somewhat noisy}
 \includegraphics[width=\textwidth]{../../plots/paper/fig_5b.png}
 \end{subfigure}%
-}%
-\uncover<4->{%
 \begin{subfigure}[t]{0.4\textwidth}
 \caption{\bf Very clean}
 \includegraphics[width=\textwidth]{../../plots/paper/fig_5c.png}
 \end{subfigure}
-}%
 \end{figure}
 }
+\begin{tikzpicture}[auto, overlay, remember picture]
+\only<2->{
+\fill [white] (1, 0.7) rectangle (9.5, 1.0);
+\node at (2, 0.8) {\tiny alignment};
+\node at (5.25, 0.8) {\tiny alignment};
+\node at (8.4, 0.8) {\tiny alignment};
+}
+\only<2>{
+\fill [white] (3.2, 0.7) rectangle (7, 3.85);
+}
+\only<2-3>{
+\fill [white] (6.5, 0.7) rectangle (9.5, 3.85);
+}
+\end{tikzpicture}
 \end{frame}
 
 \begin{frame}[standout]
 Multi-task learning has benefits \& costs.\\[1em]
-\uncover<2->{
-It's more beneficial when the target task is low SNR, and the auxiliary tasks are well aligned. \\[1em]}
-\uncover<3->{
-I'd argue that this is precisely the regime of data-efficient human learning.
-}
+It's more beneficial when the target task is low SNR, and the auxiliary tasks are well aligned.
+\end{frame}
+
+\begin{frame}{Transfer in humans}
+Is transfer beneficial to humans?
+\begin{itemize}[<+->] \itemsep 1em
+\item Human small data learning is in the low SNR regime -- small datasets are inherently lower SNR.
+\item Many of our tasks are well aligned.
+\item In fact, they are often {\bf culturally constructed} to be well aligned.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[standout]
+Data-efficient human learning is in the regime where transfer is most beneficial.
 \end{frame}
 
 
@@ -842,7 +883,7 @@ $$\overline{s} \mathcal{O}(\overline{s})$$
 
 \begin{frame}[standout]
 Even in the linear case, SGD (with $\ell_p$ regularization) is provably sub-optimal.\\[1em]
-Structure sensitive regularization is better!
+Our regularization that is sensitive to structure in the data is better.
 \end{frame}
 
 \begin{frame}{Summary}
@@ -880,7 +921,7 @@ This paper will be presented at ICLR 2019, and can be found at \url{https://arxi
 \end{frame}
 
 \begin{frame}[standout]
-Thanks to Surya, my lab, and you!
+Thanks to Surya, my lab, Erin \& Pam, and you for listening!
 \end{frame}
 
 \begin{frame}[allowframebreaks]
