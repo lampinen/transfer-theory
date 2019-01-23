@@ -2556,6 +2556,73 @@ make_nonlinear_fig_plots(avg_d %>% filter(depth==3,
                          legend=T)
 ```
 
+# New nonlinear plots for Jay
+
+```{r}
+nruns = 1
+depths = c(4)
+N_2_bars = c(3)
+noise_vars = c(1.)
+output_sizes= c(50)
+svms = c(5., 10., 30.)
+d = data.frame()
+for (depth in depths) {
+  for (n2b in N_2_bars) {
+    for (noise_var in noise_vars) {
+      for (output_size in output_sizes) {
+        for (svm in svms) {
+          for (run in 0:(nruns-1)) { 
+            filename = sprintf("../sg_nl_new_results/depth_%i_n2b_%i_noise_var_%.2f_output_size_%i_svm_%f_run_%i_.csv", depth, n2b, noise_var, output_size, svm, run)
+            if (!file.exists(filename)) {
+              next
+            }
+            this_d = read.csv(filename, header=T)
+      
+            this_d = this_d %>% 
+              mutate(noise_var=noise_var, output_size=output_size, svm=svm, run=run, depth=depth-1, teacher_rank=n2b, student_rank="Full rank", type="Empirical")
+            d = bind_rows(d, this_d)
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+```{r}
+d = d %>%
+  mutate(output_size=factor(output_size),
+         noise_var=factor(noise_var),
+         svm=factor(svm),
+         type=factor(type),
+         log_loss = log(loss),
+         log_train_loss = log(train_loss))
+```
+
+```{r}
+avg_d = d %>%
+  group_by(depth, noise_var, output_size, svm, epoch, teacher_rank, type) %>%
+  summarize(loss=mean(loss), log_tr_loss_sd=sd(log_train_loss), log_tr_loss=mean(log_train_loss), log_loss_sd=sd(log_loss), log_loss=mean(log_loss)) %>%
+  mutate(log_loss_95_low=log_loss-1.96*log_loss_sd/sqrt(n()), log_loss_95_high=log_loss+1.96*log_loss_sd/sqrt(n()),
+         log_tr_loss_95_low=log_tr_loss-1.96*log_tr_loss_sd/sqrt(n()), log_tr_loss_95_high=log_tr_loss+1.96*log_tr_loss_sd/sqrt(n())) %>%
+  ungroup() %>%
+  mutate(new_type = ifelse(type == "Theory", "Theory",
+                           "Empirical random")) %>%
+  mutate(new_type = factor(new_type, levels=c("Theory", "Empirical random")),
+         aligned = F)
+```
+
+
+```{r}
+make_nonlinear_fig_plots(avg_d %>% filter(epoch <= 400000),
+                         file_prefix="../plots/other/nl_fig_relu_",
+                         lets=c("D", "H"),
+                         x_breaks=c(0., 20., 40.),
+                         tau=10000,
+                         legend=T)
+```
+
+
 #  Randomizing slows training
 
 ```{r}
