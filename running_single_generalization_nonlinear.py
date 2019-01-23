@@ -10,15 +10,15 @@ from orthogonal_matrices import random_orthogonal
 num_examples = 100
 output_sizes = [50] #[10, 50, 100, 200, 400]
 #num_layers = 4 # not actually a changeable parameter
-num_layerss = [4, 2]
+num_layerss = [4]
 sigma_zs = [1.]
 num_runs = 1
 learning_rate = 0.0001
 num_hidden = 50
-N_2_bars = [1, 3]
+N_2_bars = [3]
 #N_2_bar = 3
 batch_size = num_examples
-filename_prefix = "sg_nl_results_orth_leaky/"
+filename_prefix = "sg_nl_new_results/"
 input_type = "one_hot" # one_hot, orthogonal, gaussian
 track_SVD = True
 save_every = 50
@@ -77,7 +77,7 @@ for num_layers in num_layerss:
                         O4 = eps_per * random_orthogonal(num_output)[:, :num_hidden] 
                         W1 = tf.get_variable('W1', shape=[num_hidden, num_input], initializer=tf.constant_initializer(O1))
                         W4 = tf.get_variable('W4', shape=[num_output, num_hidden], initializer=tf.constant_initializer(O4))
-                        hidden = tf.nn.leaky_relu(tf.matmul(W1, input_ph), alpha=leak_alpha)
+                        hidden = tf.nn.relu(tf.matmul(W1, input_ph))
 
                         if num_layers == 4:
                             O2 = eps_per * random_orthogonal(num_hidden)
@@ -85,8 +85,8 @@ for num_layers in num_layerss:
                             W2 = tf.get_variable('W2', shape=[num_hidden, num_hidden], initializer=tf.constant_initializer(O2))
                             W3 = tf.get_variable('W3', shape=[num_hidden, num_hidden], initializer=tf.constant_initializer(O3))
                         
-                            hidden = tf.nn.leaky_relu(tf.matmul(W2, hidden), alpha=leak_alpha)
-                            hidden = tf.nn.leaky_relu(tf.matmul(W3, hidden), alpha=leak_alpha)
+                            hidden = tf.nn.relu(tf.matmul(W2, hidden))
+                            hidden = tf.nn.relu(tf.matmul(W3, hidden))
 
                         output = (tf.matmul(W4, hidden))
                         
